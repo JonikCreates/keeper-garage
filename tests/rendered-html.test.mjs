@@ -18,6 +18,6 @@ test("server-renders the Keeper application shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
   assert.match(html, /Keeper/);
-  assert.match(html, /Preparing your garage/);
+  assert.match(html, /Loading the F30 intelligence library/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });

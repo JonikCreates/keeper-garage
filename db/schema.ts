@@ -169,3 +169,83 @@ export const sources = sqliteTable(
     index("idx_sources_known_issue").on(table.knownIssueId),
   ],
 );
+
+export const vehicleProfiles = sqliteTable(
+  "vehicle_profiles",
+  {
+    vehicleId: integer("vehicle_id")
+      .primaryKey()
+      .references(() => vehicles.id),
+    bodyCode: text("body_code").notNull(),
+    engineCode: text("engine_code").notNull(),
+    drivetrain: text("drivetrain").notNull(),
+    transmission: text("transmission").notNull(),
+    market: text("market").notNull(),
+    emissions: text("emissions").notNull(),
+    productionDate: text("production_date"),
+    vinLast7: text("vin_last7"),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [index("idx_vehicle_profiles_engine").on(table.engineCode)],
+);
+
+export const maintenanceRules = sqliteTable(
+  "maintenance_rules",
+  {
+    maintenanceItemId: integer("maintenance_item_id")
+      .primaryKey()
+      .references(() => maintenanceItems.id),
+    trims: text("trims"),
+    engines: text("engines"),
+    drivetrains: text("drivetrains"),
+    transmissions: text("transmissions"),
+  },
+);
+
+export const issueLibrary = sqliteTable(
+  "issue_library",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    platformId: integer("platform_id")
+      .notNull()
+      .references(() => vehiclePlatforms.id),
+    slug: text("slug").notNull(),
+    system: text("system").notNull(),
+    issue: text("issue").notNull(),
+    description: text("description").notNull(),
+    symptoms: text("symptoms").notNull(),
+    typicalMileage: text("typical_mileage").notNull(),
+    severity: text("severity").notNull(),
+    urgency: text("urgency").notNull(),
+    evidence: text("evidence").notNull(),
+    preventativeAction: text("preventative_action").notNull(),
+    trims: text("trims"),
+    engines: text("engines"),
+    drivetrains: text("drivetrains"),
+    transmissions: text("transmissions"),
+  },
+  (table) => [
+    uniqueIndex("idx_issue_library_platform_slug").on(table.platformId, table.slug),
+    index("idx_issue_library_engine").on(table.engines),
+    index("idx_issue_library_urgency").on(table.urgency),
+  ],
+);
+
+export const issueSources = sqliteTable(
+  "issue_sources",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    issueId: integer("issue_id")
+      .notNull()
+      .references(() => issueLibrary.id),
+    sourceType: text("source_type").notNull(),
+    title: text("title").notNull(),
+    url: text("url").notNull(),
+    publisher: text("publisher").notNull(),
+    notes: text("notes"),
+  },
+  (table) => [
+    uniqueIndex("idx_issue_sources_issue_url").on(table.issueId, table.url),
+    index("idx_issue_sources_issue").on(table.issueId),
+  ],
+);
