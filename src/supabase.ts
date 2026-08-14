@@ -3,6 +3,24 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+export type AuthProvider = "google" | "apple";
+
+export type AuthCapabilities = {
+  anonymous: boolean;
+  email: boolean;
+  phone: boolean;
+  google: boolean;
+  apple: boolean;
+};
+
+const unavailableCapabilities: AuthCapabilities = {
+  anonymous: false,
+  email: false,
+  phone: false,
+  google: false,
+  apple: false,
+};
+
 export const hasSupabaseConfig = Boolean(supabaseUrl && supabasePublishableKey);
 
 export const supabase = hasSupabaseConfig
@@ -15,8 +33,29 @@ export const supabase = hasSupabaseConfig
     })
   : null;
 
-export const authRedirectUrl = () =>
-  new URL(import.meta.env.BASE_URL, window.location.origin).toString();
+export const authRedirectUrl = (accountTab: "profile" | "security" = "profile") => {
+  const url = new URL(import.meta.env.BASE_URL, window.location.origin);
+  url.searchParams.set("account", accountTab);
+  return url.toString();
+};
+
+export async function getAuthCapabilities(): Promise<AuthCapabilities> {
+  if (!hasSupabaseConfig) return unavailableCapabilities;
+
+  const response = await fetch(`${supabaseUrl}/auth/v1/settings`, {
+    headers: { apikey: supabasePublishableKey },
+  });
+  if (!response.ok) throw new Error("Keeper could not validate its authentication configuration.");
+
+  const settings = await response.json() as { external?: Record<string, boolean> };
+  return {
+    anonymous: Boolean(settings.external?.anonymous_users),
+    email: Boolean(settings.external?.email),
+    phone: Boolean(settings.external?.phone),
+    google: Boolean(settings.external?.google),
+    apple: Boolean(settings.external?.apple),
+  };
+}
 
 export type VehicleRow = {
   id: string;
