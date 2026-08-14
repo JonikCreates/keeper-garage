@@ -177,15 +177,16 @@ main { border-right: 1px solid var(--line); border-left: 1px solid var(--line); 
 .configuration-panel::before { top: 7px; left: 8px; }
 .configuration-panel::after { right: 8px; bottom: 7px; }
 .configuration-heading { padding: 24px 22px 18px; border-bottom: 3px double var(--line); background: var(--panel-2); }
-.configuration-heading span, .configuration-flow, .config-grid label, .garage-save label, .session-note { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.configuration-heading span, .garage-picker, .configuration-flow, .config-grid label, .garage-save label, .session-note { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
 .configuration-heading strong { text-transform: uppercase; }
-.config-grid select, .garage-save input, .account-form input {
+.garage-picker { background: var(--panel-wash); }
+.garage-picker select, .config-grid select, .garage-save input, .account-form input {
   color: var(--paper);
   border: 1px solid var(--line);
   background: var(--field);
   box-shadow: inset 2px 2px 0 rgba(0, 0, 0, .16);
 }
-.config-grid select option { color: var(--paper); background: var(--field); }
+.garage-picker select option, .config-grid select option { color: var(--paper); background: var(--field); }
 .inference-note, .guest-choice, .account-summary, .security-proof { border-color: color-mix(in srgb, var(--acid), var(--line) 55%); background: color-mix(in srgb, var(--acid) 9%, var(--panel)); }
 .inference-note p, .security-proof p { color: var(--cream); }
 .session-note { color: var(--muted); }
