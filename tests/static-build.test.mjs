@@ -18,6 +18,8 @@ test("GitHub Pages build contains the Keeper application", async () => {
   assert.match(bundle, /Urgent/);
   assert.match(bundle, /Be on the lookout/);
   assert.match(bundle, /Owner's workshop log/);
+  assert.match(bundle, /Keeper workshop network/);
+  assert.match(bundle, /Owner-built maintenance archive/);
   assert.match(bundle, /3 Series \(E36\)/);
   assert.match(bundle, /3 Series \(E46\)/);
   assert.match(bundle, /5 Series \(E39\)/);

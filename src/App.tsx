@@ -160,6 +160,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
+    document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#121416" : "#0d2b46");
     localStorage.setItem("keeper-theme", theme);
   }, [theme]);
 
@@ -272,6 +273,10 @@ export default function App() {
 
   return (
     <div className="site-shell">
+      <section className="forum-banner" aria-label="Keeper workshop network">
+        <div><span>Keeper workshop network</span><strong>Owner-built maintenance archive</strong></div>
+        <p><span>Service schedules</span><i /><span>Known issues</span><i /><span>Garage records</span></p>
+      </section>
       <header className="topbar">
         <a className="brand-lockup" href="#garage"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
         <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={`#${link.page}`} key={link.page}>{link.label}</a>)}</nav>

@@ -13,7 +13,7 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
-- A persistent mechanical dark/light theme controlled by a moving M Parallel-inspired wheel
+- A persistent forum-inspired theme: white and blue by day, charcoal and safety orange by night, controlled by a moving M Parallel-inspired wheel
 - GitHub Pages-safe My Garage, Maintenance, and Known Issues routes with responsive navigation
 - Account-owned multi-vehicle picker with separate add and edit states
 - Passwordless email, guest access, and provider-ready Google and Apple authentication
