@@ -17,6 +17,11 @@ const generationMigrationUrl = new URL(
   import.meta.url,
 );
 
+const classicGenerationMigrationUrl = new URL(
+  "../supabase/migrations/20260814190000_add_e39_e46_fitment.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -27,6 +32,17 @@ test("garage migration enforces owner-only access", async () => {
   assert.match(sql, /auth\.uid\(\)\) = user_id/i);
   assert.match(sql, /with check \(\(select auth\.uid\(\)\) = owner_id\)/i);
   assert.doesNotMatch(sql, /grant .* to anon/i);
+});
+
+test("garage fitment adds bounded E39 and E46 branches without changing RLS", async () => {
+  const sql = await readFile(classicGenerationMigrationUrl, "utf8");
+  assert.match(sql, /3 Series \(E46\)/);
+  assert.match(sql, /5 Series \(E39\)/);
+  assert.match(sql, /engine_code = 'M56B25'.*transmission = '5-speed automatic'/is);
+  assert.match(sql, /engine_code = 'S54B32'.*6-speed SMG II/is);
+  assert.match(sql, /engine_code = 'S62B50'.*6-speed manual/is);
+  assert.match(sql, /drivetrain = 'AWD'/i);
+  assert.doesNotMatch(sql, /row level security|create policy|drop policy/i);
 });
 
 test("profile names are bounded at the database layer", async () => {
