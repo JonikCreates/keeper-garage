@@ -52,8 +52,14 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
           setState((current) => ({ ...current, loading: false }));
           return;
         }
+        const platformByModel: Record<VehicleRow["model"], VehicleProfile["platform"]> = {
+          "3 Series (F30)": "F30",
+          "3 Series (E46)": "E46",
+          "5 Series (E39)": "E39",
+          "3 Series (E36)": "E36",
+        };
         onVehicleLoaded({
-          platform: data.model === "3 Series (E36)" ? "E36" : "F30",
+          platform: platformByModel[data.model],
           year: data.model_year,
           trim: data.trim,
           engineCode: data.engine_code,

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BRAND_OPTIONS,
   KNOWN_ISSUES,
@@ -20,6 +20,7 @@ import { useGarage } from "./useGarage";
 import { useKeeperAuth } from "./useKeeperAuth";
 
 type LibraryView = "mine" | "all" | string;
+type Theme = "dark" | "light";
 
 const emergencyChecks = [
   {
@@ -52,10 +53,45 @@ const engineLabels: Record<string, string> = {
   M52B28: "M52B28 2.8L I6",
   S50US: "S50B30US 3.0L I6",
   S52US: "S52B32 3.2L I6",
+  M52TUB25: "M52TUB25 2.5L I6 · double VANOS",
+  M52TUB28: "M52TUB28 2.8L I6 · double VANOS",
+  M54B25: "M54B25 2.5L I6",
+  M56B25: "M56B25 2.5L I6 · SULEV",
+  M54B30: "M54B30 3.0L I6",
+  S54B32: "S54B32 3.2L I6",
+  M62B44: "M62B44 4.4L V8 · non-VANOS",
+  M62TUB44: "M62TUB44 4.4L V8 · VANOS",
+  S62B50: "S62B50 5.0L V8",
 };
 
 function KeeperMark() {
   return <span className="keeper-mark" aria-hidden="true"><i /><i /><i /></span>;
+}
+
+function MParallelWheel() {
+  return <svg className="theme-wheel" viewBox="0 0 64 64" aria-hidden="true">
+    <circle className="wheel-tire" cx="32" cy="32" r="29" />
+    <circle className="wheel-rim" cx="32" cy="32" r="23" />
+    <g className="wheel-spokes">
+      {Array.from({ length: 5 }, (_, index) => <g key={index} transform={`rotate(${index * 72} 32 32)`}>
+        <path d="M28.3 28.3 20 12.5 25.4 10 31.1 27.2Z" />
+        <path d="M35.7 28.3 44 12.5 38.6 10 32.9 27.2Z" />
+      </g>)}
+    </g>
+    <circle className="wheel-hub" cx="32" cy="32" r="7" />
+    <circle className="wheel-cap" cx="32" cy="32" r="3" />
+    {Array.from({ length: 5 }, (_, index) => <circle key={index} className="wheel-lug" cx="32" cy="26.6" r="1" transform={`rotate(${index * 72} 32 32)`} />)}
+  </svg>;
+}
+
+function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
+  const next = theme === "dark" ? "light" : "dark";
+  return <button className="theme-toggle" type="button" onClick={onToggle} aria-label={`Switch to ${next} mode`} title={`Switch to ${next} mode`} aria-pressed={theme === "light"}>
+    <span className="theme-icon" aria-hidden="true">☾</span>
+    <span className="theme-wheel-travel"><MParallelWheel /></span>
+    <span className="theme-icon" aria-hidden="true">☀</span>
+    <span className="sr-only">{theme} mode</span>
+  </button>;
 }
 
 function EvidenceTag({ value }: { value: string }) {
@@ -77,7 +113,7 @@ function resolveProfile(platform: VehicleProfile["platform"], year: number, trim
   const selected = options.find((option) => option.value === trim) ?? options[0];
   const drivetrains = [...selected.drivetrains] as string[];
   const drivetrain = drivetrains.includes(current?.drivetrain ?? "") ? current!.drivetrain : drivetrains[0];
-  const transmissions = getTransmissionOptions(platform, selected.value, drivetrain);
+  const transmissions = getTransmissionOptions(platform, selected.value, drivetrain, year);
   const transmission = transmissions.includes(current?.transmission ?? "") ? current!.transmission : transmissions[0];
   return {
     platform,
@@ -85,7 +121,7 @@ function resolveProfile(platform: VehicleProfile["platform"], year: number, trim
     trim: selected.value,
     drivetrain,
     transmission,
-    engineCode: inferEngine(platform, selected.value, year, current?.engineCode),
+    engineCode: inferEngine(platform, selected.value, year, transmission, current?.engineCode),
   };
 }
 
@@ -104,6 +140,14 @@ export default function App() {
   const [maintenanceExpanded, setMaintenanceExpanded] = useState(false);
   const [authOpen, setAuthOpen] = useState(() => new URLSearchParams(window.location.search).has("account"));
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  // REVIEW DECISION: theme is intentionally local to the browser so guest visitors keep their choice without needing account storage.
+  const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "light" ? "light" : "dark");
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    localStorage.setItem("keeper-theme", theme);
+  }, [theme]);
 
   const auth = useKeeperAuth();
   const loadVehicle = useCallback((vehicle: VehicleProfile) => {
@@ -120,8 +164,8 @@ export default function App() {
   const libraryTrimOptions = getTrimOptions(profile.platform);
   const selectedTrim = trimOptions.find((option) => option.value === profile.trim) ?? trimOptions[0];
   const drivetrains = [...selectedTrim.drivetrains] as string[];
-  const transmissions = getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain);
-  const engines = getEngineOptions(profile.platform, profile.trim, profile.year);
+  const transmissions = getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain, profile.year);
+  const engines = getEngineOptions(profile.platform, profile.trim, profile.year, profile.transmission);
 
   const maintenance = useMemo(() => getMaintenanceCatalog(profile), [profile]);
   const matchedIssues = useMemo(
@@ -163,10 +207,18 @@ export default function App() {
 
   function selectDrivetrain(drivetrain: string) {
     setProfile((current) => {
-      const nextTransmissions = getTransmissionOptions(current.platform, current.trim, drivetrain);
+      const nextTransmissions = getTransmissionOptions(current.platform, current.trim, drivetrain, current.year);
       const transmission = nextTransmissions.includes(current.transmission) ? current.transmission : nextTransmissions[0];
-      return { ...current, drivetrain, transmission };
+      return { ...current, drivetrain, transmission, engineCode: inferEngine(current.platform, current.trim, current.year, transmission, current.engineCode) };
     });
+  }
+
+  function selectTransmission(transmission: string) {
+    setProfile((current) => ({
+      ...current,
+      transmission,
+      engineCode: inferEngine(current.platform, current.trim, current.year, transmission, current.engineCode),
+    }));
   }
 
   async function saveGarage() {
@@ -188,15 +240,15 @@ export default function App() {
   return (
     <div className="site-shell">
       <header className="topbar">
-        <a className="brand-lockup" href="#top"><KeeperMark /><span>KEEPER</span><small>BMW ownership intelligence</small></a>
+        <a className="brand-lockup" href="#top"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
         <nav aria-label="Primary navigation"><a href="#priorities">Priorities</a><a href="#maintenance">Maintenance</a><a href="#library">Issue library</a><a href="#sources">Sources</a></nav>
-        <div className="topbar-actions"><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.user ? "active" : ""}`} onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>{accountLabel}</button></div>
+        <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.user ? "active" : ""}`} onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>{accountLabel}</button></div>
       </header>
 
       <main id="top">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow">BMW 3 Series · E36 + F30</p>
+            <p className="eyebrow">BMW archive · E36 / E39 / E46 / F30</p>
             <h1>Know what your car needs next.</h1>
             <p className="hero-intro">Factory information, researched owner patterns, and specialist maintenance guidance—filtered for the exact generation, year, engine, drivetrain, and transmission.</p>
             <div className="hero-actions"><a href="#priorities" className="button button-primary">See my priorities</a><a href="#library" className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
@@ -210,7 +262,7 @@ export default function App() {
               <label>Year<select value={profile.year} onChange={(event) => selectYear(Number(event.target.value))}>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
               <label>Type<select value={profile.trim} onChange={(event) => selectTrim(event.target.value)}>{trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
               <label>Drivetrain<select value={profile.drivetrain} onChange={(event) => selectDrivetrain(event.target.value)}>{drivetrains.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label>Transmission<select value={profile.transmission} onChange={(event) => setProfile((current) => ({ ...current, transmission: event.target.value }))}>{transmissions.map((value) => <option key={value}>{value}</option>)}</select></label>
+              <label>Transmission<select value={profile.transmission} onChange={(event) => selectTransmission(event.target.value)}>{transmissions.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label>Engine<select value={profile.engineCode} disabled={engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>{engines.map((engine) => <option value={engine} key={engine}>{engineLabels[engine] ?? engine}</option>)}</select></label>
             </div>
             {(engines.length > 1 || profile.platform === "E36") && <div className="inference-note"><strong>{engineLabels[profile.engineCode] ?? profile.engineCode} selected</strong><p>Keeper uses the year as a starting point. Confirm the VIN, production date, emissions label, engine stamp, and transmission tag before ordering parts or fluids.</p></div>}
@@ -257,7 +309,7 @@ export default function App() {
         </section>
 
         <section className="maintenance-section" id="maintenance">
-          <header className="section-heading"><div><p className="eyebrow">No account required</p><h2>Maintenance baseline.</h2></div><p>Factory documentation stays separate from the conservative planning layer. The E36 view preserves all 25 workbook categories; exact manuals, VIN data, production dates, and component labels remain controlling.</p></header>
+          <header className="section-heading"><div><p className="eyebrow">No account required</p><h2>Maintenance baseline.</h2></div><p>Factory documentation stays separate from the conservative planning layer. E36 preserves 25 workbook categories; E39 and E46 add engine, body, drivetrain, and transmission-specific rows. Exact manuals, VIN data, production dates, and component labels remain controlling.</p></header>
           <div className="maintenance-list">
             {maintenance.slice(0, maintenanceExpanded ? undefined : 8).map((item) => <details key={item.slug}>
               <summary><span className={`severity-dot ${item.severity}`} /><div><h3>{item.name}</h3><p>{item.category} · {item.description}</p></div><div><span className="source-tag oem">DOCUMENTED</span><strong>{item.oem.label}</strong></div><div><span className="source-tag community">PLAN</span><strong>{item.community.label}</strong></div><b>＋</b></summary>
@@ -300,7 +352,7 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent BMW ownership research for the E36 and F30. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify recalls, parts, fluids, capacities, and procedures against current VIN-specific information.</p><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">View source on GitHub ↗</a></footer>
+      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research, beginning with BMW E36, E39, E46, and F30. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify recalls, parts, fluids, capacities, and procedures against current VIN-specific information.</p><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">View source on GitHub ↗</a></footer>
       <AuthPanel auth={auth} open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );

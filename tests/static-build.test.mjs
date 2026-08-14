@@ -7,7 +7,7 @@ test("GitHub Pages build contains the Keeper application", async () => {
   const assets = await readdir(new URL("../dist/assets/", import.meta.url));
   const script = assets.find((file) => file.endsWith(".js"));
 
-  assert.match(html, /Keeper — BMW Ownership Intelligence/);
+  assert.match(html, /Keeper — Owner's Workshop Log/);
   assert.match(html, /\/keeper-garage\/assets\//);
   assert.ok(script, "expected a compiled JavaScript asset");
 
@@ -17,9 +17,18 @@ test("GitHub Pages build contains the Keeper application", async () => {
   );
   assert.match(bundle, /Urgent/);
   assert.match(bundle, /Be on the lookout/);
-  assert.match(bundle, /BMW ownership intelligence/);
+  assert.match(bundle, /Owner's workshop log/);
   assert.match(bundle, /3 Series \(E36\)/);
-  assert.match(bundle, /all 25 workbook categories/);
+  assert.match(bundle, /3 Series \(E46\)/);
+  assert.match(bundle, /5 Series \(E39\)/);
+  assert.match(bundle, /E36 preserves 25 workbook categories/);
+  assert.match(bundle, /M56B25 2\.5L I6/);
+  assert.match(bundle, /S54B32 3\.2L I6/);
+  assert.match(bundle, /S62B50 5\.0L V8/);
+  assert.match(bundle, /6-speed SMG II/);
+  assert.match(bundle, /Touring rear self-leveling air suspension/);
+  assert.match(bundle, /Rear axle carrier panel/);
+  assert.match(bundle, /keeper-theme/);
   assert.match(bundle, /328i/);
   assert.match(bundle, /330i/);
   assert.match(bundle, /335i/);

@@ -1,3 +1,5 @@
+import { CLASSIC_KNOWN_ISSUES, getClassicMaintenanceCatalog } from "./classicCatalog";
+
 export type SourceType = "OEM" | "Community consensus" | "Individual experience";
 
 export type CatalogSource = {
@@ -18,7 +20,7 @@ export type Applicability = {
 };
 
 export type VehicleProfile = {
-  platform: "F30" | "E36";
+  platform: "F30" | "E46" | "E39" | "E36";
   year: number;
   trim: string;
   engineCode: string;
@@ -70,6 +72,8 @@ export const BRAND_OPTIONS = [
 
 export const PLATFORM_OPTIONS = [
   { value: "F30", label: "3 Series (F30)", yearStart: 2012, yearEnd: 2018 },
+  { value: "E46", label: "3 Series (E46)", yearStart: 1999, yearEnd: 2006 },
+  { value: "E39", label: "5 Series (E39)", yearStart: 1997, yearEnd: 2003 },
   { value: "E36", label: "3 Series (E36)", yearStart: 1992, yearEnd: 1999 },
 ] as const;
 
@@ -81,6 +85,32 @@ export const TRIM_OPTIONS = [
   { platform: "F30", value: "330i", label: "330i", yearStart: 2017, yearEnd: 2018, engines: ["B46"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "335i", label: "335i", yearStart: 2012, yearEnd: 2015, engines: ["N55"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "340i", label: "340i", yearStart: 2016, yearEnd: 2018, engines: ["B58"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
+  // REVIEW DECISION: US-market body styles stay separate so convertible, Touring, AWD, M56, M3, and M5 maintenance rows only appear where they apply.
+  { platform: "E46", value: "323i", label: "323i Sedan", yearStart: 1999, yearEnd: 2000, engines: ["M52TUB25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "323Ci", label: "323Ci Coupe", yearStart: 2000, yearEnd: 2000, engines: ["M52TUB25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "323Cic", label: "323Ci Convertible", yearStart: 2000, yearEnd: 2000, engines: ["M52TUB25"], drivetrains: ["RWD"], transmissions: ["5-speed automatic"] },
+  { platform: "E46", value: "323iT", label: "323i Sport Wagon", yearStart: 2000, yearEnd: 2000, engines: ["M52TUB25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "328i", label: "328i Sedan", yearStart: 1999, yearEnd: 2000, engines: ["M52TUB28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "328Ci", label: "328Ci Coupe", yearStart: 2000, yearEnd: 2000, engines: ["M52TUB28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "325i", label: "325i Sedan", yearStart: 2001, yearEnd: 2005, engines: ["M54B25", "M56B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "325Ci", label: "325Ci Coupe", yearStart: 2001, yearEnd: 2006, engines: ["M54B25", "M56B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "325Cic", label: "325Ci Convertible", yearStart: 2001, yearEnd: 2006, engines: ["M54B25", "M56B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "325iT", label: "325i Sport Wagon", yearStart: 2001, yearEnd: 2005, engines: ["M54B25", "M56B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "325xi", label: "325xi Sedan", yearStart: 2001, yearEnd: 2005, engines: ["M54B25"], drivetrains: ["AWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "325xiT", label: "325xi Sport Wagon", yearStart: 2001, yearEnd: 2005, engines: ["M54B25"], drivetrains: ["AWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "330i", label: "330i Sedan", yearStart: 2001, yearEnd: 2005, engines: ["M54B30"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "6-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "330Ci", label: "330Ci Coupe", yearStart: 2001, yearEnd: 2006, engines: ["M54B30"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "6-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "330Cic", label: "330Ci Convertible", yearStart: 2001, yearEnd: 2006, engines: ["M54B30"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "6-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "330xi", label: "330xi Sedan", yearStart: 2001, yearEnd: 2005, engines: ["M54B30"], drivetrains: ["AWD"], transmissions: ["5-speed manual", "6-speed manual", "5-speed automatic"] },
+  { platform: "E46", value: "M3", label: "M3 Coupe / Convertible", yearStart: 2001, yearEnd: 2006, engines: ["S54B32"], drivetrains: ["RWD"], transmissions: ["6-speed manual", "6-speed SMG II"] },
+  { platform: "E39", value: "528i", label: "528i Sedan", yearStart: 1997, yearEnd: 2000, engines: ["M52B28", "M52TUB28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic", "5-speed automatic"] },
+  { platform: "E39", value: "528iT", label: "528i Touring", yearStart: 1999, yearEnd: 2000, engines: ["M52TUB28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E39", value: "525i", label: "525i Sedan", yearStart: 2001, yearEnd: 2003, engines: ["M54B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E39", value: "525iT", label: "525i Touring", yearStart: 2001, yearEnd: 2003, engines: ["M54B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E39", value: "530i", label: "530i Sedan", yearStart: 2001, yearEnd: 2003, engines: ["M54B30"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+  { platform: "E39", value: "540i", label: "540i Sedan", yearStart: 1997, yearEnd: 2003, engines: ["M62B44", "M62TUB44"], drivetrains: ["RWD"], transmissions: ["6-speed manual", "5-speed automatic"] },
+  { platform: "E39", value: "540iT", label: "540i Touring", yearStart: 1997, yearEnd: 2003, engines: ["M62B44", "M62TUB44"], drivetrains: ["RWD"], transmissions: ["5-speed automatic"] },
+  { platform: "E39", value: "M5", label: "M5 Sedan", yearStart: 2000, yearEnd: 2003, engines: ["S62B50"], drivetrains: ["RWD"], transmissions: ["6-speed manual"] },
   { platform: "E36", value: "318i", label: "318i", yearStart: 1992, yearEnd: 1998, engines: ["M42", "M44"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
   { platform: "E36", value: "318is", label: "318is", yearStart: 1992, yearEnd: 1998, engines: ["M42", "M44"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
   { platform: "E36", value: "318ic", label: "318ic", yearStart: 1994, yearEnd: 1998, engines: ["M42", "M44"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
@@ -111,10 +141,19 @@ export function getYearOptions(platform: VehicleProfile["platform"]) {
   return Array.from({ length: option.yearEnd - option.yearStart + 1 }, (_, index) => option.yearEnd - index);
 }
 
-export function getEngineOptions(platform: VehicleProfile["platform"], trim: string, year: number) {
+export function getEngineOptions(platform: VehicleProfile["platform"], trim: string, year: number, transmission?: string) {
   const option = TRIM_OPTIONS.find((candidate) => candidate.platform === platform && candidate.value === trim);
   if (!option) return [];
   const engines = [...option.engines] as string[];
+  if (platform === "E46") {
+    if (!trim.startsWith("325") || year < 2003 || transmission?.includes("manual")) return engines.filter((engine) => engine !== "M56B25");
+    return engines;
+  }
+  if (platform === "E39") {
+    if (trim.startsWith("528")) return engines.filter((engine) => year <= 1998 ? engine === "M52B28" : engine === "M52TUB28");
+    if (trim.startsWith("540")) return engines.filter((engine) => year <= 1998 ? engine === "M62B44" : engine === "M62TUB44");
+    return engines;
+  }
   if (platform !== "E36") return engines;
   if (["318i", "318is", "318ic", "318ti"].includes(trim)) return engines.filter((engine) => year <= 1995 ? engine === "M42" : engine === "M44");
   if (["325i", "325is"].includes(trim)) return engines.filter((engine) => year === 1992 ? engine === "M50-NV" : engine === "M50TU");
@@ -122,18 +161,24 @@ export function getEngineOptions(platform: VehicleProfile["platform"], trim: str
   return engines;
 }
 
-export function getTransmissionOptions(platform: VehicleProfile["platform"], trim: string, drivetrain: string) {
+export function getTransmissionOptions(platform: VehicleProfile["platform"], trim: string, drivetrain: string, year?: number) {
   const option = TRIM_OPTIONS.find((candidate) => candidate.platform === platform && candidate.value === trim);
   if (!option) return [];
   const transmissions = [...option.transmissions] as string[];
   if (platform === "F30" && drivetrain === "xDrive" && ["328i", "330i"].includes(trim)) {
     return transmissions.filter((transmission) => transmission === "8-speed automatic");
   }
+  if (platform === "E46" && trim.startsWith("330") && year) {
+    return transmissions.filter((transmission) => transmission === "5-speed automatic" || (year <= 2003 ? transmission === "5-speed manual" : transmission === "6-speed manual"));
+  }
+  if (platform === "E39" && trim === "528i" && year) {
+    return transmissions.filter((transmission) => transmission === "5-speed manual" || (year <= 1998 ? transmission === "4-speed automatic" : transmission === "5-speed automatic"));
+  }
   return transmissions;
 }
 
-export function inferEngine(platform: VehicleProfile["platform"], trim: string, year: number, current?: string) {
-  const engines = getEngineOptions(platform, trim, year);
+export function inferEngine(platform: VehicleProfile["platform"], trim: string, year: number, transmission?: string, current?: string) {
+  const engines = getEngineOptions(platform, trim, year, transmission);
   if (engines.includes(current ?? "")) return current as string;
   return engines[0] ?? "Unknown";
 }
@@ -495,6 +540,9 @@ function resolveE36Maintenance(item: MaintenanceCatalogItem, profile: VehiclePro
 }
 
 export function getMaintenanceCatalog(profile: VehicleProfile) {
+  if (profile.platform === "E39" || profile.platform === "E46") {
+    return getClassicMaintenanceCatalog(profile);
+  }
   return [...MAINTENANCE_CATALOG, ...E36_MAINTENANCE_CATALOG]
     .filter((item) => matchesApplicability(profile, item.appliesTo))
     .map((item) => profile.platform === "E36" ? resolveE36Maintenance(item, profile) : item);
@@ -842,7 +890,7 @@ const issues: KnownIssue[] = [
   },
 ];
 
-export const KNOWN_ISSUES = issues;
+export const KNOWN_ISSUES = [...issues, ...CLASSIC_KNOWN_ISSUES];
 
 export const PROJECT_IDEAS: ProjectIdea[] = [
   { slug: "tires", title: "Replace aging run-flats with a quality tire setup", description: "A fresh, correctly sized tire is often the biggest ride, grip, and noise improvement on an F30.", payoff: "Ride · grip · confidence", appliesTo: {} },
@@ -854,6 +902,12 @@ export const PROJECT_IDEAS: ProjectIdea[] = [
   { slug: "e36-cooling-baseline", title: "Build a documented E36 cooling baseline", description: "After inspection, replace only the age-critical cooling parts your engine family and history justify, then record the date and mileage.", payoff: "Reliability · confidence", appliesTo: { platforms: ["E36"] } },
   { slug: "e36-shifter-refresh", title: "Refresh shifter wear after the driveline is healthy", description: "Bushings and linkage parts can restore a precise feel without masking a damaged guibo, mount, or center-support bearing.", payoff: "Tactility · control", appliesTo: { platforms: ["E36"], transmissions: ["5-speed manual"] } },
   { slug: "e36-head-unit", title: "Add a reversible period-correct audio upgrade", description: "Modern Bluetooth or CarPlay can fit the cabin cleanly after water leaks, charging health, and mechanical priorities are handled.", payoff: "Daily usability", appliesTo: { platforms: ["E36"] } },
+  { slug: "e46-cooling-log", title: "Build a dated E46 cooling-system record", description: "Pressure-test first, then document the age and condition of the tank, radiator, pump, thermostat, hoses, cap, fan, and pulleys.", payoff: "Reliability · history", appliesTo: { platforms: ["E46"] } },
+  { slug: "e46-chassis-baseline", title: "Restore the E46 chassis before adding stiffness", description: "Inspect the rear axle carrier panel, front arms, trailing-arm bushings, rear mounts, tires, and alignment as one system.", payoff: "Balance · confidence", appliesTo: { platforms: ["E46"] } },
+  { slug: "e46-audio", title: "Plan a reversible, period-aware audio upgrade", description: "Preserve the dashboard and factory wiring while adding the connectivity you actually use.", payoff: "Daily usability", appliesTo: { platforms: ["E46"] } },
+  { slug: "e39-cooling-log", title: "Build a dated E39 cooling-system record", description: "Pressure-test first, then document the tank, radiator, pump, thermostat, hoses, fan, clutch, and auxiliary fan.", payoff: "Reliability · history", appliesTo: { platforms: ["E39"] } },
+  { slug: "e39-chassis-refresh", title: "Restore the E39's original chassis balance", description: "Fresh thrust arms, confirmed rear links, healthy dampers, correct tires, and a careful alignment are more rewarding than random stiffness.", payoff: "Ride · control", appliesTo: { platforms: ["E39"] } },
+  { slug: "e39-period-audio", title: "Add discreet modern audio to the E39 cabin", description: "Choose a reversible solution that keeps the dashboard, steering controls, and factory character intact.", payoff: "Daily usability", appliesTo: { platforms: ["E39"] } },
 ];
 
 export function getCatalogItem(slug: string) {
