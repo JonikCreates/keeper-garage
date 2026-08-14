@@ -24,6 +24,9 @@ test("GitHub Pages build contains the Keeper application", async () => {
   assert.match(bundle, /330i/);
   assert.match(bundle, /335i/);
   assert.match(bundle, /340i/);
+  assert.match(bundle, /328d — Diesel/);
+  assert.match(bundle, /330e — Plug-in Hybrid/);
+  assert.match(bundle, /Each selection narrows the choices that follow/);
   assert.match(bundle, /Continue as guest/);
   assert.match(bundle, /Email me a sign-in link/);
   assert.match(bundle, /Save to garage/);

@@ -54,7 +54,8 @@ main { max-width: 1560px; margin: 0 auto; }
 .configuration-heading { padding: 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .configuration-heading span { color: var(--acid); font-size: 8px; letter-spacing: .15em; text-transform: uppercase; }
 .configuration-heading strong { font-size: 18px; letter-spacing: -.025em; }
-.config-grid { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.configuration-flow { margin: 0; padding: 13px 20px 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.config-grid { padding: 14px 20px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .config-grid label { display: flex; flex-direction: column; gap: 7px; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
 .config-grid select { width: 100%; padding: 12px 10px; color: var(--paper); border: 1px solid var(--line); border-radius: 0; outline: 0; background: #101411; font-size: 11px; text-transform: none; }
 .config-grid select:focus { border-color: var(--acid); }

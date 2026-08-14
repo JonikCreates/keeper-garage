@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import {
+  BRAND_OPTIONS,
   KNOWN_ISSUES,
   PLATFORM_OPTIONS,
   PROJECT_IDEAS,
@@ -8,6 +9,7 @@ import {
   getPlatform,
   getTransmissionOptions,
   getTrimOptions,
+  getYearOptions,
   inferEngine,
   matchesApplicability,
   type KnownIssue,
@@ -37,8 +39,8 @@ const emergencyChecks = [
 const engineLabels: Record<string, string> = {
   N20: "N20 2.0L turbo",
   N26: "N26 2.0L turbo · SULEV",
-  N47T: "N47T 2.0L diesel",
-  "B48-PHEV": "B48 2.0L · plug-in hybrid",
+  N47T: "N47T 2.0L · Diesel",
+  "B48-PHEV": "B48 2.0L · Plug-in Hybrid",
   B46: "B46 2.0L turbo",
   N55: "N55 3.0L turbo I6",
   B58: "B58 3.0L turbo I6",
@@ -70,6 +72,23 @@ function issueMatchesTrim(issue: KnownIssue, platform: VehicleProfile["platform"
     (!rules.engines || rules.engines.some((engine) => (option.engines as readonly string[]).includes(engine)));
 }
 
+function resolveProfile(platform: VehicleProfile["platform"], year: number, trim: string | undefined, current?: VehicleProfile): VehicleProfile {
+  const options = getTrimOptions(platform, year);
+  const selected = options.find((option) => option.value === trim) ?? options[0];
+  const drivetrains = [...selected.drivetrains] as string[];
+  const drivetrain = drivetrains.includes(current?.drivetrain ?? "") ? current!.drivetrain : drivetrains[0];
+  const transmissions = getTransmissionOptions(platform, selected.value, drivetrain);
+  const transmission = transmissions.includes(current?.transmission ?? "") ? current!.transmission : transmissions[0];
+  return {
+    platform,
+    year,
+    trim: selected.value,
+    drivetrain,
+    transmission,
+    engineCode: inferEngine(platform, selected.value, year, current?.engineCode),
+  };
+}
+
 export default function App() {
   const [profile, setProfile] = useState<VehicleProfile>({
     platform: "F30",
@@ -96,9 +115,10 @@ export default function App() {
   const garage = useGarage(auth.user, loadVehicle);
 
   const platform = getPlatform(profile.platform);
-  const trimOptions = getTrimOptions(profile.platform);
+  const years = getYearOptions(profile.platform);
+  const trimOptions = getTrimOptions(profile.platform, profile.year);
+  const libraryTrimOptions = getTrimOptions(profile.platform);
   const selectedTrim = trimOptions.find((option) => option.value === profile.trim) ?? trimOptions[0];
-  const years = Array.from({ length: selectedTrim.yearEnd - selectedTrim.yearStart + 1 }, (_, index) => selectedTrim.yearEnd - index);
   const drivetrains = [...selectedTrim.drivetrains] as string[];
   const transmissions = getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain);
   const engines = getEngineOptions(profile.platform, profile.trim, profile.year);
@@ -129,30 +149,16 @@ export default function App() {
 
   function selectPlatform(nextPlatform: VehicleProfile["platform"]) {
     resetGenerationView();
-    if (nextPlatform === "E36") {
-      setProfile({ platform: "E36", year: 1997, trim: "328i", engineCode: "M52B28", drivetrain: "RWD", transmission: "5-speed manual" });
-      return;
-    }
-    setProfile({ platform: "F30", year: 2016, trim: "328i", engineCode: "N26", drivetrain: "RWD", transmission: "8-speed automatic" });
+    const year = getPlatform(nextPlatform).yearEnd;
+    setProfile((current) => resolveProfile(nextPlatform, year, current.trim, current));
   }
 
   function selectTrim(trim: string) {
-    const option = trimOptions.find((candidate) => candidate.value === trim);
-    if (!option) return;
-    const nextDrivetrains = option.drivetrains as readonly string[];
-    const drivetrain = nextDrivetrains.includes(profile.drivetrain) ? profile.drivetrain : option.drivetrains[0];
-    const nextTransmissions = getTransmissionOptions(profile.platform, trim, drivetrain);
-    const transmission = nextTransmissions.includes(profile.transmission) ? profile.transmission : nextTransmissions[0];
-    const year = profile.year >= option.yearStart && profile.year <= option.yearEnd ? profile.year : option.yearEnd;
-    setProfile((current) => ({ ...current, trim, year, transmission, drivetrain, engineCode: inferEngine(current.platform, trim, year) }));
+    setProfile((current) => resolveProfile(current.platform, current.year, trim, current));
   }
 
   function selectYear(year: number) {
-    setProfile((current) => ({
-      ...current,
-      year,
-      engineCode: inferEngine(current.platform, current.trim, year),
-    }));
+    setProfile((current) => resolveProfile(current.platform, year, current.trim, current));
   }
 
   function selectDrivetrain(drivetrain: string) {
@@ -197,11 +203,12 @@ export default function App() {
           </div>
           <aside className="configuration-panel" aria-labelledby="config-title">
             <div className="configuration-heading"><span>Configure this visit</span><strong id="config-title">Your exact BMW</strong></div>
+            <p className="configuration-flow">Choose in order. Each selection narrows the choices that follow.</p>
             <div className="config-grid">
-              <label>Brand<select disabled><option>BMW</option></select></label>
+              <label>Brand<select value={BRAND_OPTIONS[0].value} onChange={() => undefined}>{BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
               <label>Model<select value={profile.platform} onChange={(event) => selectPlatform(event.target.value as VehicleProfile["platform"])}>{PLATFORM_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
               <label>Year<select value={profile.year} onChange={(event) => selectYear(Number(event.target.value))}>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
-              <label>Specific model<select value={profile.trim} onChange={(event) => selectTrim(event.target.value)}>{trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
+              <label>Type<select value={profile.trim} onChange={(event) => selectTrim(event.target.value)}>{trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
               <label>Drivetrain<select value={profile.drivetrain} onChange={(event) => selectDrivetrain(event.target.value)}>{drivetrains.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label>Transmission<select value={profile.transmission} onChange={(event) => setProfile((current) => ({ ...current, transmission: event.target.value }))}>{transmissions.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label>Engine<select value={profile.engineCode} disabled={engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>{engines.map((engine) => <option value={engine} key={engine}>{engineLabels[engine] ?? engine}</option>)}</select></label>
@@ -264,7 +271,7 @@ export default function App() {
           <header className="section-heading"><div><p className="eyebrow">Stored research · {KNOWN_ISSUES.length} patterns</p><h2>{platform.label} issue library.</h2></div><p>Coverage follows the selected generation and its U.S.-market engine and transmission combinations. Each record keeps fitment, evidence type, symptoms, and next action visible.</p></header>
           <div className="library-toolbar">
             <label className="search-field"><span>⌕</span><input value={libraryQuery} onChange={(event) => setLibraryQuery(event.target.value)} placeholder="Search symptoms, systems, or issues" aria-label="Search the issue library" /></label>
-            <label><span>Fitment view</span><select value={libraryView} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option><option value="all">All {profile.platform} research</option>{trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
+            <label><span>Fitment view</span><select value={libraryView} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option><option value="all">All {profile.platform} research</option>{libraryTrimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
             <strong>{libraryIssues.length} shown</strong>
           </div>
           <div className="issue-library-list">

@@ -64,6 +64,10 @@ export type ProjectIdea = {
   appliesTo: Applicability;
 };
 
+export const BRAND_OPTIONS = [
+  { value: "BMW", label: "BMW" },
+] as const;
+
 export const PLATFORM_OPTIONS = [
   { value: "F30", label: "3 Series (F30)", yearStart: 2012, yearEnd: 2018 },
   { value: "E36", label: "3 Series (E36)", yearStart: 1992, yearEnd: 1999 },
@@ -72,8 +76,8 @@ export const PLATFORM_OPTIONS = [
 export const TRIM_OPTIONS = [
   { platform: "F30", value: "320i", label: "320i", yearStart: 2013, yearEnd: 2018, engines: ["N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "328i", label: "328i", yearStart: 2012, yearEnd: 2016, engines: ["N26", "N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
-  { platform: "F30", value: "328d", label: "328d diesel", yearStart: 2014, yearEnd: 2018, engines: ["N47T"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic"] },
-  { platform: "F30", value: "330e", label: "330e plug-in hybrid", yearStart: 2016, yearEnd: 2018, engines: ["B48-PHEV"], drivetrains: ["RWD"], transmissions: ["8-speed automatic"] },
+  { platform: "F30", value: "328d", label: "328d — Diesel", yearStart: 2014, yearEnd: 2018, engines: ["N47T"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic"] },
+  { platform: "F30", value: "330e", label: "330e — Plug-in Hybrid", yearStart: 2016, yearEnd: 2018, engines: ["B48-PHEV"], drivetrains: ["RWD"], transmissions: ["8-speed automatic"] },
   { platform: "F30", value: "330i", label: "330i", yearStart: 2017, yearEnd: 2018, engines: ["B46"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "335i", label: "335i", yearStart: 2012, yearEnd: 2015, engines: ["N55"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "340i", label: "340i", yearStart: 2016, yearEnd: 2018, engines: ["B58"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
@@ -93,12 +97,18 @@ export const TRIM_OPTIONS = [
   { platform: "E36", value: "M3", label: "M3", yearStart: 1995, yearEnd: 1999, engines: ["S50US", "S52US"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
 ] as const;
 
-export function getTrimOptions(platform: VehicleProfile["platform"]) {
-  return TRIM_OPTIONS.filter((option) => option.platform === platform);
+export function getTrimOptions(platform: VehicleProfile["platform"], year?: number) {
+  return TRIM_OPTIONS.filter((option) => option.platform === platform &&
+    (year === undefined || (year >= option.yearStart && year <= option.yearEnd)));
 }
 
 export function getPlatform(platform: VehicleProfile["platform"]) {
   return PLATFORM_OPTIONS.find((option) => option.value === platform) ?? PLATFORM_OPTIONS[0];
+}
+
+export function getYearOptions(platform: VehicleProfile["platform"]) {
+  const option = getPlatform(platform);
+  return Array.from({ length: option.yearEnd - option.yearStart + 1 }, (_, index) => option.yearEnd - index);
 }
 
 export function getEngineOptions(platform: VehicleProfile["platform"], trim: string, year: number) {
