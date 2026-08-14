@@ -14,7 +14,8 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
 - A persistent mechanical dark/light theme controlled by a moving M Parallel-inspired wheel
-- GitHub Pages-safe Garage, Maintenance, and Known Issues routes with responsive navigation
+- GitHub Pages-safe My Garage, Maintenance, and Known Issues routes with responsive navigation
+- Account-owned multi-vehicle picker with separate add and edit states
 - Passwordless email, guest access, and provider-ready Google and Apple authentication
 - Profile and security controls for display name, email, phone, and linked identities
 

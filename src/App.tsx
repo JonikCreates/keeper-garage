@@ -24,7 +24,7 @@ type Theme = "dark" | "light";
 type AppPage = "garage" | "maintenance" | "issues";
 
 const pageLinks: Array<{ page: AppPage; label: string }> = [
-  { page: "garage", label: "Garage" },
+  { page: "garage", label: "My garage" },
   { page: "maintenance", label: "Maintenance" },
   { page: "issues", label: "Known issues" },
 ];
@@ -171,7 +171,7 @@ export default function App() {
 
   useEffect(() => {
     document.title = page === "garage"
-      ? "Keeper — Choose Your Car"
+      ? "Keeper — My Garage"
       : page === "maintenance"
         ? `Keeper — ${profile.year} ${profile.trim} Maintenance`
         : `Keeper — ${profile.year} ${profile.trim} Known Issues`;
@@ -259,8 +259,9 @@ export default function App() {
       setAuthOpen(true);
       return;
     }
+    const editing = Boolean(garage.vehicleId);
     const saved = await garage.saveVehicle(profile);
-    setSaveNotice(saved ? "Garage saved." : null);
+    setSaveNotice(saved ? editing ? "Vehicle changes saved." : "Vehicle added to My Garage." : null);
   }
 
   const accountLabel = !auth.ready
@@ -288,6 +289,16 @@ export default function App() {
           </div>
           <aside className="configuration-panel" aria-labelledby="config-title">
             <div className="configuration-heading"><span>Configure this visit</span><strong id="config-title">Your exact BMW</strong></div>
+            <div className="garage-picker">
+              <div className="garage-picker-copy"><span>My garage</span><strong>{!auth.user ? "Sign in to save vehicles" : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : "No saved vehicles yet"}</strong></div>
+              {auth.user ? <>
+                <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") garage.startNewVehicle(); else garage.selectVehicle(event.target.value); }}>
+                  {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} {vehicle.trim}</option>)}
+                  <option value="new">＋ Add another vehicle</option>
+                </select></label>
+                <p>{garage.vehicleId ? `Editing ${garage.nickname}. Changes update this saved vehicle.` : "Creating a new garage entry. Your other vehicles will not be changed."}</p>
+              </> : <button className="button button-quiet garage-login" onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>Log in to open My Garage</button>}
+            </div>
             <p className="configuration-flow">Choose in order. Each selection narrows the choices that follow.</p>
             <div className="config-grid">
               <label>Brand<select value={BRAND_OPTIONS[0].value} onChange={() => undefined}>{BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
@@ -302,10 +313,10 @@ export default function App() {
             <div className="garage-save">
               <label>Garage name<input value={garage.nickname} onChange={(event) => garage.setNickname(event.target.value)} maxLength={60} placeholder="My BMW" /></label>
               <label>Mileage<input value={garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" /></label>
-              <button className="button button-primary" disabled={garage.loading || garage.saving} onClick={() => void saveGarage()}>{garage.saving ? "Saving…" : garage.vehicleId ? "Update garage" : "Save to garage"}</button>
+              <button className="button button-primary" disabled={garage.loading || garage.saving} onClick={() => void saveGarage()}>{garage.saving ? "Saving…" : garage.vehicleId ? "Save changes" : "Add to garage"}</button>
             </div>
             {(saveNotice || garage.error) && <p className={`save-status ${garage.error ? "error" : ""}`}>{garage.error ?? saveNotice}</p>}
-            <p className="session-note">{auth.user ? `${auth.isGuest ? "Guest" : "Permanent"} account active. Your saved car is protected by owner-only database policies.` : "Browse freely, then continue as a guest or use email when you want to save this car."}</p>
+            <p className="session-note">{auth.user ? `${auth.isGuest ? "Guest" : "Permanent"} account active. Every saved vehicle is protected by owner-only database policies.` : "Browse freely, then continue as a guest or use email when you want to save cars to My Garage."}</p>
             <a className="plan-launch" href="#maintenance"><span>Next work order</span><strong>View {maintenance.length}-item maintenance list</strong><b>→</b></a>
           </aside>
         </section>

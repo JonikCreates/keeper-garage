@@ -4,6 +4,7 @@ import { getPlatform, type VehicleProfile } from "../lib/catalog";
 import { supabase, type VehicleRow } from "./supabase";
 
 type GarageState = {
+  vehicles: VehicleRow[];
   vehicleId: string | null;
   nickname: string;
   mileage: string;
@@ -14,6 +15,7 @@ type GarageState = {
 };
 
 const initialState: GarageState = {
+  vehicles: [],
   vehicleId: null,
   nickname: "My BMW",
   mileage: "",
@@ -22,6 +24,29 @@ const initialState: GarageState = {
   savedAt: null,
   error: null,
 };
+
+const platformByModel: Record<VehicleRow["model"], VehicleProfile["platform"]> = {
+  "3 Series (F30)": "F30",
+  "3 Series (E46)": "E46",
+  "5 Series (E39)": "E39",
+  "3 Series (E36)": "E36",
+};
+
+function vehicleProfile(vehicle: VehicleRow): VehicleProfile {
+  return {
+    platform: platformByModel[vehicle.model],
+    year: vehicle.model_year,
+    trim: vehicle.trim,
+    engineCode: vehicle.engine_code,
+    drivetrain: vehicle.drivetrain,
+    transmission: vehicle.transmission,
+  };
+}
+
+function sortVehicles(vehicles: VehicleRow[]) {
+  return [...vehicles].sort((left, right) => Number(right.is_primary) - Number(left.is_primary)
+    || Date.parse(right.updated_at) - Date.parse(left.updated_at));
+}
 
 export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleProfile) => void) {
   const [state, setState] = useState<GarageState>(initialState);
@@ -35,53 +60,70 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     const client = supabase;
     const currentUser = user;
     let active = true;
-    async function loadVehicle() {
-      setState((current) => ({ ...current, loading: true, error: null }));
+    async function loadVehicles() {
+      setState({ ...initialState, loading: true });
       const { data, error } = await client
         .from("vehicles")
         .select("*")
         .eq("owner_id", currentUser.id)
-        .eq("is_primary", true)
-        .maybeSingle<VehicleRow>();
-        if (!active) return;
-        if (error) {
-          setState((current) => ({ ...current, loading: false, error: error.message }));
-          return;
-        }
-        if (!data) {
-          setState((current) => ({ ...current, loading: false }));
-          return;
-        }
-        const platformByModel: Record<VehicleRow["model"], VehicleProfile["platform"]> = {
-          "3 Series (F30)": "F30",
-          "3 Series (E46)": "E46",
-          "5 Series (E39)": "E39",
-          "3 Series (E36)": "E36",
-        };
-        onVehicleLoaded({
-          platform: platformByModel[data.model],
-          year: data.model_year,
-          trim: data.trim,
-          engineCode: data.engine_code,
-          drivetrain: data.drivetrain,
-          transmission: data.transmission,
-        });
-        setState({
-          vehicleId: data.id,
-          nickname: data.nickname,
-          mileage: data.mileage === null ? "" : String(data.mileage),
-          loading: false,
-          saving: false,
-          savedAt: data.updated_at,
-          error: null,
-        });
+        .order("is_primary", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .returns<VehicleRow[]>();
+      if (!active) return;
+      if (error) {
+        setState((current) => ({ ...current, loading: false, error: error.message }));
+        return;
+      }
+      const vehicles = sortVehicles(data ?? []);
+      const selected = vehicles.find((vehicle) => vehicle.is_primary) ?? vehicles[0];
+      if (!selected) {
+        setState((current) => ({ ...current, vehicles: [], loading: false }));
+        return;
+      }
+      onVehicleLoaded(vehicleProfile(selected));
+      setState({
+        vehicles,
+        vehicleId: selected.id,
+        nickname: selected.nickname,
+        mileage: selected.mileage === null ? "" : String(selected.mileage),
+        loading: false,
+        saving: false,
+        savedAt: selected.updated_at,
+        error: null,
+      });
     }
-    void loadVehicle();
+    void loadVehicles();
 
     return () => {
       active = false;
     };
   }, [user, onVehicleLoaded]);
+
+  const selectVehicle = useCallback((vehicleId: string) => {
+    const selected = state.vehicles.find((vehicle) => vehicle.id === vehicleId);
+    if (!selected) return;
+    onVehicleLoaded(vehicleProfile(selected));
+    setState((current) => ({
+      ...current,
+      vehicleId: selected.id,
+      nickname: selected.nickname,
+      mileage: selected.mileage === null ? "" : String(selected.mileage),
+      savedAt: selected.updated_at,
+      error: null,
+    }));
+  }, [onVehicleLoaded, state.vehicles]);
+
+  // REVIEW DECISION: starting a new vehicle keeps the visible configuration as a useful template but clears every saved-car field.
+  const startNewVehicle = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      vehicleId: null,
+      nickname: "My BMW",
+      mileage: "",
+      savedAt: null,
+      error: null,
+    }));
+  }, []);
 
   const saveVehicle = useCallback(async (profile: VehicleProfile) => {
     if (!supabase || !user) return false;
@@ -89,6 +131,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
 
     const mileage = state.mileage.trim() ? Number(state.mileage) : null;
     const platform = getPlatform(profile.platform);
+    const selectedVehicle = state.vehicles.find((vehicle) => vehicle.id === state.vehicleId);
     const vehicle = {
       owner_id: user.id,
       nickname: state.nickname.trim() || "My BMW",
@@ -100,7 +143,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       drivetrain: profile.drivetrain,
       transmission: profile.transmission,
       mileage,
-      is_primary: true,
+      is_primary: selectedVehicle?.is_primary ?? state.vehicles.length === 0,
     };
 
     const request = state.vehicleId
@@ -115,6 +158,9 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
 
     setState((current) => ({
       ...current,
+      vehicles: sortVehicles(current.vehicles.some((vehicle) => vehicle.id === data.id)
+        ? current.vehicles.map((vehicle) => vehicle.id === data.id ? data : vehicle)
+        : [...current.vehicles, data]),
       vehicleId: data.id,
       nickname: data.nickname,
       mileage: data.mileage === null ? "" : String(data.mileage),
@@ -123,12 +169,14 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       error: null,
     }));
     return true;
-  }, [state.vehicleId, state.nickname, state.mileage, user]);
+  }, [state.vehicleId, state.vehicles, state.nickname, state.mileage, user]);
 
   return {
     ...state,
     setNickname: (nickname: string) => setState((current) => ({ ...current, nickname })),
     setMileage: (mileage: string) => setState((current) => ({ ...current, mileage })),
+    selectVehicle,
+    startNewVehicle,
     saveVehicle,
   };
 }

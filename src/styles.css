@@ -54,6 +54,16 @@ main { max-width: 1560px; margin: 0 auto; }
 .configuration-heading { padding: 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .configuration-heading span { color: var(--acid); font-size: 8px; letter-spacing: .15em; text-transform: uppercase; }
 .configuration-heading strong { font-size: 18px; letter-spacing: -.025em; }
+.garage-picker { padding: 16px 20px; display: grid; grid-template-columns: minmax(0, .75fr) minmax(210px, 1.25fr); align-items: end; gap: 9px 16px; border-bottom: 1px solid var(--line); }
+.garage-picker-copy { align-self: center; display: flex; flex-direction: column; gap: 6px; }
+.garage-picker-copy span, .garage-picker label > span { color: var(--muted); font-size: 7px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+.garage-picker-copy strong { font-size: 11px; text-transform: uppercase; }
+.garage-picker label { display: flex; flex-direction: column; gap: 7px; }
+.garage-picker select { width: 100%; min-height: 42px; padding: 10px 34px 10px 11px; color: var(--paper); border: 1px solid var(--line); border-radius: 0; outline: 0; background: #101411; font-size: 10px; }
+.garage-picker select:focus { border-color: var(--acid); }
+.garage-picker select:disabled { opacity: .6; }
+.garage-picker p { grid-column: 1 / -1; margin: 2px 0 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.garage-picker .garage-login { grid-column: 1 / -1; justify-self: start; min-height: 40px; }
 .configuration-flow { margin: 0; padding: 13px 20px 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
 .config-grid { padding: 14px 20px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .config-grid label { display: flex; flex-direction: column; gap: 7px; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
@@ -255,6 +265,8 @@ main { max-width: 1560px; margin: 0 auto; }
   .account-button { max-width: 130px; }
   .hero { min-height: auto; padding: 58px 20px 38px; gap: 42px; }
   .hero-copy h1 { font-size: clamp(54px, 18vw, 86px); }
+  .garage-picker { grid-template-columns: 1fr; }
+  .garage-picker p { grid-column: auto; }
   .config-grid { grid-template-columns: 1fr; }
   .inference-note { grid-template-columns: 1fr; }
   .garage-save { grid-template-columns: 1fr; }
