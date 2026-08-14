@@ -90,6 +90,7 @@ body::before {
 .topbar nav { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; letter-spacing: .07em; }
 .topbar nav a { padding: 8px 2px 6px; border-bottom: 2px solid transparent; }
 .topbar nav a:hover { border-color: var(--acid); }
+.topbar nav a.active { color: var(--acid); border-color: var(--acid); }
 .topbar-actions { gap: 9px; }
 .github-link { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
 .account-button, .button, .expand-button, .sign-out-button, .close-button, .provider-button {
@@ -188,6 +189,51 @@ main { border-right: 1px solid var(--line); border-left: 1px solid var(--line); 
 .inference-note, .guest-choice, .account-summary, .security-proof { border-color: color-mix(in srgb, var(--acid), var(--line) 55%); background: color-mix(in srgb, var(--acid) 9%, var(--panel)); }
 .inference-note p, .security-proof p { color: var(--cream); }
 .session-note { color: var(--muted); }
+.plan-launch {
+  margin: 0 20px 20px;
+  min-height: 68px;
+  padding: 13px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 16px;
+  color: var(--button-ink);
+  border: 1px solid var(--acid);
+  background: var(--acid);
+  box-shadow: inset 0 -3px rgba(0, 0, 0, .2), 3px 3px 0 var(--shadow);
+}
+.plan-launch span { grid-column: 1; font: 800 7px ui-monospace, "Cascadia Mono", monospace; letter-spacing: .14em; text-transform: uppercase; opacity: .68; }
+.plan-launch strong { grid-column: 1; font: 900 11px ui-monospace, "Cascadia Mono", monospace; text-transform: uppercase; }
+.plan-launch b { grid-column: 2; grid-row: 1 / 3; font-size: 24px; }
+
+.garage-route-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 3px double var(--line);
+  background: var(--panel-2);
+}
+.garage-route-strip article { min-height: 126px; padding: 28px clamp(20px, 3vw, 42px); display: grid; grid-template-columns: 34px 1fr; gap: 14px; border-right: 1px dashed var(--line); }
+.garage-route-strip article:last-child { border-right: 0; }
+.garage-route-strip span { color: var(--acid); font: 800 9px ui-monospace, "Cascadia Mono", monospace; }
+.garage-route-strip strong { font: 900 11px ui-monospace, "Cascadia Mono", monospace; text-transform: uppercase; }
+.garage-route-strip p { margin: 9px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+
+.page-masthead {
+  min-height: 320px;
+  padding: 70px clamp(24px, 5vw, 86px) 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 40px;
+  border-bottom: 3px double var(--line);
+  background:
+    linear-gradient(90deg, var(--panel-wash) 1px, transparent 1px),
+    linear-gradient(var(--panel-wash) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+.page-masthead h1 { margin: 0; font: 700 clamp(62px, 8vw, 118px)/.86 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; letter-spacing: -.02em; text-transform: uppercase; text-shadow: 3px 3px 0 var(--shadow); }
+.page-masthead > div > p:last-child { max-width: 720px; margin: 26px 0 0; padding-left: 18px; color: var(--cream); border-left: 4px solid var(--acid); font-size: 15px; line-height: 1.6; }
+.page-masthead-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 
 .vehicle-band { border-bottom: 3px double var(--line); background: var(--panel-2); }
 .vehicle-band > div { position: relative; border-right: 1px dashed var(--line); }
@@ -241,6 +287,28 @@ main { border-right: 1px solid var(--line); border-left: 1px solid var(--line); 
 @media (max-width: 1100px) {
   .topbar { grid-template-columns: 1fr auto; }
   .theme-toggle { width: 98px; }
+  body { padding-bottom: 55px; }
+  .topbar nav {
+    height: 56px;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 55;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    color: var(--muted);
+    border-top: 2px solid var(--line);
+    background: var(--bar);
+    box-shadow: 0 -4px 0 var(--shadow);
+  }
+  .topbar nav a { display: grid; place-items: center; padding: 0 8px; border-right: 1px solid var(--line); border-bottom: 4px solid transparent; font-size: 9px; text-align: center; }
+  .topbar nav a:last-child { border-right: 0; }
+  .garage-route-strip { grid-template-columns: 1fr; }
+  .garage-route-strip article { min-height: 100px; border-right: 0; border-bottom: 1px dashed var(--line); }
+  .page-masthead { grid-template-columns: 1fr; align-items: start; }
+  .page-masthead-actions { justify-content: flex-start; }
 }
 
 @media (max-width: 760px) {
@@ -251,6 +319,10 @@ main { border-right: 1px solid var(--line); border-left: 1px solid var(--line); 
   .hero { padding-top: 74px; }
   .hero::before { top: 24px; left: 20px; }
   .hero-copy h1 { font-size: clamp(52px, 17vw, 76px); }
+  .page-masthead { min-height: 290px; padding: 62px 20px 46px; gap: 28px; }
+  .page-masthead h1 { font-size: clamp(54px, 17vw, 80px); }
+  .page-masthead > div > p:last-child { font-size: 13px; }
+  .page-masthead-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .priority-card { grid-template-columns: 1fr; }
   .section-heading { border-bottom-width: 3px; }
 }

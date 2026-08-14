@@ -29,6 +29,10 @@ test("GitHub Pages build contains the Keeper application", async () => {
   assert.match(bundle, /Touring rear self-leveling air suspension/);
   assert.match(bundle, /Rear axle carrier panel/);
   assert.match(bundle, /keeper-theme/);
+  assert.match(bundle, /Keeper — Choose Your Car/);
+  assert.match(bundle, /Garage/);
+  assert.match(bundle, /Known issues/);
+  assert.match(bundle, /View .*item maintenance list/);
   assert.match(bundle, /328i/);
   assert.match(bundle, /330i/);
   assert.match(bundle, /335i/);
