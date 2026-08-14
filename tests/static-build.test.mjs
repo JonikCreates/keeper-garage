@@ -20,4 +20,7 @@ test("GitHub Pages build contains the Keeper application", async () => {
   assert.match(bundle, /2016 F30 issue library/);
   assert.match(bundle, /328i/);
   assert.match(bundle, /340i/);
+  assert.match(bundle, /Continue as guest/);
+  assert.match(bundle, /Email me a sign-in link/);
+  assert.match(bundle, /Save to garage/);
 });

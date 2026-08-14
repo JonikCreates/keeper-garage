@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   KNOWN_ISSUES,
   MAINTENANCE_CATALOG,
@@ -9,6 +9,9 @@ import {
   type KnownIssue,
   type VehicleProfile,
 } from "../lib/catalog";
+import { AuthPanel } from "./AuthPanel";
+import { useGarage } from "./useGarage";
+import { useKeeperAuth } from "./useKeeperAuth";
 
 type LibraryView = "mine" | "all" | string;
 
@@ -73,6 +76,12 @@ export default function App() {
   const [libraryQuery, setLibraryQuery] = useState("");
   const [watchExpanded, setWatchExpanded] = useState(false);
   const [maintenanceExpanded, setMaintenanceExpanded] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
+
+  const auth = useKeeperAuth();
+  const loadVehicle = useCallback((vehicle: VehicleProfile) => setProfile(vehicle), []);
+  const garage = useGarage(auth.user, loadVehicle);
 
   const selectedTrim = TRIM_OPTIONS.find((option) => option.value === profile.trim) ?? TRIM_OPTIONS[1];
   const drivetrains = [...selectedTrim.drivetrains] as string[];
@@ -116,12 +125,28 @@ export default function App() {
     }));
   }
 
+  async function saveGarage() {
+    setSaveNotice(null);
+    if (!auth.user) {
+      setAuthOpen(true);
+      return;
+    }
+    const saved = await garage.saveVehicle(profile);
+    setSaveNotice(saved ? "Garage saved." : null);
+  }
+
+  const accountLabel = !auth.ready
+    ? "Checking…"
+    : auth.isGuest
+      ? "Guest garage"
+      : auth.user?.email ?? "Log in";
+
   return (
     <div className="site-shell">
       <header className="topbar">
         <a className="brand-lockup" href="#top"><KeeperMark /><span>KEEPER</span><small>F30 intelligence</small></a>
         <nav aria-label="Primary navigation"><a href="#priorities">Priorities</a><a href="#maintenance">Maintenance</a><a href="#library">Issue library</a><a href="#sources">Sources</a></nav>
-        <a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a>
+        <div className="topbar-actions"><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.user ? "active" : ""}`} onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>{accountLabel}</button></div>
       </header>
 
       <main id="top">
@@ -143,7 +168,13 @@ export default function App() {
               <label>Engine<select value={profile.engineCode} disabled><option>{engineLabels[profile.engineCode]}</option></select></label>
             </div>
             {profile.trim === "328i" && <div className="inference-note"><strong>{profile.engineCode} inferred</strong><p>For the U.S. 2016 328i, BMW maps the automatic to N26 SULEV and the manual to N20. Confirm with the under-hood emissions label or VIN data.</p></div>}
-            <p className="session-note">Selections are temporary and reset when the page reloads. No account, cookies, or vehicle data are stored.</p>
+            <div className="garage-save">
+              <label>Garage name<input value={garage.nickname} onChange={(event) => garage.setNickname(event.target.value)} maxLength={60} placeholder="My F30" /></label>
+              <label>Mileage<input value={garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" /></label>
+              <button className="button button-primary" disabled={garage.loading || garage.saving} onClick={() => void saveGarage()}>{garage.saving ? "Saving…" : garage.vehicleId ? "Update garage" : "Save to garage"}</button>
+            </div>
+            {(saveNotice || garage.error) && <p className={`save-status ${garage.error ? "error" : ""}`}>{garage.error ?? saveNotice}</p>}
+            <p className="session-note">{auth.user ? `${auth.isGuest ? "Guest" : "Permanent"} account active. Your saved car is protected by owner-only database policies.` : "Browse freely, then continue as a guest or use email when you want to save this car."}</p>
           </aside>
         </section>
 
@@ -218,6 +249,7 @@ export default function App() {
       </main>
 
       <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent 2016 BMW F30 research. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify recalls, parts, fluids, capacities, and procedures against current VIN-specific information.</p><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">View source on GitHub ↗</a></footer>
+      <AuthPanel auth={auth} open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }

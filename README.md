@@ -11,7 +11,7 @@ The platform library covers the 320i, 328i, 328d, 330e, and 340i. Maintenance an
 - Urgent, watch-list, and optional project lanes
 - 40 sourced issue patterns and a condition-based maintenance planner
 
-Keeper is a React + Vite site hosted by GitHub Pages. It has no account system, cookies, database, or browser storage; configuration choices reset when the page is refreshed.
+Keeper is a React + Vite site hosted by GitHub Pages. Supabase provides optional guest and email authentication plus an owner-isolated saved garage. The complete issue library remains available without an account.
 
 ## Local development
 
@@ -25,6 +25,10 @@ pnpm lint
 pnpm build
 pnpm test
 ```
+
+Copy `.env.example` to `.env.local` and add the project URL and publishable browser key when testing authentication locally. Never place a Supabase secret or service-role key in the frontend.
+
+Database changes live in `supabase/migrations`. The garage tables use Row Level Security so authenticated users—including anonymous guests—can access only rows owned by their `auth.uid()`.
 
 ## Data policy
 
