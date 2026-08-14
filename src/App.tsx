@@ -76,7 +76,7 @@ export default function App() {
   const [libraryQuery, setLibraryQuery] = useState("");
   const [watchExpanded, setWatchExpanded] = useState(false);
   const [maintenanceExpanded, setMaintenanceExpanded] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(() => new URLSearchParams(window.location.search).has("account"));
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
   const auth = useKeeperAuth();

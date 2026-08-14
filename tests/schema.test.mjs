@@ -7,6 +7,11 @@ const migrationUrl = new URL(
   import.meta.url,
 );
 
+const profileMigrationUrl = new URL(
+  "../supabase/migrations/20260814014500_harden_profiles.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -17,4 +22,10 @@ test("garage migration enforces owner-only access", async () => {
   assert.match(sql, /auth\.uid\(\)\) = user_id/i);
   assert.match(sql, /with check \(\(select auth\.uid\(\)\) = owner_id\)/i);
   assert.doesNotMatch(sql, /grant .* to anon/i);
+});
+
+test("profile names are bounded at the database layer", async () => {
+  const sql = await readFile(profileMigrationUrl, "utf8");
+  assert.match(sql, /profiles_display_name_length/i);
+  assert.match(sql, /char_length\(btrim\(display_name\)\) between 1 and 60/i);
 });
