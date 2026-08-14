@@ -1,15 +1,16 @@
 # Keeper
 
-Configuration-aware maintenance intelligence for the U.S.-spec 2016 BMW F30 3 Series, published as a standalone static site at [jonikcreates.github.io/keeper-garage](https://jonikcreates.github.io/keeper-garage/).
+Configuration-aware BMW maintenance intelligence for the U.S.-spec E36 and F30 3 Series, published as a standalone static site at [jonikcreates.github.io/keeper-garage](https://jonikcreates.github.io/keeper-garage/).
 
-The platform library covers the 320i, 328i, 328d, 330e, and 340i. Maintenance and issue records carry applicability rules for trim, engine, drivetrain, and transmission, so a saved vehicle only receives relevant recommendations.
+The platform library covers the U.S. E36 gasoline range and the F30 320i, 328i, 328d, 330e, 330i, 335i, and 340i. Maintenance and issue records carry applicability rules for generation, year, trim, engine, drivetrain, and transmission, so a saved vehicle only receives relevant recommendations.
 
 ## What it covers
 
-- 320i, 328i, 328d, 330e, and 340i trims
-- Engine, drivetrain, and transmission applicability
+- E36 M42, M44, M50, M52, S50US, and S52US schedules across manual and automatic configurations
+- F30 320i, 328i, 328d, 330e, 330i, 335i, and 340i trims
+- Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes
-- 40 sourced issue patterns and a condition-based maintenance planner
+- Sourced issue patterns and a 25-category E36 maintenance planner
 - Passwordless email, guest access, and provider-ready Google and Apple authentication
 - Profile and security controls for display name, email, phone, and linked identities
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import type { VehicleProfile } from "../lib/catalog";
+import { getPlatform, type VehicleProfile } from "../lib/catalog";
 import { supabase, type VehicleRow } from "./supabase";
 
 type GarageState = {
@@ -15,7 +15,7 @@ type GarageState = {
 
 const initialState: GarageState = {
   vehicleId: null,
-  nickname: "My F30",
+  nickname: "My BMW",
   mileage: "",
   loading: false,
   saving: false,
@@ -53,6 +53,8 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
           return;
         }
         onVehicleLoaded({
+          platform: data.model === "3 Series (E36)" ? "E36" : "F30",
+          year: data.model_year,
           trim: data.trim,
           engineCode: data.engine_code,
           drivetrain: data.drivetrain,
@@ -80,12 +82,13 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     setState((current) => ({ ...current, saving: true, error: null }));
 
     const mileage = state.mileage.trim() ? Number(state.mileage) : null;
+    const platform = getPlatform(profile.platform);
     const vehicle = {
       owner_id: user.id,
-      nickname: state.nickname.trim() || "My F30",
+      nickname: state.nickname.trim() || "My BMW",
       brand: "BMW" as const,
-      model: "3 Series (F30)" as const,
-      model_year: 2016 as const,
+      model: platform.label,
+      model_year: profile.year,
       trim: profile.trim,
       engine_code: profile.engineCode,
       drivetrain: profile.drivetrain,
