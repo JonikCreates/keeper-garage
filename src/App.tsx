@@ -21,6 +21,18 @@ import { useKeeperAuth } from "./useKeeperAuth";
 
 type LibraryView = "mine" | "all" | string;
 type Theme = "dark" | "light";
+type AppPage = "garage" | "maintenance" | "issues";
+
+const pageLinks: Array<{ page: AppPage; label: string }> = [
+  { page: "garage", label: "Garage" },
+  { page: "maintenance", label: "Maintenance" },
+  { page: "issues", label: "Known issues" },
+];
+
+function getPageFromHash(): AppPage {
+  const hash = window.location.hash.replace("#", "");
+  return pageLinks.some((link) => link.page === hash) ? hash as AppPage : "garage";
+}
 
 const emergencyChecks = [
   {
@@ -140,6 +152,8 @@ export default function App() {
   const [maintenanceExpanded, setMaintenanceExpanded] = useState(false);
   const [authOpen, setAuthOpen] = useState(() => new URLSearchParams(window.location.search).has("account"));
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  // REVIEW DECISION: hash routes keep each view directly addressable without creating GitHub Pages 404s or adding a routing dependency.
+  const [page, setPage] = useState<AppPage>(getPageFromHash);
   // REVIEW DECISION: theme is intentionally local to the browser so guest visitors keep their choice without needing account storage.
   const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "light" ? "light" : "dark");
 
@@ -148,6 +162,24 @@ export default function App() {
     document.documentElement.style.colorScheme = theme;
     localStorage.setItem("keeper-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const syncPage = () => setPage(getPageFromHash());
+    window.addEventListener("hashchange", syncPage);
+    return () => window.removeEventListener("hashchange", syncPage);
+  }, []);
+
+  useEffect(() => {
+    document.title = page === "garage"
+      ? "Keeper — Choose Your Car"
+      : page === "maintenance"
+        ? `Keeper — ${profile.year} ${profile.trim} Maintenance`
+        : `Keeper — ${profile.year} ${profile.trim} Known Issues`;
+  }, [page, profile.trim, profile.year]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [page]);
 
   const auth = useKeeperAuth();
   const loadVehicle = useCallback((vehicle: VehicleProfile) => {
@@ -240,18 +272,19 @@ export default function App() {
   return (
     <div className="site-shell">
       <header className="topbar">
-        <a className="brand-lockup" href="#top"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
-        <nav aria-label="Primary navigation"><a href="#priorities">Priorities</a><a href="#maintenance">Maintenance</a><a href="#library">Issue library</a><a href="#sources">Sources</a></nav>
+        <a className="brand-lockup" href="#garage"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
+        <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={`#${link.page}`} key={link.page}>{link.label}</a>)}</nav>
         <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.user ? "active" : ""}`} onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>{accountLabel}</button></div>
       </header>
 
       <main id="top">
+        {page === "garage" && <>
         <section className="hero">
           <div className="hero-copy">
             <p className="eyebrow">BMW archive · E36 / E39 / E46 / F30</p>
             <h1>Know what your car needs next.</h1>
             <p className="hero-intro">Factory information, researched owner patterns, and specialist maintenance guidance—filtered for the exact generation, year, engine, drivetrain, and transmission.</p>
-            <div className="hero-actions"><a href="#priorities" className="button button-primary">See my priorities</a><a href="#library" className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
+            <div className="hero-actions"><a href="#maintenance" className="button button-primary">Open maintenance list</a><a href="#issues" className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
           </div>
           <aside className="configuration-panel" aria-labelledby="config-title">
             <div className="configuration-heading"><span>Configure this visit</span><strong id="config-title">Your exact BMW</strong></div>
@@ -273,7 +306,25 @@ export default function App() {
             </div>
             {(saveNotice || garage.error) && <p className={`save-status ${garage.error ? "error" : ""}`}>{garage.error ?? saveNotice}</p>}
             <p className="session-note">{auth.user ? `${auth.isGuest ? "Guest" : "Permanent"} account active. Your saved car is protected by owner-only database policies.` : "Browse freely, then continue as a guest or use email when you want to save this car."}</p>
+            <a className="plan-launch" href="#maintenance"><span>Next work order</span><strong>View {maintenance.length}-item maintenance list</strong><b>→</b></a>
           </aside>
+        </section>
+
+        <section className="garage-route-strip" aria-label="How Keeper works">
+          <article><span>01</span><div><strong>Choose the exact car</strong><p>Generation, year, body, drivetrain, transmission, and engine.</p></div></article>
+          <article><span>02</span><div><strong>Open maintenance</strong><p>Only the service rows that match the selected configuration.</p></div></article>
+          <article><span>03</span><div><strong>Check known issues</strong><p>Urgent signals and researched patterns stay on their own page.</p></div></article>
+        </section>
+        </>}
+
+        {page !== "garage" && <>
+        <section className="page-masthead">
+          <div>
+            <p className="eyebrow">{profile.year} BMW {profile.trim} · {profile.platform}</p>
+            <h1>{page === "maintenance" ? "Maintenance list." : "Known issues."}</h1>
+            <p>{page === "maintenance" ? "Factory positions and conservative planning intervals, filtered to the car you configured." : "Urgent warning signs, recurring owner patterns, and supporting evidence kept separate from routine service."}</p>
+          </div>
+          <div className="page-masthead-actions"><a className="button button-quiet" href="#garage">Change vehicle</a><a className="button button-primary" href={page === "maintenance" ? "#issues" : "#maintenance"}>{page === "maintenance" ? "Known issues" : "Maintenance list"}</a></div>
         </section>
 
         <section className="vehicle-band">
@@ -282,7 +333,9 @@ export default function App() {
           <div><span>Drive</span><strong>{profile.drivetrain}</strong></div>
           <div><span>Matched research</span><strong>{matchedIssues.length} issue patterns · {maintenance.length} service items</strong></div>
         </section>
+        </>}
 
+        {page === "issues" && <>
         <section className="priorities-section" id="priorities">
           <header className="section-heading"><div><p className="eyebrow">Ordered by consequence</p><h2>Start here.</h2></div><p>Keeper does not claim that a known issue is present on your car. It tells you what deserves immediate attention, what to watch, and what can wait.</p></header>
 
@@ -307,7 +360,9 @@ export default function App() {
             <div className="project-grid">{projects.map((project) => <article key={project.slug}><span>{project.payoff}</span><h4>{project.title}</h4><p>{project.description}</p></article>)}</div>
           </div>
         </section>
+        </>}
 
+        {page === "maintenance" &&
         <section className="maintenance-section" id="maintenance">
           <header className="section-heading"><div><p className="eyebrow">No account required</p><h2>Maintenance baseline.</h2></div><p>Factory documentation stays separate from the conservative planning layer. E36 preserves 25 workbook categories; E39 and E46 add engine, body, drivetrain, and transmission-specific rows. Exact manuals, VIN data, production dates, and component labels remain controlling.</p></header>
           <div className="maintenance-list">
@@ -317,8 +372,9 @@ export default function App() {
             </details>)}
             {maintenance.length > 8 && <button className="expand-button" onClick={() => setMaintenanceExpanded((value) => !value)}>{maintenanceExpanded ? "Show the short list" : `Show all ${maintenance.length} service items`}</button>}
           </div>
-        </section>
+        </section>}
 
+        {page === "issues" && <>
         <section className="library-section" id="library">
           <header className="section-heading"><div><p className="eyebrow">Stored research · {KNOWN_ISSUES.length} patterns</p><h2>{platform.label} issue library.</h2></div><p>Coverage follows the selected generation and its U.S.-market engine and transmission combinations. Each record keeps fitment, evidence type, symptoms, and next action visible.</p></header>
           <div className="library-toolbar">
@@ -350,6 +406,7 @@ export default function App() {
           <h2>Useful, without pretending every forum post is a fact.</h2>
           <div className="evidence-grid"><article><span>01</span><h3>BMW / official</h3><p>Maintenance schedules, recalls, and service bulletins define factory positions, affected production, and VIN-specific actions.</p></article><article><span>02</span><h3>Community consensus</h3><p>Repeated patterns from BMW specialists, platform forums, and technical videos become watch items—not automatic diagnoses.</p></article><article><span>03</span><h3>Individual experience</h3><p>StartMyCar and isolated owner reports help discover symptoms, but remain visibly labeled and carry the lowest confidence.</p></article></div>
         </section>
+        </>}
       </main>
 
       <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research, beginning with BMW E36, E39, E46, and F30. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify recalls, parts, fluids, capacities, and procedures against current VIN-specific information.</p><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">View source on GitHub ↗</a></footer>
