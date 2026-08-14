@@ -9,10 +9,11 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --test tests/static-build.test.mjs",
+    "test": "node --test tests/*.test.mjs",
     "lint": "eslint src lib/catalog.ts vite.config.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
