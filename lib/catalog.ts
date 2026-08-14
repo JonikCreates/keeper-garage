@@ -9,6 +9,8 @@ export type CatalogSource = {
 };
 
 export type Applicability = {
+  platforms?: string[];
+  years?: number[];
   trims?: string[];
   engines?: string[];
   drivetrains?: string[];
@@ -16,6 +18,8 @@ export type Applicability = {
 };
 
 export type VehicleProfile = {
+  platform: "F30" | "E36";
+  year: number;
   trim: string;
   engineCode: string;
   drivetrain: string;
@@ -60,32 +64,75 @@ export type ProjectIdea = {
   appliesTo: Applicability;
 };
 
-export const PLATFORM = {
-  slug: "bmw-f30-2016-us",
-  yearStart: 2016,
-  yearEnd: 2016,
-  make: "BMW",
-  model: "3 Series (F30)",
-  trim: "320i–340i",
-  engine: "N20 / N26 / N47T / B48 / B58",
-  transmission: "8-speed automatic / 6-speed manual",
-};
-
-export const TRIM_OPTIONS = [
-  { value: "320i", label: "320i", engines: ["N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
-  { value: "328i", label: "328i", engines: ["N26", "N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
-  { value: "328d", label: "328d diesel", engines: ["N47T"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic"] },
-  { value: "330e", label: "330e plug-in hybrid", engines: ["B48-PHEV"], drivetrains: ["RWD"], transmissions: ["8-speed automatic"] },
-  { value: "340i", label: "340i", engines: ["B58"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
+export const PLATFORM_OPTIONS = [
+  { value: "F30", label: "3 Series (F30)", yearStart: 2012, yearEnd: 2018 },
+  { value: "E36", label: "3 Series (E36)", yearStart: 1992, yearEnd: 1999 },
 ] as const;
 
-export function inferEngine(trim: string, transmission: string) {
-  if (trim === "328i") return transmission === "6-speed manual" ? "N20" : "N26";
-  return TRIM_OPTIONS.find((option) => option.value === trim)?.engines[0] ?? "Unknown";
+export const TRIM_OPTIONS = [
+  { platform: "F30", value: "320i", label: "320i", yearStart: 2013, yearEnd: 2018, engines: ["N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
+  { platform: "F30", value: "328i", label: "328i", yearStart: 2012, yearEnd: 2016, engines: ["N26", "N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
+  { platform: "F30", value: "328d", label: "328d diesel", yearStart: 2014, yearEnd: 2018, engines: ["N47T"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic"] },
+  { platform: "F30", value: "330e", label: "330e plug-in hybrid", yearStart: 2016, yearEnd: 2018, engines: ["B48-PHEV"], drivetrains: ["RWD"], transmissions: ["8-speed automatic"] },
+  { platform: "F30", value: "330i", label: "330i", yearStart: 2017, yearEnd: 2018, engines: ["B46"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
+  { platform: "F30", value: "335i", label: "335i", yearStart: 2012, yearEnd: 2015, engines: ["N55"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
+  { platform: "F30", value: "340i", label: "340i", yearStart: 2016, yearEnd: 2018, engines: ["B58"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
+  { platform: "E36", value: "318i", label: "318i", yearStart: 1992, yearEnd: 1998, engines: ["M42", "M44"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "318is", label: "318is", yearStart: 1992, yearEnd: 1998, engines: ["M42", "M44"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "318ic", label: "318ic", yearStart: 1994, yearEnd: 1998, engines: ["M42", "M44"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "318ti", label: "318ti Compact", yearStart: 1995, yearEnd: 1999, engines: ["M42", "M44"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "325i", label: "325i", yearStart: 1992, yearEnd: 1995, engines: ["M50-NV", "M50TU"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "325is", label: "325is", yearStart: 1992, yearEnd: 1995, engines: ["M50-NV", "M50TU"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "325ic", label: "325ic", yearStart: 1994, yearEnd: 1995, engines: ["M50TU"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "323i", label: "323i", yearStart: 1998, yearEnd: 1999, engines: ["M52B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "323is", label: "323is", yearStart: 1998, yearEnd: 1999, engines: ["M52B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "323ic", label: "323ic", yearStart: 1998, yearEnd: 1999, engines: ["M52B25"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "328i", label: "328i", yearStart: 1996, yearEnd: 1999, engines: ["M52B28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "328is", label: "328is", yearStart: 1996, yearEnd: 1999, engines: ["M52B28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "328ic", label: "328ic", yearStart: 1996, yearEnd: 1999, engines: ["M52B28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
+  { platform: "E36", value: "M3", label: "M3", yearStart: 1995, yearEnd: 1999, engines: ["S50US", "S52US"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
+] as const;
+
+export function getTrimOptions(platform: VehicleProfile["platform"]) {
+  return TRIM_OPTIONS.filter((option) => option.platform === platform);
+}
+
+export function getPlatform(platform: VehicleProfile["platform"]) {
+  return PLATFORM_OPTIONS.find((option) => option.value === platform) ?? PLATFORM_OPTIONS[0];
+}
+
+export function getEngineOptions(platform: VehicleProfile["platform"], trim: string, year: number) {
+  const option = TRIM_OPTIONS.find((candidate) => candidate.platform === platform && candidate.value === trim);
+  if (!option) return [];
+  const engines = [...option.engines] as string[];
+  if (platform !== "E36") return engines;
+  if (["318i", "318is", "318ic", "318ti"].includes(trim)) return engines.filter((engine) => year <= 1995 ? engine === "M42" : engine === "M44");
+  if (["325i", "325is"].includes(trim)) return engines.filter((engine) => year === 1992 ? engine === "M50-NV" : engine === "M50TU");
+  if (trim === "M3") return engines.filter((engine) => year === 1995 ? engine === "S50US" : engine === "S52US");
+  return engines;
+}
+
+export function getTransmissionOptions(platform: VehicleProfile["platform"], trim: string, drivetrain: string) {
+  const option = TRIM_OPTIONS.find((candidate) => candidate.platform === platform && candidate.value === trim);
+  if (!option) return [];
+  const transmissions = [...option.transmissions] as string[];
+  if (platform === "F30" && drivetrain === "xDrive" && ["328i", "330i"].includes(trim)) {
+    return transmissions.filter((transmission) => transmission === "8-speed automatic");
+  }
+  return transmissions;
+}
+
+export function inferEngine(platform: VehicleProfile["platform"], trim: string, year: number, current?: string) {
+  const engines = getEngineOptions(platform, trim, year);
+  if (engines.includes(current ?? "")) return current as string;
+  return engines[0] ?? "Unknown";
 }
 
 export function matchesApplicability(profile: VehicleProfile, rule: Applicability) {
-  return (!rule.trims || rule.trims.includes(profile.trim)) &&
+  const platforms = rule.platforms ?? ["F30"];
+  return platforms.includes(profile.platform) &&
+    (!rule.years || rule.years.includes(profile.year)) &&
+    (!rule.trims || rule.trims.includes(profile.trim)) &&
     (!rule.engines || rule.engines.includes(profile.engineCode)) &&
     (!rule.drivetrains || rule.drivetrains.includes(profile.drivetrain)) &&
     (!rule.transmissions || rule.transmissions.includes(profile.transmission));
@@ -139,6 +186,30 @@ const STARTMYCAR_328: CatalogSource = {
   note: "Unverified owner complaints used only as a symptom-discovery layer; model year and diagnosis must be checked individually.",
 };
 
+const N55_VIDEO: CatalogSource = {
+  type: "Community consensus",
+  title: "N55 diagnostics and recurring failure guide",
+  publisher: "FCP Euro · YouTube",
+  url: "https://www.youtube.com/watch?v=rPUUNhjJjHU",
+  note: "Independent specialist diagnostic overview covering N55 oil leaks, Valvetronic, VANOS, ignition, and cooling faults.",
+};
+
+const BMW_F3X_FUEL_TANK: CatalogSource = {
+  type: "OEM",
+  title: "F3x plastic fuel-tank leakage warranty extension",
+  publisher: "BMW of North America · SIB 01 03 22",
+  url: "https://static.nhtsa.gov/odi/tsbs/2024/MC-11009422-0001.pdf",
+  note: "VIN-specific 15-year/150,000-mile leakage coverage for listed B46, B58, N20, N55, and S55 vehicles.",
+};
+
+const BMW_B46_PURGE: CatalogSource = {
+  type: "OEM",
+  title: "B46 EVAP purge-valve warranty extension",
+  publisher: "BMW of North America · SIB 01 04 19",
+  url: "https://static.nhtsa.gov/odi/tsbs/2024/MC-11008102-0001.pdf",
+  note: "VIN-specific 15-year/150,000-mile coverage for listed B46 PZEV/SULEV vehicles.",
+};
+
 export const MAINTENANCE_CATALOG: MaintenanceCatalogItem[] = [
   {
     slug: "engine-oil-filter", name: "Engine oil & filter", shortName: "Oil & filter", category: "Engine", severity: "critical", appliesTo: {},
@@ -163,7 +234,7 @@ export const MAINTENANCE_CATALOG: MaintenanceCatalogItem[] = [
     description: "A loaded air filter increases restriction and can hide leaves or debris in the airbox.",
     oem: { mileage: 40000, months: null, label: "About every 4th oil service", summary: "BMW's 2016 B58 schedule places the air filter at the fourth oil service, approximately 40,000 miles; verify CBS and the exact engine schedule." },
     community: { mileage: 30000, months: 36, label: "30,000 mi / 3 yr", summary: "Inspect sooner in dust, construction, or high-pollen conditions." },
-    parts: [{ name: "Engine-specific filter element", partNumber: null, note: "The N20/N26, N47T, B48, and B58 use different parts." }],
+    parts: [{ name: "Engine-specific filter element", partNumber: null, note: "The N20/N26, N47T, B46/B48, N55, and B58 use different parts." }],
     sources: [BMW_2016, FCP_ENGINE],
     diy: ["Clean loose debris from the airbox without dropping it into the intake.", "Check intake boots and clamps before closing the airbox."],
   },
@@ -186,13 +257,22 @@ export const MAINTENANCE_CATALOG: MaintenanceCatalogItem[] = [
     diy: ["Work on a cold engine and keep every plug indexed by cylinder.", "Do not treat repeated misfires as a plug-only problem; scan faults and inspect coils and fueling."],
   },
   {
-    slug: "spark-plugs-b-series", name: "Spark plugs · B48/B58", shortName: "Spark plugs", category: "Ignition", severity: "important", appliesTo: { engines: ["B48-PHEV", "B58"] },
+    slug: "spark-plugs-b-series", name: "Spark plugs · B46/B48/B58", shortName: "Spark plugs", category: "Ignition", severity: "important", appliesTo: { engines: ["B46", "B48-PHEV", "B58"] },
     description: "The B-series turbo engines rely on healthy plugs and coils for clean combustion under load.",
     oem: { mileage: 60000, months: null, label: "About every 6th oil service", summary: "BMW's 2016 B58 schedule specifies spark plugs at the sixth oil service, approximately 60,000 miles." },
     community: { mileage: 45000, months: 48, label: "45,000 mi / 4 yr", summary: "Independent specialists often shorten the interval when the engine is tuned or driven hard." },
     parts: [{ name: "VIN-matched spark plug set", partNumber: null, note: "B48 and B58 plug quantities and revisions differ." }],
     sources: [BMW_2016, FCP_ENGINE],
     diy: ["Verify plug revision and torque against current BMW information.", "Scan and diagnose recurring cylinder-specific misfires rather than repeatedly replacing parts."],
+  },
+  {
+    slug: "spark-plugs-n55", name: "Spark plugs · N55", shortName: "Spark plugs", category: "Ignition", severity: "important", appliesTo: { engines: ["N55"] },
+    description: "The turbocharged N55 needs healthy plugs and coils for clean combustion under load.",
+    oem: { mileage: 60000, months: null, label: "Service-counter based", summary: "BMW links spark-plug replacement to scheduled oil services; confirm the exact counter and VIN-specific service data." },
+    community: { mileage: 40000, months: 48, label: "40,000 mi / 4 yr", summary: "A shorter interval is common on tuned cars or cars with repeated high-load use." },
+    parts: [{ name: "VIN-matched six-plug set", partNumber: null, note: "Verify plug revision, gap policy, and torque for the exact N55 calibration." }],
+    sources: [BMW_2014, FCP_ENGINE],
+    diy: ["Work on a cold engine and keep every plug indexed by cylinder.", "Scan recurring misfires and test coils and fueling instead of repeatedly replacing parts."],
   },
   {
     slug: "automatic-transmission-fluid", name: "ZF 8HP fluid & filter pan", shortName: "Transmission fluid", category: "Driveline", severity: "important", appliesTo: { transmissions: ["8-speed automatic"] },
@@ -286,6 +366,130 @@ export const MAINTENANCE_CATALOG: MaintenanceCatalogItem[] = [
   },
 ];
 
+const E36_BMW_SIA: CatalogSource = {
+  type: "OEM",
+  title: "E36 SIA II service-indicator logic",
+  publisher: "BMW Technical Training · Service and Maintenance",
+  url: "https://ia600902.us.archive.org/26/items/BMWTechnicalTrainingDocuments/ST050%20Technical%20Systems%20%28Archive%201%29/Service%20and%20Maintenance.pdf",
+  note: "Period BMW technical material explaining condition-adjusted service-indicator logic.",
+};
+
+const E36_OWNER_MANUAL: CatalogSource = {
+  type: "OEM",
+  title: "BMW E36 owner's manual",
+  publisher: "BMW · 07/1998 manual mirror",
+  url: "https://www.manualslib.com/manual/728617/Bmw-318i.html?page=129",
+  note: "BMW documentation supporting the two-year brake-fluid interval and inspection context.",
+};
+
+const E36_MILLER: CatalogSource = {
+  type: "Community consensus",
+  title: "Old School BMW Maintenance Schedule",
+  publisher: "Mike Miller · technical reference mirror",
+  url: "https://www.1addicts.com/forums/attachment.php?attachmentid=1461518&d=1469006598",
+  note: "Independent long-term BMW maintenance guidance used for preventive planning, not represented as an OEM schedule.",
+};
+
+const E36_SPECIALIST: CatalogSource = {
+  type: "Community consensus",
+  title: "E36 maintenance service packages",
+  publisher: "Turner Motorsport",
+  url: "https://www.turnermotorsport.com/p-338946-e36-323isic-328iisic-maintenance-service-package/",
+  note: "Platform-specialist 30,000/60,000-mile inspection and service structure.",
+};
+
+type E36ItemInput = {
+  slug: string;
+  name: string;
+  category: string;
+  severity: MaintenanceCatalogItem["severity"];
+  description: string;
+  appliesTo?: Applicability;
+  factoryLabel: string;
+  factorySummary: string;
+  planMileage: number | null;
+  planMonths?: number | null;
+  planLabel: string;
+  planSummary: string;
+  diy: string[];
+  sources?: CatalogSource[];
+};
+
+const e36Item = (input: E36ItemInput): MaintenanceCatalogItem => ({
+  slug: `e36-${input.slug}`,
+  name: input.name,
+  shortName: input.name,
+  category: input.category,
+  severity: input.severity,
+  description: input.description,
+  appliesTo: { platforms: ["E36"], ...(input.appliesTo ?? {}) },
+  oem: { mileage: null, months: null, label: input.factoryLabel, summary: input.factorySummary },
+  community: { mileage: input.planMileage, months: input.planMonths ?? null, label: input.planLabel, summary: input.planSummary },
+  parts: [],
+  sources: input.sources ?? [E36_BMW_SIA, E36_MILLER, E36_SPECIALIST],
+  diy: input.diy,
+});
+
+export const E36_MAINTENANCE_CATALOG: MaintenanceCatalogItem[] = [
+  e36Item({ slug: "oil-filter", name: "Engine oil & filter", category: "Engine", severity: "critical", description: "Track oil by both time and distance while preserving the E36 service-indicator context.", factoryLabel: "BMW SIA II / condition", factorySummary: "The period BMW SIA II system adjusts service timing from operating conditions rather than prescribing one universal fixed odometer interval.", planMileage: 7500, planMonths: 12, planLabel: "7,500 mi / 12 mo", planSummary: "The workbook uses a conservative 7,500-mile annual tracker for long-term ownership.", diy: ["Verify oil approval and viscosity for the engine, climate, and owner's manual.", "Inspect the filter housing, pan, drain plug, and belt area for active leakage."], sources: [E36_BMW_SIA, E36_MILLER] }),
+  e36Item({ slug: "brake-fluid", name: "Brake fluid", category: "Brakes", severity: "critical", description: "Moisture absorption makes brake fluid a time-based service even on a low-mileage E36.", factoryLabel: "Every 2 years", factorySummary: "BMW E36 documentation states a two-year brake-fluid replacement interval.", planMileage: null, planMonths: 24, planLabel: "Every 24 mo", planSummary: "Keep the BMW time interval and shorten only for measured condition or track use.", diy: ["Use fresh DOT 4 fluid and the correct bleed sequence.", "Do not drive with a soft or uncertain pedal."], sources: [E36_OWNER_MANUAL, E36_SPECIALIST] }),
+  e36Item({ slug: "air-filter", name: "Engine air filter", category: "Engine", severity: "routine", description: "Inspect the filter and airbox for restriction, debris, and sealing problems.", factoryLabel: "Inspect by condition", factorySummary: "Use the installed filter's condition and the vehicle's operating environment as the controlling check.", planMileage: 30000, planLabel: "30,000 mi", planSummary: "Turner and the workbook place the engine air filter in the 30,000-mile major-service structure.", diy: ["Inspect sooner in dust or heavy pollen.", "Use an OE/OEM paper element and check intake clamps before closing the airbox."] }),
+  e36Item({ slug: "cabin-filter", name: "Cabin microfilter", category: "Climate", severity: "routine", description: "Equipment and access differ across early and low-option E36s, so confirm the car has the expected filter arrangement.", factoryLabel: "Equipment dependent", factorySummary: "Not every E36 configuration has the same microfilter arrangement.", planMileage: 30000, planMonths: 12, planLabel: "Inspect yearly / 30,000 mi", planSummary: "Inspect annually and replace by condition or at the major-service interval where equipped.", diy: ["Confirm the installed housing before ordering.", "Check for dampness, leaves, and evidence of water entry."] }),
+  e36Item({ slug: "fuel-filter", name: "Fuel filter", category: "Fuel", severity: "important", description: "A conservative fuel-filter baseline protects an aging fuel system and makes unknown history visible.", factoryLabel: "Verify service history", factorySummary: "The exact historical factory cadence varies by model-year documentation.", planMileage: 30000, planLabel: "30,000 mi", planSummary: "The workbook uses Turner's conservative 30,000-mile E36 major-service interval while noting longer independent recommendations.", diy: ["Relieve pressure safely and observe the filter's flow direction.", "Replace aged clamps or hoses and leak-check before driving."] }),
+  e36Item({ slug: "manual-transmission", name: "Manual transmission fluid", category: "Driveline", severity: "important", description: "The gearbox label controls fluid choice; model year alone is not enough.", appliesTo: { transmissions: ["5-speed manual"] }, factoryLabel: "Verify gearbox label", factorySummary: "BMW used multiple gearbox and label specifications across the platform.", planMileage: 30000, planLabel: "30,000 mi", planSummary: "The workbook uses a 30,000-mile preventive drain-and-fill baseline.", diy: ["Open the fill plug before draining.", "Identify the gearbox and read its fluid label before ordering fluid."] }),
+  e36Item({ slug: "automatic-transmission", name: "Automatic transmission fluid & filter", category: "Driveline", severity: "important", description: "Automatic fluid, pan/filter service, and fill procedure depend on the exact transmission tag.", appliesTo: { transmissions: ["4-speed automatic", "5-speed automatic"] }, factoryLabel: "Tag / production dependent", factorySummary: "Early GM units predate later lifetime-fill guidance; later GM and ZF units require exact tag verification.", planMileage: 60000, planLabel: "30,000–60,000 mi", planSummary: "The workbook uses 30,000 miles for early/pre-lifetime-fill GM units and 60,000 miles for later lifetime-fill GM or ZF units.", diy: ["Identify the transmission tag and approved fluid before service.", "A pan/filter service quantity is lower than total dry capacity; follow the temperature-dependent fill procedure."] }),
+  e36Item({ slug: "differential", name: "Differential fluid", category: "Driveline", severity: "important", description: "Open and limited-slip differentials require correct identification and fluid.", factoryLabel: "Verify differential", factorySummary: "Fluid choice depends on the installed final drive and whether it has a limited-slip unit.", planMileage: 30000, planLabel: "30,000 mi", planSummary: "The workbook applies a 30,000-mile independent specialist baseline.", diy: ["Open the fill plug before draining.", "Use LSD-compatible fluid where required and fill on a level car."] }),
+  e36Item({ slug: "spark-plugs", name: "Spark plugs", category: "Ignition", severity: "important", description: "Correct OE-style plugs support clean ignition and useful condition checks.", factoryLabel: "Engine / VIN specific", factorySummary: "Plug specification and quantity depend on the exact engine.", planMileage: 60000, planLabel: "60,000 mi", planSummary: "Turner uses a 60,000-mile E36 major-service interval; modified engines may need a different plan.", diy: ["Use the exact Bosch/NGK specification for the engine and VIN.", "Diagnose recurring misfires rather than treating plugs as the only cause."] }),
+  e36Item({ slug: "oxygen-sensors", name: "Oxygen sensors", category: "Emissions", severity: "important", description: "OBD-I and OBD-II layouts differ, so sensor count and diagnosis must follow model year.", factoryLabel: "Diagnose / year specific", factorySummary: "The workbook leaves a numeric OEM interval blank until exact year-specific documentation is verified.", planMileage: null, planLabel: "60,000–150,000 mi context", planSummary: "Independent guidance spans a wide range; condition, faults, and the exact OBD generation are more useful than a single replacement number.", diy: ["1996-on cars use pre- and post-catalyst sensors; earlier layouts differ.", "Use exact OE-style sensors and diagnose mixture faults before replacement."] }),
+  e36Item({ slug: "belts", name: "Engine & A/C serpentine belts", category: "Engine", severity: "important", description: "Age, cracking, glazing, fraying, and fluid contamination control belt replacement.", factoryLabel: "Inspect by condition", factorySummary: "Belt condition is checked within periodic engine-compartment service.", planMileage: 30000, planLabel: "Inspect / 30,000 mi", planSummary: "The workbook uses Turner's 30,000-mile major-service replacement point while preserving condition-based judgment.", diy: ["Never work around a moving belt drive.", "Find and repair any oil or coolant source before fitting a new belt."] }),
+  e36Item({ slug: "tensioners", name: "Belt tensioners & roller pulleys", category: "Engine", severity: "important", description: "Rough, noisy, loose, or dragging pulleys can damage a new belt.", factoryLabel: "Inspect by condition", factorySummary: "The installed hardware's condition controls replacement.", planMileage: 60000, planLabel: "Inspect 30k / service 60k", planSummary: "Inspect at the 30,000-mile major service and give the complete drive closer attention at 60,000 miles.", diy: ["Spin accessible pulleys by hand with the belt removed.", "Replace components showing roughness, play, noise, or drag."] }),
+  e36Item({ slug: "coolant", name: "Engine coolant", category: "Cooling", severity: "critical", description: "Correct coolant, a complete bleed, and diagnosis of any loss are foundational on an aging E36.", factoryLabel: "BMW-compatible fluid", factorySummary: "Use the correct coolant chemistry and follow the engine-specific bleed procedure.", planMileage: 30000, planMonths: 24, planLabel: "30,000 mi / 24 mo", planSummary: "The workbook combines Turner's major service with Mike Miller's two-year preventive interval.", diy: ["Never open a hot pressurized system.", "Use BMW-compatible blue G48-style coolant with distilled water unless using premix, and bleed completely."] }),
+  e36Item({ slug: "power-steering", name: "Power steering fluid", category: "Steering", severity: "important", description: "Reservoir hoses and seals commonly deserve inspection whenever fluid is exchanged.", factoryLabel: "Reservoir label controls", factorySummary: "Most E36 systems use ATF, but the reservoir-cap label must be verified.", planMileage: 30000, planLabel: "30,000 mi", planSummary: "The workbook uses a 30,000-mile independent specialist exchange interval.", diy: ["Verify the reservoir-cap label before selecting fluid.", "Inspect the reservoir, return hose, pressure hose, rack boots, and clamps for seepage."] }),
+  e36Item({ slug: "water-pump", name: "Water pump", category: "Cooling", severity: "critical", description: "Preventive timing differs sharply between four- and six-cylinder E36 engines.", factoryLabel: "Engine-family dependent", factorySummary: "There is no single BMW replacement interval shared by every E36 engine family.", planMileage: 60000, planLabel: "60,000–150,000 mi", planSummary: "The workbook uses about 60,000 miles for six-cylinder preventive service and around 150,000 miles as a consideration for original M42/M44 pumps.", diy: ["Inspect for leakage, bearing play, noise, and temperature faults.", "Use a quality OE/OEM or proven upgraded pump."] }),
+  e36Item({ slug: "thermostat", name: "Thermostat", category: "Cooling", severity: "critical", description: "A thermostat that sticks open or closed affects warm-up, efficiency, and overheat risk.", factoryLabel: "Engine-family dependent", factorySummary: "Temperature faults and engine family control replacement.", planMileage: 60000, planLabel: "60,000–150,000 mi", planSummary: "The workbook pairs six-cylinder thermostat service with the 60,000-mile pump baseline and treats M42/M44 closer to a 150,000-mile consideration.", diy: ["Use the correct temperature rating for the engine.", "Replace earlier for regulation faults, leaks, or during a confirmed cooling overhaul."] }),
+  e36Item({ slug: "thermostat-housing", name: "Thermostat housing", category: "Cooling", severity: "critical", description: "Housing material and risk depend on the exact engine.", factoryLabel: "Engine-specific", factorySummary: "M42 uses a metal housing, M44 uses an integrated plastic assembly, and six-cylinder engines commonly use a separate plastic housing.", planMileage: 60000, planLabel: "Inspect / pair with thermostat", planSummary: "The workbook treats six-cylinder and M44 plastic housings preventively while keeping M42 as a documented exception.", diy: ["Inspect sealing surfaces and nearby plastic during thermostat service.", "Do not apply the six-cylinder plastic-housing recommendation blindly to M42."] }),
+  e36Item({ slug: "radiator", name: "Radiator", category: "Cooling", severity: "critical", description: "Plastic end tanks and necks deserve age-based inspection even without a fixed failure mileage.", factoryLabel: "Inspect by condition", factorySummary: "Look for cracks, staining, seepage, distorted necks, and prior repairs.", planMileage: 90000, planLabel: "90,000–150,000 mi", planSummary: "The workbook uses roughly 90,000 miles for six-cylinder preventive planning and around 150,000 miles for original M42/M44 components.", diy: ["Inspect plastic tanks, necks, seams, mounts, and cap sealing.", "Pressure-test unexplained loss before ordering parts."] }),
+  e36Item({ slug: "expansion-tank", name: "Expansion tank", category: "Cooling", severity: "critical", description: "Age-hardened plastic, cap sealing, and seam leakage can turn a small loss into an overheat event.", factoryLabel: "Inspect by condition", factorySummary: "Track staining, seam seepage, cap condition, and repeated level changes.", planMileage: 90000, planLabel: "90,000–150,000 mi", planSummary: "The workbook separates the six-cylinder 90,000-mile preventive baseline from the longer M42/M44 planning point.", diy: ["Inspect seams, the cap seat, level sensor area, and hose necks.", "Treat repeated top-offs as a leak to diagnose."] }),
+  e36Item({ slug: "fan-clutch", name: "Mechanical fan & fan clutch", category: "Cooling", severity: "critical", description: "Cracked fan blades, bearing play, or a failing clutch can damage the cooling system and nearby components.", factoryLabel: "Equipment / condition dependent", factorySummary: "Some four-cylinder configurations differ; verify the installed fan system.", planMileage: 90000, planLabel: "Inspect / 90,000–150,000 mi", planSummary: "The workbook uses a six-cylinder 90,000-mile preventive point and a longer M42/M44 condition-based consideration.", diy: ["Inspect each blade for cracks and check clutch operation and bearing play.", "Verify the installed fan arrangement before ordering parts."] }),
+  e36Item({ slug: "hoses", name: "Coolant & fuel hoses", category: "Inspection", severity: "critical", description: "Decades of age can matter more than odometer mileage for molded rubber and hose connections.", factoryLabel: "Inspect by condition", factorySummary: "Use leakage, hardening, swelling, cracking, and service history as the controlling evidence.", planMileage: 150000, planLabel: "Age / condition", planSummary: "The workbook records 150,000 miles as long-term context but explicitly notes that age can justify replacement much earlier.", diy: ["Use OE/OEM-quality molded hoses and correct clamps.", "Replace fuel hoses safely and leak-check before driving."] }),
+  e36Item({ slug: "intake-vacuum", name: "Intake boots & vacuum lines", category: "Engine", severity: "important", description: "Split or hardened rubber creates unmetered-air leaks and misleading drivability symptoms.", factoryLabel: "Inspect by condition", factorySummary: "Visual and smoke-test evidence controls replacement.", planMileage: null, planMonths: 12, planLabel: "Inspect yearly", planSummary: "The workbook uses a 12-month inspection cadence.", diy: ["Flex boots to reveal hidden cracks.", "Smoke-test persistent lean, idle, or mixture faults before replacing unrelated sensors."] }),
+  e36Item({ slug: "chassis", name: "Chassis, bushings, ball joints & wheel bearings", category: "Chassis", severity: "critical", description: "A system inspection is safer than chasing each clunk in isolation.", factoryLabel: "Inspect by condition", factorySummary: "Wear and structural condition control repair timing.", planMileage: 30000, planMonths: 12, planLabel: "30,000 mi / 12 mo", planSummary: "The workbook applies an annual or 30,000-mile platform inspection.", diy: ["Inspect control arms, tie rods, ball joints, wheel bearings, rear bushings and mounts, subframe areas, and shock mounts.", "Use safe lifting practices and measure play rather than diagnosing only from noise."] }),
+  e36Item({ slug: "brake-system", name: "Brake system", category: "Brakes", severity: "critical", description: "Pads, rotors, hoses, parking brake, pedal feel, and leakage are condition-based safety items.", factoryLabel: "Inspect by condition", factorySummary: "There is no responsible universal pad or rotor replacement mileage.", planMileage: 30000, planMonths: 12, planLabel: "30,000 mi / 12 mo", planSummary: "The workbook combines annual inspection with the 30,000-mile major-service structure.", diy: ["Measure wear and inspect flexible hoses and hard lines.", "Do not drive with leakage, a soft pedal, pulling, grinding, or structurally unsafe components."], sources: [E36_OWNER_MANUAL, E36_SPECIALIST] }),
+  e36Item({ slug: "driveline", name: "Shifter linkage, guibo, CV joints & center support", category: "Driveline", severity: "critical", description: "Rubber couplings, boots, supports, and linkage age together and can produce overlapping vibration or play.", factoryLabel: "Inspect by condition", factorySummary: "Installed transmission and driveline layout control the exact inspection.", planMileage: 30000, planLabel: "30,000 mi", planSummary: "The workbook uses a 30,000-mile driveline inspection interval.", diy: ["Inspect guibo cracking, center-support bearing, CV/axle boots, linkage play, and driveline vibration.", "Automatic cars use a different selector linkage but keep the same driveline inspection category."] }),
+  e36Item({ slug: "ignition-coils", name: "Ignition coils & coil boots", category: "Ignition", severity: "important", description: "A 60,000-mile checkpoint is for inspection and diagnosis, not automatic replacement of every working coil.", factoryLabel: "Diagnose by condition", factorySummary: "Use faults, cylinder testing, boot condition, and spark-plug evidence.", planMileage: 60000, planLabel: "Inspect at 60,000 mi", planSummary: "The workbook retains Turner's 60,000-mile inspection/service checkpoint.", diy: ["Use OE/OEM-quality ignition components.", "Move coils only as a controlled diagnostic test and preserve cylinder location."] }),
+];
+
+const E36_SIX_CYLINDER_ENGINES = ["M50-NV", "M50TU", "M52B25", "M52B28", "S50US", "S52US"];
+
+function resolveE36Maintenance(item: MaintenanceCatalogItem, profile: VehicleProfile): MaintenanceCatalogItem {
+  const sixCylinder = E36_SIX_CYLINDER_ENGINES.includes(profile.engineCode);
+  const notes: Record<string, string> = {
+    "e36-oil-filter": `${profile.engineCode}: ${sixCylinder ? "6.5 L" : "5.0 L"} with filter is the workbook reference capacity; verify the exact manual and dipstick procedure.`,
+    "e36-manual-transmission": ["M52B28", "S50US", "S52US"].includes(profile.engineCode) ? "ZF 5-speed family: about 1.30 L nominal; the gearbox label remains controlling." : "Getrag S5D 250G family: about 1.1–1.25 L nominal; the gearbox label remains controlling.",
+    "e36-automatic-transmission": profile.transmission === "5-speed automatic" ? "ZF 5HP18: about 10.5 L nominal total capacity; a pan service drains substantially less and fluid is type-plate dependent." : "GM 4L30-E/A4S automatic: roughly 7.8–8.8 L total depending on unit; a pan service drains less and the tag controls fluid.",
+    "e36-differential": `${sixCylinder ? "About 1.8 US qt" : "About 1.2 US qt"} is the workbook reference; fill to the lower edge of the fill hole and verify LSD requirements.`,
+    "e36-spark-plugs": `${sixCylinder ? "Six" : "Four"} plug positions for ${profile.engineCode}.`,
+    "e36-coolant": `${sixCylinder ? "About 10.5 L" : "About 6.5 L"} total-system reference for ${profile.engineCode}; actual refill depends on how completely the system is drained.`,
+    "e36-water-pump": sixCylinder ? "Six-cylinder workbook baseline: preventive replacement around 60,000 miles." : "M42/M44 workbook baseline: inspect by condition and consider an original pump around 150,000 miles rather than applying the six-cylinder 60,000-mile rule.",
+    "e36-thermostat": sixCylinder ? "Six-cylinder workbook baseline: commonly paired with the 60,000-mile water-pump service." : "M42/M44 workbook baseline: inspect by condition and consider around 150,000 miles if original.",
+    "e36-thermostat-housing": profile.engineCode === "M42" ? "M42 uses a metal thermostat housing; inspect its gasket and sealing surfaces without treating it as the six-cylinder plastic-housing failure item." : profile.engineCode === "M44" ? "M44 uses an integrated plastic thermostat housing/assembly; monitor it for age-related cracking and leakage." : "Six-cylinder workbook baseline: replace the plastic housing preventively with the thermostat around 60,000 miles or use a quality aluminum upgrade where appropriate.",
+    "e36-radiator": sixCylinder ? "Six-cylinder workbook baseline: inspect and consider preventive replacement around 90,000 miles." : "M42/M44 workbook baseline: no blanket 90,000-mile replacement; inspect and consider around 150,000 miles if original.",
+    "e36-expansion-tank": sixCylinder ? "Six-cylinder workbook baseline: inspect and consider preventive replacement around 90,000 miles." : "M42/M44 workbook baseline: no blanket 90,000-mile replacement; inspect and consider around 150,000 miles if original.",
+    "e36-fan-clutch": sixCylinder ? "Six-cylinder workbook baseline: inspect and consider fan/clutch replacement around 90,000 miles." : "M42/M44 configurations vary; verify the installed fan system and use condition or roughly 150,000-mile original-component context.",
+    "e36-chassis": profile.trim === "318ti" ? "The 318ti Compact uses an E30-derived rear semi-trailing-arm layout; inspect its rear bushings and bearings accordingly." : "Inspect the E36 multi-link rear suspension, mounts, bushings, bearings, and subframe attachment areas.",
+    "e36-ignition-coils": `${sixCylinder ? "Six" : "Four"} coil positions for ${profile.engineCode}; the 60,000-mile value is an inspection checkpoint, not mandatory replacement.`,
+  };
+  const note = notes[item.slug];
+  if (!note) return item;
+  return { ...item, diy: [note, ...item.diy] };
+}
+
+export function getMaintenanceCatalog(profile: VehicleProfile) {
+  return [...MAINTENANCE_CATALOG, ...E36_MAINTENANCE_CATALOG]
+    .filter((item) => matchesApplicability(profile, item.appliesTo))
+    .map((item) => profile.platform === "E36" ? resolveE36Maintenance(item, profile) : item);
+}
+
 const issueSource = (title: string, url: string, note: string, publisher = "F30Post"):
   CatalogSource => ({ type: "Community consensus", title, publisher, url, note });
 
@@ -317,7 +521,7 @@ const issues: KnownIssue[] = [
     preventativeAction: "Scan cooling faults during major service, address abnormal temperature behavior immediately, and replace pump/thermostat as a matched job when diagnosis supports it.", sources: [N20_VIDEO, STARTMYCAR_328],
   },
   {
-    slug: "n20-charge-pipe", system: "Intake", issue: "Plastic charge-pipe cracking", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26", "B58"] },
+    slug: "n20-charge-pipe", system: "Intake", issue: "Plastic charge-pipe cracking", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26", "N55", "B58"] },
     description: "The plastic charge path can split at a seam or connection, especially after years of heat cycles or higher boost.",
     symptoms: "Sudden power loss, boost leak, drivetrain malfunction, hiss, or an oily split near a coupling.", typicalMileage: "Condition and modification dependent.",
     preventativeAction: "Inspect joints during service and diagnose boost faults before replacing parts; a quality metal replacement is a common preventative upgrade.", sources: [N20_VIDEO, F30_BUYER],
@@ -401,11 +605,46 @@ const issues: KnownIssue[] = [
     sources: [issueSource("330e unable-to-charge diagnostic discussion", "https://www.reddit.com/r/BmwTech/comments/14d36ui", "Community troubleshooting patterns requiring proper scan confirmation.", "r/BmwTech")],
   },
   {
-    slug: "b48-coolant-housing", system: "Cooling", issue: "B48 coolant vent lines and filter-housing leaks", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["B48-PHEV"] },
+    slug: "b48-coolant-housing", system: "Cooling", issue: "B46/B48 coolant vent lines and filter-housing leaks", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["B46", "B48-PHEV"] },
     description: "Plastic coolant connections and the oil-filter-housing area can develop leaks with heat cycles.",
     symptoms: "Low-coolant warning, sweet odor, dried coolant residue, or wetness below the intake side of the engine.", typicalMileage: "Age and heat-cycle dependent.",
     preventativeAction: "Pressure-test unexplained loss and inspect plastic connectors before a small seep becomes an overheat event.",
     sources: [issueSource("B48 coolant-hose failure patterns", "https://www.reddit.com/r/F30/comments/1cckw4p", "Recurring owner reports used to define an inspection item.", "r/F30")],
+  },
+  {
+    slug: "b46-evap-purge-valve", system: "Fuel & emissions", issue: "B46 EVAP purge-valve faults", severity: "important", urgency: "watch", evidence: "BMW bulletin", appliesTo: { engines: ["B46"], years: [2017, 2018] },
+    description: "BMW extended VIN-specific coverage for the tank-ventilation purge valve on listed B46-powered F30 330i vehicles.",
+    symptoms: "Check-engine light, EVAP leak or mixture faults, rough idle after refueling, hard restart, or fuel odor.", typicalMileage: "Coverage and eligibility are VIN specific, not a universal failure interval.",
+    preventativeAction: "Scan the exact BMW faults and check VIN-specific warranty coverage before replacing the valve or smoke-testing the rest of the EVAP system.",
+    sources: [BMW_B46_PURGE, { type: "OEM", title: "Updated B46/B48/B58 purge-valve coverage", publisher: "BMW of North America · SIB 01 02 24", url: "https://static.nhtsa.gov/odi/tsbs/2026/MC-11032730-0001.pdf", note: "Current BMW coverage bulletin including listed 2018 F30 330i vehicles." }],
+  },
+  {
+    slug: "f30-fuel-tank-leakage", system: "Fuel", issue: "Plastic fuel-tank leakage coverage", severity: "critical", urgency: "watch", evidence: "BMW bulletin", appliesTo: { engines: ["N20", "N26", "B46", "N55", "B58"] },
+    description: "BMW published VIN-specific extended coverage for leakage from the plastic fuel tank on listed F30 gasoline models.",
+    symptoms: "Fuel odor, visible wetness, drips near the tank, evaporative-emissions faults, or an applicable warranty notice.", typicalMileage: "Eligibility is VIN and production-date based; the bulletin is not evidence that every tank will leak.",
+    preventativeAction: "Do not drive with liquid fuel leakage or a strong unexplained fuel odor. Check VIN-specific coverage and arrange professional inspection.",
+    sources: [BMW_F3X_FUEL_TANK],
+  },
+  {
+    slug: "n55-oil-filter-housing-action", system: "Engine", issue: "Early N55 plastic oil-filter housing service action", severity: "critical", urgency: "watch", evidence: "BMW bulletin", appliesTo: { engines: ["N55"], years: [2012] },
+    description: "BMW issued a service action for specific early-production F30 N55 cars because the plastic housing could leak oil or coolant internally or externally.",
+    symptoms: "Oil or coolant around the housing, unexplained fluid loss, cross-contamination, odor, or an open campaign in BMW records.", typicalMileage: "F30 production from August 2011 through March 2012; VIN status remains controlling.",
+    preventativeAction: "Verify the production date and campaign history. Diagnose any oil/coolant mixing or external leak promptly.",
+    sources: [{ type: "OEM", title: "N55 oil-filter housing service action", publisher: "BMW of North America · SIB 11 14 15", url: "https://static.nhtsa.gov/odi/tsbs/2016/MC-10150903-9999.pdf", note: "Defines the early F30 production range and inspection/replacement procedure." }],
+  },
+  {
+    slug: "n55-cooling-system", system: "Cooling", issue: "N55 electric water pump, thermostat, and cooling leaks", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N55"] },
+    description: "The N55 electric cooling system and its plastic connections can fail by fault, leakage, or age rather than a single fixed interval.",
+    symptoms: "High fan speed, reduced power, coolant warning, pump faults, slow warm-up, or an overheating message.", typicalMileage: "Age, heat-cycle, and service-history dependent.",
+    preventativeAction: "Scan cooling faults during major service, pressure-test unexplained loss, and stop driving for an overheating or coolant-temperature warning.",
+    sources: [N55_VIDEO],
+  },
+  {
+    slug: "n55-valve-cover-valvetronic", system: "Engine", issue: "N55 valve-cover, PCV, Valvetronic, and VANOS diagnosis", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N55"] },
+    description: "Oil leaks, crankcase ventilation, variable valve lift, and camshaft-control faults can produce overlapping N55 symptoms.",
+    symptoms: "Whistle, rough idle, oil odor, smoke after idle, reduced power, hard starting, or Valvetronic/VANOS faults.", typicalMileage: "Age and condition dependent; diagnosis matters more than a mileage guess.",
+    preventativeAction: "Test crankcase pressure, inspect the full cover, and read BMW-specific fault and adaptation data before replacing assemblies.",
+    sources: [N55_VIDEO],
   },
   {
     slug: "b58-oil-filter-housing", system: "Cooling", issue: "B58 plastic oil-filter housing coolant leak", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["B58"] },
@@ -483,7 +722,7 @@ const issues: KnownIssue[] = [
     preventativeAction: "Inspect all mounts and rule out misfires or driveline faults before replacement.", sources: [F30_BUYER],
   },
   {
-    slug: "f30-oil-pan-gasket", system: "Engine", issue: "Oil-pan gasket seepage", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26", "N47T", "B48-PHEV", "B58"] },
+    slug: "f30-oil-pan-gasket", system: "Engine", issue: "Oil-pan gasket seepage", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26", "N47T", "B46", "B48-PHEV", "N55", "B58"] },
     description: "The pan seal can seep with age; repair labor differs sharply between RWD and xDrive because of front-driveline packaging.",
     symptoms: "Oil along the pan seam, wet undertray, drops after parking, or oil smell.", typicalMileage: "Age and heat-cycle dependent.",
     preventativeAction: "Clean and confirm the highest leak source before approving a pan reseal; use the profile's drivetrain to estimate labor correctly.", sources: [F30_BUYER],
@@ -543,6 +782,54 @@ const issues: KnownIssue[] = [
     symptoms: "Gear-oil smell, wet output flange, fluid on the rear underbody, or differential whine.", typicalMileage: "Age, impact, vent, and mileage dependent.",
     preventativeAction: "Inspect at each rear-differential service and confirm the source before replacing seals.", sources: [F30_BUYER],
   },
+  {
+    slug: "e36-cooling-system-age", system: "Cooling", issue: "Age-critical cooling-system plastic and hose inspection", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Radiator necks, expansion tanks, thermostat housings, hoses, caps, pumps, and fan components age as a connected system.",
+    symptoms: "Coolant odor, staining, repeated top-offs, cracks, high temperature, fan damage, or pressure-test loss.", typicalMileage: "Age and engine-family dependent; these cars are now decades old.",
+    preventativeAction: "Establish the exact engine-family baseline, pressure-test unexplained loss, and stop driving immediately for overheating.", sources: [E36_MILLER, E36_SPECIALIST],
+  },
+  {
+    slug: "e36-mechanical-fan", system: "Cooling", issue: "Mechanical fan and fan-clutch condition", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Cracked blades, bearing play, or a failing clutch can damage the radiator, hoses, shroud, and hood.",
+    symptoms: "Visible blade cracks, wobble, roar that never settles, poor airflow at idle, bearing noise, or impact marks.", typicalMileage: "Equipment, age, engine family, and prior replacement dependent.",
+    preventativeAction: "Inspect every blade and the clutch/bearing condition; verify that the selected E36 actually uses the mechanical-fan arrangement.", sources: [E36_MILLER],
+  },
+  {
+    slug: "e36-brake-hoses-system", system: "Brakes", issue: "Brake hoses, hydraulic leaks, and measured wear", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Aged flexible hoses, corroded lines, leaks, and worn components require condition-based inspection rather than a guessed pad mileage.",
+    symptoms: "Soft pedal, pulling, fluid loss, cracked hoses, grinding, vibration, or uneven braking.", typicalMileage: "Condition and age based.",
+    preventativeAction: "Inspect yearly, keep the two-year fluid cadence, and do not drive with hydraulic leakage or an uncertain pedal.", sources: [E36_OWNER_MANUAL, E36_SPECIALIST],
+  },
+  {
+    slug: "e36-chassis-mounts", system: "Chassis", issue: "Bushings, ball joints, shock mounts, and subframe areas", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Multiple age-related chassis wear points can create similar noise, alignment, or stability symptoms.",
+    symptoms: "Clunking, wandering, uneven tire wear, rear movement, cracked rubber, visible play, or mounting-area damage.", typicalMileage: "Road, use, age, and previous repair dependent.",
+    preventativeAction: "Inspect the chassis as a system annually or every 30,000 miles, including rear mounts and subframe attachment areas.", sources: [E36_SPECIALIST, E36_MILLER],
+  },
+  {
+    slug: "e36-guibo-csb", system: "Driveline", issue: "Guibo, center-support bearing, CV boots, and linkage wear", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Rubber couplings, supports, boots, and linkages age together and can produce overlapping driveline symptoms.",
+    symptoms: "Clunk taking up drive, vibration under acceleration, cracked guibo, torn boots, or excessive shifter/selector play.", typicalMileage: "Age, torque cycles, and condition dependent.",
+    preventativeAction: "Inspect every 30,000 miles with safe underbody access and diagnose the complete driveline before replacing isolated parts.", sources: [E36_SPECIALIST, E36_MILLER],
+  },
+  {
+    slug: "e36-fuel-hoses", system: "Fuel", issue: "Aged fuel hoses and connections", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Fuel hoses can harden, crack, or seep long before a long-term mileage target because the platform is now decades old.",
+    symptoms: "Fuel odor, damp hose ends, cracking, staining, difficult hot starts, or visible leakage.", typicalMileage: "Age and material condition matter more than odometer mileage.",
+    preventativeAction: "Do not drive with liquid fuel leakage or a strong unexplained odor. Replace aged hose with correct fuel-rated material and clamps.", sources: [E36_MILLER],
+  },
+  {
+    slug: "e36-intake-vacuum", system: "Engine", issue: "Intake boot and vacuum-line leaks", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Hardened or split rubber can admit unmetered air and mimic ignition, sensor, or fuel faults.",
+    symptoms: "Rough idle, lean mixture codes, hesitation, whistle, stalling, or cracks revealed when a boot is flexed.", typicalMileage: "Age, heat, and prior replacement dependent.",
+    preventativeAction: "Inspect yearly and smoke-test persistent mixture or idle complaints before replacing unrelated sensors.", sources: [E36_SPECIALIST, E36_MILLER],
+  },
+  {
+    slug: "e36-power-steering-leaks", system: "Steering", issue: "Power-steering reservoir and hose seepage", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { platforms: ["E36"] },
+    description: "Reservoir hose connections and aged seals commonly deserve attention when fluid history is unknown.",
+    symptoms: "ATF odor, wet reservoir or hoses, low level, steering noise, drips, or saturated underbody areas.", typicalMileage: "Age and hose condition dependent.",
+    preventativeAction: "Verify the cap label, clean and identify the highest leak source, and inspect hoses and rack boots during a fluid exchange.", sources: [E36_MILLER, { type: "Community consensus", title: "E36 power-steering reservoir and hose service", publisher: "FCP Euro", url: "https://www.fcpeuro.com/blog/bmw-e36-power-steering-reservoir-hose-replacement", note: "Independent platform-specific service reference." }],
+  },
 ];
 
 export const KNOWN_ISSUES = issues;
@@ -554,8 +841,11 @@ export const PROJECT_IDEAS: ProjectIdea[] = [
   { slug: "charge-pipe", title: "Upgrade the plastic charge path", description: "A well-fitting metal charge pipe is a popular preventative project after the maintenance baseline is current.", payoff: "Reliability · response", appliesTo: { engines: ["N20", "N26", "B58"] } },
   { slug: "rwd-lsd", title: "Plan a limited-slip differential", description: "For a RWD enthusiast build, a professionally selected LSD can add usable traction without pretending it is required maintenance.", payoff: "Traction · balance", appliesTo: { drivetrains: ["RWD"], engines: ["N20", "N26", "B58"] } },
   { slug: "brake-feel", title: "Dial in brake feel", description: "Fresh correct fluid, healthy rubber, quality street pads, and good tires come before larger calipers.", payoff: "Pedal feel · confidence", appliesTo: {} },
+  { slug: "e36-cooling-baseline", title: "Build a documented E36 cooling baseline", description: "After inspection, replace only the age-critical cooling parts your engine family and history justify, then record the date and mileage.", payoff: "Reliability · confidence", appliesTo: { platforms: ["E36"] } },
+  { slug: "e36-shifter-refresh", title: "Refresh shifter wear after the driveline is healthy", description: "Bushings and linkage parts can restore a precise feel without masking a damaged guibo, mount, or center-support bearing.", payoff: "Tactility · control", appliesTo: { platforms: ["E36"], transmissions: ["5-speed manual"] } },
+  { slug: "e36-head-unit", title: "Add a reversible period-correct audio upgrade", description: "Modern Bluetooth or CarPlay can fit the cabin cleanly after water leaks, charging health, and mechanical priorities are handled.", payoff: "Daily usability", appliesTo: { platforms: ["E36"] } },
 ];
 
 export function getCatalogItem(slug: string) {
-  return MAINTENANCE_CATALOG.find((item) => item.slug === slug);
+  return [...MAINTENANCE_CATALOG, ...E36_MAINTENANCE_CATALOG].find((item) => item.slug === slug);
 }

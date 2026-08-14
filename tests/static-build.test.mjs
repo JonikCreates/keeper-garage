@@ -7,7 +7,7 @@ test("GitHub Pages build contains the Keeper application", async () => {
   const assets = await readdir(new URL("../dist/assets/", import.meta.url));
   const script = assets.find((file) => file.endsWith(".js"));
 
-  assert.match(html, /Keeper — 2016 BMW F30 Intelligence/);
+  assert.match(html, /Keeper — BMW Ownership Intelligence/);
   assert.match(html, /\/keeper-garage\/assets\//);
   assert.ok(script, "expected a compiled JavaScript asset");
 
@@ -17,8 +17,12 @@ test("GitHub Pages build contains the Keeper application", async () => {
   );
   assert.match(bundle, /Urgent/);
   assert.match(bundle, /Be on the lookout/);
-  assert.match(bundle, /2016 F30 issue library/);
+  assert.match(bundle, /BMW ownership intelligence/);
+  assert.match(bundle, /3 Series \(E36\)/);
+  assert.match(bundle, /all 25 workbook categories/);
   assert.match(bundle, /328i/);
+  assert.match(bundle, /330i/);
+  assert.match(bundle, /335i/);
   assert.match(bundle, /340i/);
   assert.match(bundle, /Continue as guest/);
   assert.match(bundle, /Email me a sign-in link/);
