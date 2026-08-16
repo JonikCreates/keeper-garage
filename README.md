@@ -19,6 +19,8 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - A vehicle-specific maintenance dashboard with saved-car switching, latest completed work, date, mileage, plan status, and repeatable service history
 - Importance-sorted maintenance groups that move overdue and due-soon work above untracked and completed/on-plan items
 - Vehicle-specific work lists for researched known issues and owner-added repairs, restoration, or cosmetic jobs
+- Vehicle-specific Known Issues search with aliases, symptoms, partial-word and typo matching, ranked explanations, and a custom-observation fallback
+- Reversible owner-tracked issues with date found, mileage found, and Watching, Needs Repair, or Repaired status; removing an active item never deletes completed service records
 - Member exports of every completed record for the selected vehicle as a paginated PDF or high-resolution PNG
 - Passwordless email, temporary guest access, and Supabase OAuth sign-in with Google
 - Profile and security controls for display name, email, phone, and linked identities

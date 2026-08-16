@@ -7,6 +7,7 @@ type TrackedState = {
   items: VehicleMaintenanceItemRow[];
   loading: boolean;
   saving: boolean;
+  removingSlug: string | null;
   error: string | null;
 };
 
@@ -14,6 +15,7 @@ const initialState: TrackedState = {
   items: [],
   loading: false,
   saving: false,
+  removingSlug: null,
   error: null,
 };
 
@@ -40,7 +42,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
         .order("created_at", { ascending: false })
         .returns<VehicleMaintenanceItemRow[]>();
       if (!active) return;
-      setState({ items: data ?? [], loading: false, saving: false, error: error?.message ?? null });
+      setState({ items: data ?? [], loading: false, saving: false, removingSlug: null, error: error?.message ?? null });
     }
     void loadItems();
     return () => {
@@ -50,7 +52,10 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
 
   const itemSlugs = useMemo(() => new Set(state.items.map((item) => item.item_slug)), [state.items]);
 
-  const insertItem = useCallback(async (item: Omit<VehicleMaintenanceItemRow, "id" | "owner_id" | "vehicle_id" | "created_at">) => {
+  type NewTrackedItem = Pick<VehicleMaintenanceItemRow, "item_slug" | "item_name" | "item_type" | "category" | "severity" | "notes">
+    & Partial<Pick<VehicleMaintenanceItemRow, "date_found" | "mileage_found" | "issue_status">>;
+
+  const insertItem = useCallback(async (item: NewTrackedItem) => {
     if (!supabase || !user || !vehicleId) return false;
     setState((current) => ({ ...current, saving: true, error: null }));
     const { data, error } = await supabase
@@ -88,11 +93,43 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
     notes: null,
   }), [insertItem]);
 
+  const addCustomIssue = useCallback((name: string, notes: string, dateFound: string, mileageFound: number | null, issueStatus: NonNullable<VehicleMaintenanceItemRow["issue_status"]>) => insertItem({
+    item_slug: `custom-issue-${crypto.randomUUID()}`,
+    item_name: name.trim(),
+    item_type: "custom_issue",
+    category: "Custom issue",
+    severity: issueStatus === "needs_repair" ? "important" : "routine",
+    notes: notes.trim() || null,
+    date_found: dateFound,
+    mileage_found: mileageFound,
+    issue_status: issueStatus,
+  }), [insertItem]);
+
+  const removeItem = useCallback(async (itemSlug: string) => {
+    if (!supabase || !user || !vehicleId) return false;
+    // REVIEW DECISION: removal targets only the active-plan row; completed maintenance_records remain an independent history.
+    setState((current) => ({ ...current, removingSlug: itemSlug, error: null }));
+    const { error } = await supabase
+      .from("vehicle_maintenance_items")
+      .delete()
+      .eq("owner_id", user.id)
+      .eq("vehicle_id", vehicleId)
+      .eq("item_slug", itemSlug);
+    if (error) {
+      setState((current) => ({ ...current, removingSlug: null, error: error.message }));
+      return false;
+    }
+    setState((current) => ({ ...current, items: current.items.filter((item) => item.item_slug !== itemSlug), removingSlug: null, error: null }));
+    return true;
+  }, [user, vehicleId]);
+
   return {
     ...state,
     itemSlugs,
     addKnownIssue,
     addCustomItem,
+    addCustomIssue,
+    removeItem,
     clearError: () => setState((current) => ({ ...current, error: null })),
   };
 }

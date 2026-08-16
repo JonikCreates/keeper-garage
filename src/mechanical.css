@@ -457,11 +457,45 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .issue-maintenance-action span { color: var(--acid); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .issue-maintenance-action p { margin: 0; color: var(--muted); font-size: 9px; }
 .issue-maintenance-action .button:disabled { cursor: default; opacity: .55; }
+.confirm-remove-actions { display: flex !important; align-items: center; gap: 7px !important; }
+.button-danger { color: #fff; border-color: var(--red); background: var(--red); }
+.button-danger:hover:not(:disabled) { color: var(--red); background: transparent; }
+.tracked-item-removal { margin-top: 12px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid color-mix(in srgb, var(--red) 28%, var(--line)); background: var(--field); }
+.tracked-item-removal > div { display: grid; gap: 5px; }
+.tracked-item-removal strong { font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.tracked-item-removal p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
 .library-toolbar { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
 .search-field, .library-toolbar > label:not(.search-field), .library-toolbar > strong { border-radius: 3px; background: var(--panel-2); }
 .search-field input, .library-toolbar select { color: var(--paper); background: var(--panel-2); }
+.library-toolbar select:disabled { cursor: not-allowed; opacity: .55; }
 .library-toolbar select option { color: var(--paper); background: var(--field); }
 .issue-library-list details.matched { box-shadow: inset 4px 0 var(--acid); }
+.known-issue-search-context { margin: -7px 0 14px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; border: 1px solid var(--line); border-left: 4px solid var(--blue); background: var(--panel-2); }
+.known-issue-search-context span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.known-issue-search-context strong { font-size: 10px; }
+.known-issue-search-context p { grid-column: 2; margin: 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.issue-search-status { margin-bottom: 12px; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--amber); background: var(--panel-2); }
+.issue-search-status.exact { border-left-color: var(--green); }
+.issue-search-status strong { font: 900 9px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.issue-search-status p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
+.issue-match-badge { color: var(--button-ink) !important; border-color: var(--acid) !important; background: var(--acid) !important; }
+.issue-match-explanation { margin: 0 16px 12px; padding: 11px 13px; display: grid; gap: 5px; border: 1px solid color-mix(in srgb, var(--blue) 45%, var(--line)); background: var(--field); }
+.issue-match-explanation span { color: var(--blue); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.issue-match-explanation p { margin: 0; font-size: 10px; }
+.issue-match-explanation small { color: var(--muted); font-size: 8px; line-height: 1.5; }
+.custom-issue-panel { margin-top: 16px; padding: 18px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px 24px; border: 1px solid var(--line); border-left: 4px solid var(--acid); background: var(--panel-2); }
+.custom-issue-panel > div:first-child { display: grid; gap: 5px; }
+.custom-issue-panel > div:first-child > span, .custom-issue-form label > span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.custom-issue-panel h3 { margin: 0; font: 900 18px "Arial Narrow", Arial, sans-serif; text-transform: uppercase; }
+.custom-issue-panel p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.custom-issue-notice { grid-column: 1 / -1; color: var(--green) !important; }
+.custom-issue-form { grid-column: 1 / -1; padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: end; gap: 11px; border-top: 1px solid var(--line); }
+.custom-issue-form label { display: grid; gap: 7px; }
+.custom-issue-form label.wide { grid-column: 1 / -1; }
+.custom-issue-form input, .custom-issue-form textarea, .custom-issue-form select { min-height: 42px; width: 100%; padding: 10px 12px; color: var(--paper); border: 1px solid var(--line); outline: 0; background: var(--field); font: 700 10px Arial, sans-serif; }
+.custom-issue-form textarea { resize: vertical; }
+.custom-issue-form input:focus, .custom-issue-form textarea:focus, .custom-issue-form select:focus { border-color: var(--acid); }
+.custom-issue-actions { display: flex; align-items: stretch; gap: 8px; }
 
 .sources-section h2 { max-width: 900px; font-size: clamp(34px, 4.5vw, 56px); }
 .evidence-grid { margin-top: 28px; border-color: var(--line); }
@@ -577,6 +611,11 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .maintenance-technical-grid { grid-template-columns: 1fr; }
   .maintenance-record-panel > header, .maintenance-record-gate { align-items: flex-start; flex-direction: column; }
   .maintenance-record-form { grid-template-columns: 1fr; }
+  .tracked-item-removal, .issue-maintenance-action { align-items: flex-start; flex-direction: column; }
+  .known-issue-search-context { grid-template-columns: 1fr; }
+  .known-issue-search-context p { grid-column: 1; }
+  .custom-issue-panel, .custom-issue-form { grid-template-columns: 1fr; }
+  .custom-issue-form label.wide { grid-column: 1; }
   .page-masthead-actions .button { min-width: 0; padding-inline: 8px; font-size: 8px; text-align: center; white-space: normal; }
   .site-footer { margin: 0; border-right: 0; border-left: 0; border-radius: 0; }
   .auth-panel { padding: 26px 20px; border-left: 0; }
