@@ -3,14 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-export type AuthProvider = "google" | "apple";
+export type AuthProvider = "google";
 
 export type AuthCapabilities = {
   anonymous: boolean;
   email: boolean;
   phone: boolean;
   google: boolean;
-  apple: boolean;
 };
 
 const unavailableCapabilities: AuthCapabilities = {
@@ -18,7 +17,6 @@ const unavailableCapabilities: AuthCapabilities = {
   email: false,
   phone: false,
   google: false,
-  apple: false,
 };
 
 export const hasSupabaseConfig = Boolean(supabaseUrl && supabasePublishableKey);
@@ -53,7 +51,6 @@ export async function getAuthCapabilities(): Promise<AuthCapabilities> {
     email: Boolean(settings.external?.email),
     phone: Boolean(settings.external?.phone),
     google: Boolean(settings.external?.google),
-    apple: Boolean(settings.external?.apple),
   };
 }
 

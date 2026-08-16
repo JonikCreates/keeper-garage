@@ -140,6 +140,8 @@ body::before {
 }
 .account-button { min-height: 34px; color: var(--header-text); border-color: rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .06); }
 .account-button:hover, .account-button.active { color: var(--button-ink); border-color: var(--acid); background: var(--acid); }
+.account-button.guest.active { color: #17110d; border-color: var(--amber); background: var(--amber); }
+.account-button.member.active { color: #101610; border-color: var(--green); background: var(--green); }
 .button { min-height: 40px; padding: 11px 15px; }
 .button-primary { color: var(--button-ink); border-color: var(--acid); background: var(--acid); box-shadow: 0 1px 2px var(--shadow); }
 .button-primary:hover { filter: brightness(1.06); }
@@ -242,7 +244,12 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .garage-picker select:focus, .config-grid select:focus, .garage-save input:focus, .account-form input:focus { border-color: var(--acid); box-shadow: 0 0 0 2px color-mix(in srgb, var(--acid) 18%, transparent); }
 .inference-note, .guest-choice, .account-summary, .security-proof { border-color: color-mix(in srgb, var(--acid), var(--line) 66%); background: color-mix(in srgb, var(--acid) 7%, var(--panel)); }
 .inference-note p, .security-proof p { color: var(--cream); }
-.session-note { color: var(--muted); background: var(--panel-2); }
+.session-note { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 12px; align-items: start; color: var(--muted); background: var(--panel-2); }
+.session-note strong { color: var(--paper); font-size: 8px; letter-spacing: .09em; text-transform: uppercase; }
+.session-note span { line-height: 1.55; }
+.session-note.visitor strong { color: var(--blue); }
+.session-note.guest strong { color: var(--amber); }
+.session-note.member strong { color: var(--green); }
 .plan-launch {
   margin: 0 20px 20px;
   min-height: 60px;
@@ -355,6 +362,13 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .auth-backdrop { background: rgba(3, 4, 5, .78); backdrop-filter: blur(3px); }
 .auth-panel { color: var(--paper); border-left: 1px solid var(--line); background: var(--panel); box-shadow: -12px 0 32px rgba(0, 0, 0, .34); }
 .auth-panel > header { padding-bottom: 18px; border-bottom: 3px solid var(--acid); }
+.provider-list { grid-template-columns: 1fr; }
+.social-auth-block .provider-footnote { margin: 14px 0 0; padding-top: 12px; border-top: 1px dashed var(--line); }
+.account-access-note { padding: 14px 16px; display: grid; gap: 6px; border: 1px solid var(--line); border-left: 4px solid var(--blue); background: var(--panel-2); }
+.account-access-note.guest { border-left-color: var(--amber); }
+.account-access-note.member { border-left-color: var(--green); }
+.account-access-note strong { font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.account-access-note p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
 .provider-button { color: var(--paper); border-color: var(--line); background: var(--panel-2); }
 .provider-button:hover:not(:disabled) { color: var(--button-ink); border-color: var(--acid); background: var(--acid); }
 .account-tabs button { color: var(--muted); background: var(--field); }
@@ -417,6 +431,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .hero-intro { font-size: 13px; }
   .configuration-panel { border-right: 0; border-left: 0; border-radius: 0; }
   .garage-route-strip { margin-bottom: 10px; border-right: 0; border-left: 0; border-radius: 0; }
+  .session-note { grid-template-columns: 1fr; }
   .page-masthead { min-height: 0; margin: 0 0 10px; padding: 26px 20px; gap: 24px; border-right: 0; border-left: 0; border-radius: 0; }
   .page-masthead h1 { font-size: clamp(42px, 14vw, 62px); }
   .page-masthead > div > p:last-child { font-size: 12px; }

@@ -18,10 +18,10 @@ function ProviderButton({ provider, enabled, linked = false, busy, onClick }: {
   busy: boolean;
   onClick: () => void;
 }) {
-  const name = provider === "google" ? "Google" : "Apple";
+  const name = "Google";
   return (
     <button className={`provider-button ${provider} ${linked ? "linked" : ""}`} disabled={busy || linked || !enabled} onClick={onClick}>
-      <span className="provider-mark" aria-hidden="true">{provider === "google" ? "G" : "●"}</span>
+      <span className="provider-mark" aria-hidden="true">G</span>
       <span>{linked ? `${name} connected` : enabled ? `Continue with ${name}` : `${name} setup required`}</span>
       <b>{linked ? "✓" : "↗"}</b>
     </button>
@@ -111,21 +111,21 @@ export function AuthPanel({ auth, open, onClose }: AuthPanelProps) {
         {auth.configured && auth.ready && auth.capabilitiesReady && !auth.user && (
           <div className="signed-out-stack">
             <section className="social-auth-block">
-              <span>Trusted sign-in</span>
-              <h3>Use an account you already trust</h3>
-              <p>Google and Apple authentication is handled by the provider. Keeper never receives or stores those passwords.</p>
+              <span>Member sign-in</span>
+              <h3>Open a recoverable garage</h3>
+              <p>Google authentication is handled by Google through Supabase. Keeper never receives or stores your Google password, and your garage can follow you across devices.</p>
               <div className="provider-list">
                 <ProviderButton provider="google" enabled={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.signInWithProvider("google")} />
-                <ProviderButton provider="apple" enabled={auth.capabilities.apple} busy={auth.busy} onClick={() => void auth.signInWithProvider("apple")} />
               </div>
+              {!auth.capabilities.google && <p className="provider-footnote">Google is waiting for its OAuth developer credentials to be enabled in Supabase.</p>}
             </section>
 
             <div className="auth-divider"><span>or use email</span></div>
 
             <form className="account-form" onSubmit={submitLoginEmail}>
               <span>Passwordless email</span>
-              <h3>Email me a secure link</h3>
-              <p>No password to create, reuse, or forget.</p>
+              <h3>Email me a secure member link</h3>
+              <p>No password to create, reuse, or forget. This creates the same recoverable member access as social sign-in.</p>
               <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
               <button className="button button-primary" disabled={auth.busy || !auth.capabilities.email}>{auth.busy ? "Sending…" : "Email me a sign-in link"}</button>
             </form>
@@ -133,9 +133,9 @@ export function AuthPanel({ auth, open, onClose }: AuthPanelProps) {
             <div className="auth-divider"><span>or browse privately</span></div>
 
             <article className="auth-choice guest-choice">
-              <span>Fastest start</span>
-              <h3>Continue as guest</h3>
-              <p>Save a garage on this browser, then connect email, Google, or Apple later.</p>
+              <span>Temporary access</span>
+              <h3>Continue as guest on this browser</h3>
+              <p>You can save vehicles immediately, but the anonymous account cannot be recovered after sign-out or cleared browser data until you connect email or Google.</p>
               <button className="button button-quiet" disabled={auth.busy || !auth.capabilities.anonymous} onClick={() => void auth.continueAsGuest()}>
                 {auth.busy ? "Starting…" : "Continue as guest"}
               </button>
@@ -147,8 +147,9 @@ export function AuthPanel({ auth, open, onClose }: AuthPanelProps) {
           <div className="account-center">
             <div className="account-summary">
               <div className="account-avatar" aria-hidden="true">{accountName.slice(0, 1).toUpperCase()}</div>
-              <div><span>{auth.isGuest ? "Guest garage" : "Keeper member"}</span><strong>{accountName}</strong><small>{joinedDate ? `Joined ${joinedDate}` : "Secure account"}</small></div>
+              <div><span>{auth.access.label}</span><strong>{accountName}</strong><small>{joinedDate ? `Joined ${joinedDate}` : "Secure account"}</small></div>
             </div>
+            <div className={`account-access-note ${auth.access.kind}`}><strong>Current access</strong><p>{auth.access.description}</p></div>
 
             <nav className="account-tabs" aria-label="Account settings">
               <button className={activeTab === "profile" ? "active" : ""} onClick={() => setActiveTab("profile")}>Profile</button>
@@ -176,9 +177,8 @@ export function AuthPanel({ auth, open, onClose }: AuthPanelProps) {
                   <div className="security-section-heading"><div><span>Social identity</span><strong>Connected accounts</strong></div><small>Provider-secured</small></div>
                   <div className="provider-list">
                     <ProviderButton provider="google" enabled={auth.capabilities.google} linked={auth.linkedProviders.includes("google")} busy={auth.busy} onClick={() => void auth.linkProvider("google")} />
-                    <ProviderButton provider="apple" enabled={auth.capabilities.apple} linked={auth.linkedProviders.includes("apple")} busy={auth.busy} onClick={() => void auth.linkProvider("apple")} />
                   </div>
-                  {(!auth.capabilities.google || !auth.capabilities.apple) && <p className="provider-footnote">Unavailable providers need their developer credentials connected in Supabase before customers can use them.</p>}
+                  {!auth.capabilities.google && <p className="provider-footnote">Google needs its OAuth developer credentials connected in Supabase before customers can use it.</p>}
                 </div>
 
                 <form className="security-section account-form" onSubmit={submitEmailChange}>
