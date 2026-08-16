@@ -16,6 +16,21 @@ const initialState: MaintenanceRecordState = {
   error: null,
 };
 
+export type MaintenanceRecordInput = {
+  workPerformed: string;
+  mileage: number;
+  completedAt: string;
+  notes: string | null;
+  fluidBrand: string | null;
+  fluidProduct: string | null;
+  fluidType: string | null;
+  fluidViscosity: string | null;
+  fluidSpecification: string | null;
+  fluidQuantity: number | null;
+  fluidUnit: string | null;
+  filterProduct: string | null;
+};
+
 export function useMaintenanceRecords(user: User | null, vehicleId: string | null) {
   const [state, setState] = useState(initialState);
 
@@ -63,7 +78,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
     return grouped;
   }, [state.records]);
 
-  const addRecord = useCallback(async (maintenanceSlug: string, maintenanceName: string, workPerformed: string, mileage: number, completedAt: string) => {
+  const addRecord = useCallback(async (maintenanceSlug: string, maintenanceName: string, input: MaintenanceRecordInput) => {
     if (!supabase || !user || !vehicleId) return false;
     setState((current) => ({ ...current, savingSlug: maintenanceSlug, error: null }));
     const { data, error } = await supabase
@@ -73,9 +88,18 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
         vehicle_id: vehicleId,
         maintenance_slug: maintenanceSlug,
         maintenance_name: maintenanceName,
-        work_performed: workPerformed.trim(),
-        mileage,
-        completed_at: completedAt,
+        work_performed: input.workPerformed.trim(),
+        mileage: input.mileage,
+        completed_at: input.completedAt,
+        notes: input.notes,
+        fluid_brand: input.fluidBrand,
+        fluid_product: input.fluidProduct,
+        fluid_type: input.fluidType,
+        fluid_viscosity: input.fluidViscosity,
+        fluid_specification: input.fluidSpecification,
+        fluid_quantity: input.fluidQuantity,
+        fluid_unit: input.fluidUnit,
+        filter_product: input.filterProduct,
       })
       .select()
       .single<MaintenanceRecordRow>();

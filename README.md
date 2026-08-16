@@ -16,8 +16,10 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - A light-first forum theme: white and blue by default, charcoal and safety orange when dark mode is selected, controlled by a moving M Parallel-inspired wheel
 - GitHub Pages-safe My Garage, Maintenance, and Known Issues routes with responsive navigation
 - Account-owned multi-vehicle picker with separate add and edit states
-- A vehicle-specific maintenance dashboard with saved-car switching, latest completed work, date, mileage, plan status, and repeatable service history
-- Importance-sorted maintenance groups that move overdue and due-soon work above untracked and completed/on-plan items
+- A simplified vehicle-specific maintenance view with compact last-completed, next-due, and status rows that expand only when more detail is wanted
+- Clearly separated Overdue, Do Soon, and Done sections plus lightweight status, category, fluid, and no-schedule filters
+- Optional per-service fluid records—including product, brand, viscosity/type, specification, quantity, unit, filter, and notes—with previous-product recall and a current-fluid summary
+- Organized custom maintenance categories with mileage, time, combined, or no-schedule plans for recurring service and one-time repairs
 - Vehicle-specific work lists for researched known issues and owner-added repairs, restoration, or cosmetic jobs
 - Vehicle-specific Known Issues search with aliases, symptoms, partial-word and typo matching, ranked explanations, and a custom-observation fallback
 - Reversible owner-tracked issues with date found, mileage found, and Watching, Needs Repair, or Repaired status; removing an active item never deletes completed service records

@@ -23,7 +23,7 @@ test("GitHub Pages build contains the Keeper application", async () => {
   assert.match(bundle, /3 Series \(E36\)/);
   assert.match(bundle, /3 Series \(E46\)/);
   assert.match(bundle, /5 Series \(E39\)/);
-  assert.match(bundle, /E36 preserves 25 workbook categories/);
+  assert.match(bundle, /Simple at first glance\. Detailed when you want it\./);
   assert.match(bundle, /M56B25 2\.5L I6/);
   assert.match(bundle, /S54B32 3\.2L I6/);
   assert.match(bundle, /S62B50 5\.0L V8/);
@@ -52,11 +52,13 @@ test("GitHub Pages build contains the Keeper application", async () => {
   assert.match(bundle, /Visitor · public research/);
   assert.match(bundle, /Guest · temporary garage/);
   assert.match(bundle, /Member · recoverable garage/);
-  assert.match(bundle, /Mark completed/);
-  assert.match(bundle, /Completion history/);
+  assert.match(bundle, /Save maintenance/);
+  assert.match(bundle, /Maintenance history/);
   assert.match(bundle, /Maintenance for/);
   assert.match(bundle, /Completed work/);
-  assert.match(bundle, /Done \/ on plan/);
+  assert.match(bundle, /What does this vehicle need/);
+  assert.match(bundle, /Current fluids/);
+  assert.match(bundle, /No Scheduled Interval/);
   assert.match(bundle, /Add custom maintenance/);
   assert.match(bundle, /Export as PDF/);
   assert.match(bundle, /Export as image/);

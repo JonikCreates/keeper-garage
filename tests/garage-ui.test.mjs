@@ -22,11 +22,11 @@ test("saved vehicles keep repeatable maintenance completion history", async () =
 
   assert.match(hook, /from\("maintenance_records"\)/);
   assert.match(hook, /maintenance_slug: maintenanceSlug/);
-  assert.match(hook, /work_performed: workPerformed\.trim\(\)/);
-  assert.match(panel, /Mark completed/);
-  assert.match(panel, /Completed work/);
-  assert.match(panel, /Mileage completed/);
-  assert.match(panel, /Completion history/);
+  assert.match(hook, /work_performed: input\.workPerformed\.trim\(\)/);
+  assert.match(panel, /Save maintenance/);
+  assert.match(panel, /Work completed/);
+  assert.match(panel, /<label>Mileage/);
+  assert.match(app, /Maintenance history/);
   assert.match(app, /recordsBySlug\.get\(item\.slug\)/);
   assert.match(app, /aria-label="Maintenance vehicle"/);
   assert.match(app, /maintenancePlanStatus/);
@@ -39,13 +39,30 @@ test("maintenance is importance-sorted and accepts issue and custom work items",
   const custom = await readFile(new URL("../src/CustomMaintenanceForm.tsx", import.meta.url), "utf8");
 
   assert.match(app, /label: "Overdue"/);
-  assert.match(app, /label: "Do soon"/);
-  assert.match(app, /label: "Done \/ on plan"/);
-  assert.match(app, /toneRank\.get\(left\.status\.tone\)/);
+  assert.match(app, /label: "Do Soon"/);
+  assert.match(app, /label: "Done"/);
+  assert.match(app, /toneRank\[left\.status\.tone\]/);
   assert.match(app, /TrackedIssueAction/);
   assert.match(tracked, /from\("vehicle_maintenance_items"\)/);
   assert.match(tracked, /item_slug: `issue-\$\{issue\.slug\}`/);
-  assert.match(custom, /Roof liner replacement/);
+  assert.match(custom, /Rear subframe bushings/);
+});
+
+test("simplified maintenance separates statuses and stores fluid details on service records", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const panel = await readFile(new URL("../src/MaintenanceRecordPanel.tsx", import.meta.url), "utf8");
+  const custom = await readFile(new URL("../src/CustomMaintenanceForm.tsx", import.meta.url), "utf8");
+  const records = await readFile(new URL("../src/useMaintenanceRecords.ts", import.meta.url), "utf8");
+
+  assert.match(app, /maintenance-status-section \$\{section\.key\}/);
+  assert.match(app, /What does this vehicle need\?/);
+  assert.match(app, /Current fluids/);
+  assert.match(app, /What have I actually done\?/);
+  assert.match(panel, /Previously used/);
+  assert.match(panel, /OEM specification/);
+  assert.match(records, /fluid_product: input\.fluidProduct/);
+  assert.match(custom, /Other \/ Custom Category/);
+  assert.match(custom, /No Scheduled Interval/);
 });
 
 test("known issues support smart search, custom observations, and reversible tracking", async () => {

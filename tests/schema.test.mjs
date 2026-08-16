@@ -42,6 +42,11 @@ const customIssueDetailsMigrationUrl = new URL(
   import.meta.url,
 );
 
+const simplifiedMaintenanceMigrationUrl = new URL(
+  "../supabase/migrations/20260816230000_simplify_maintenance_and_add_fluids.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -116,4 +121,14 @@ test("custom issue observations add bounded details without touching completed h
   assert.match(sql, /add column if not exists mileage_found integer/i);
   assert.match(sql, /issue_status in \('watching', 'needs_repair', 'repaired'\)/i);
   assert.doesNotMatch(sql, /delete from public\.maintenance_records|update public\.maintenance_records|drop table/i);
+});
+
+test("maintenance redesign adds optional fluid and plan fields without rewriting existing records", async () => {
+  const sql = await readFile(simplifiedMaintenanceMigrationUrl, "utf8");
+  assert.match(sql, /add column if not exists plan_type text not null default 'none'/i);
+  assert.match(sql, /add column if not exists tracks_fluid boolean not null default false/i);
+  assert.match(sql, /add column if not exists fluid_product text/i);
+  assert.match(sql, /add column if not exists fluid_specification text/i);
+  assert.match(sql, /maintenance_records_fluid_quantity_check/i);
+  assert.doesNotMatch(sql, /delete from|truncate|drop table|update public\.maintenance_records/i);
 });

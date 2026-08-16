@@ -11,6 +11,16 @@ type TrackedState = {
   error: string | null;
 };
 
+export type CustomTrackedItemInput = {
+  name: string;
+  category: string;
+  severity: VehicleMaintenanceItemRow["severity"];
+  planType: VehicleMaintenanceItemRow["plan_type"];
+  mileageInterval: number | null;
+  timeIntervalMonths: number | null;
+  tracksFluid: boolean;
+};
+
 const initialState: TrackedState = {
   items: [],
   loading: false,
@@ -53,7 +63,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
   const itemSlugs = useMemo(() => new Set(state.items.map((item) => item.item_slug)), [state.items]);
 
   type NewTrackedItem = Pick<VehicleMaintenanceItemRow, "item_slug" | "item_name" | "item_type" | "category" | "severity" | "notes">
-    & Partial<Pick<VehicleMaintenanceItemRow, "date_found" | "mileage_found" | "issue_status">>;
+    & Partial<Pick<VehicleMaintenanceItemRow, "date_found" | "mileage_found" | "issue_status" | "plan_type" | "mileage_interval" | "time_interval_months" | "tracks_fluid">>;
 
   const insertItem = useCallback(async (item: NewTrackedItem) => {
     if (!supabase || !user || !vehicleId) return false;
@@ -84,13 +94,17 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
     notes: issue.preventativeAction,
   }), [insertItem]);
 
-  const addCustomItem = useCallback((name: string, category: string, severity: VehicleMaintenanceItemRow["severity"]) => insertItem({
+  const addCustomItem = useCallback((input: CustomTrackedItemInput) => insertItem({
     item_slug: `custom-${crypto.randomUUID()}`,
-    item_name: name.trim(),
+    item_name: input.name.trim(),
     item_type: "custom",
-    category: category.trim() || "Other",
-    severity,
+    category: input.category.trim() || "Other",
+    severity: input.severity,
     notes: null,
+    plan_type: input.planType,
+    mileage_interval: input.mileageInterval,
+    time_interval_months: input.timeIntervalMonths,
+    tracks_fluid: input.tracksFluid,
   }), [insertItem]);
 
   const addCustomIssue = useCallback((name: string, notes: string, dateFound: string, mileageFound: number | null, issueStatus: NonNullable<VehicleMaintenanceItemRow["issue_status"]>) => insertItem({
