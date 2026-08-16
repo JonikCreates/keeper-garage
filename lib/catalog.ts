@@ -46,7 +46,10 @@ export type MaintenanceCatalogItem = {
 export type KnownIssue = {
   slug: string;
   system: string;
+  component?: string;
   issue: string;
+  aliases?: string[];
+  keywords?: string[];
   description: string;
   symptoms: string;
   typicalMileage: string;
@@ -560,14 +563,14 @@ const issues: KnownIssue[] = [
     sources: [{ type: "OEM", title: "N20/N26 timing-chain limited warranty extension", publisher: "BMW of North America · SIB 11 03 17", url: "https://bmwrepairguide.com/sib/110317.pdf", note: "Defines affected production and covered timing/oil-pump drive components." }, N20_VIDEO],
   },
   {
-    slug: "n20-oil-filter-housing", system: "Engine", issue: "Oil-filter housing and oil-cooler gasket leaks", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26"] },
+    slug: "n20-oil-filter-housing", system: "Engine", component: "Oil filter housing", issue: "Oil-filter housing and oil-cooler gasket leaks", aliases: ["OFHG", "oil filter housing gasket", "oil cooler gasket", "filter housing seal"], keywords: ["oil leak front of engine", "belt contamination", "passenger side oil leak"], severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26"] },
     description: "The housing-to-head and oil-cooler seals harden and leak. Oil reaching the belt drive raises the consequence beyond a cosmetic seep.",
     symptoms: "Fresh oil around the filter housing, oil smell, belt contamination, or oil collecting at the front of the engine.", typicalMileage: "Common with age and heat cycling, often from roughly 60,000 miles onward.",
     preventativeAction: "Inspect at every oil service. Repair promptly, clean the belt path, and replace contaminated belt components.",
     sources: [{ type: "Community consensus", title: "N20/N26 oil-filter housing gasket replacement", publisher: "FCP Euro", url: "https://www.fcpeuro.com/blog/how-to-replace-a-bmw-n20-n26-oil-filter-housing-gasket-f30", note: "Specialist procedure and failure context." }, N20_VIDEO],
   },
   {
-    slug: "n20-valve-cover-pcv", system: "Engine", issue: "Valve-cover gasket and integrated PCV", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26"] },
+    slug: "n20-valve-cover-pcv", system: "Engine", component: "Cylinder head cover and Valvetronic servomotor mounting area", issue: "Valve-cover gasket and integrated PCV", aliases: ["VVT motor seal", "VVT actuator seal", "Valvetronic motor seal", "Valvetronic motor gasket", "Valvetronic actuator gasket", "eccentric shaft actuator seal", "actuator flange gasket", "motor flange seal", "seal flange"], keywords: ["oil leak passenger side", "oil around Valvetronic motor", "cylinder head cover leak", "whistling PCV"], severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: { engines: ["N20", "N26"] },
     description: "The composite cover can warp, its gasket can leak, and the integrated crankcase-ventilation diaphragm can fail.",
     symptoms: "Burning-oil odor, oil at the cover edge, whistling, rough idle, mixture faults, or excess crankcase vacuum.", typicalMileage: "Age and heat-cycle dependent; common on higher-mileage cars.",
     preventativeAction: "Inspect the entire cover before replacing only the gasket and verify crankcase pressure when symptoms point to PCV failure.", sources: [N20_VIDEO],
@@ -736,7 +739,7 @@ const issues: KnownIssue[] = [
     preventativeAction: "Use BMW-specific fault data and cylinder testing; do not replace injectors or the pump without confirming the failure.", sources: [{ type: "Community consensus", title: "B58 common-issue owner discussion", publisher: "F30Post", url: "https://f30.bimmerpost.com/forums/showthread.php?t=1796289", note: "Recurring owner reports cross-checked against specialist guidance." }],
   },
   {
-    slug: "f30-thrust-arm-bushings", system: "Suspension", issue: "Front thrust-arm hydro-bushings", severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: {},
+    slug: "f30-thrust-arm-bushings", system: "Suspension", component: "Front thrust arm", issue: "Front thrust-arm hydro-bushings", aliases: ["control arm bushing", "tension strut bushing", "wishbone bushing", "front lower control arm"], keywords: ["clunk over bumps", "brake shimmy", "wandering steering"], severity: "critical", urgency: "watch", evidence: "Community consensus", appliesTo: {},
     description: "The fluid-filled front tension-strut bushings can split or leak, reducing stability under braking.",
     symptoms: "Brake shimmy, clunk when braking or reversing, wandering, vague steering, or dark oily residue at the bushing.", typicalMileage: "Often relevant from 50,000–100,000 miles, sooner on rough roads.",
     preventativeAction: "Inspect for leakage and play during every tire or brake service and align the car after replacement.",
@@ -768,7 +771,7 @@ const issues: KnownIssue[] = [
     preventativeAction: "Inspect tire wear first, then confirm the bearing location professionally before replacement.", sources: [F30_BUYER],
   },
   {
-    slug: "f30-sway-links-strut-mounts", system: "Suspension", issue: "Sway-bar links, strut mounts, and damper wear", severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: {},
+    slug: "f30-sway-links-strut-mounts", system: "Suspension", component: "Sway-bar end links and strut mounts", issue: "Sway-bar links, strut mounts, and damper wear", aliases: ["sway bar end links", "stabilizer links", "drop links", "upper strut mounts", "shock mounts"], keywords: ["clunk over bumps", "rattle from suspension", "knocking front end"], severity: "important", urgency: "watch", evidence: "Community consensus", appliesTo: {},
     description: "Several front-end wear points can produce similar low-speed rattles, making physical diagnosis essential.",
     symptoms: "Rattle over broken pavement, bounce, cupped tires, leaking damper, or noise while steering.", typicalMileage: "Often increasingly relevant after 60,000 miles or repeated pothole impacts.",
     preventativeAction: "Inspect as a system and avoid replacing multiple parts solely from a sound recording.", sources: [issueSource("F30 low-speed suspension rattle diagnosis", "https://f30.bimmerpost.com/forums/showthread.php?t=1800060", "Recurring owner diagnostic path across links, mounts, dampers, and steering rack.")],

@@ -37,6 +37,11 @@ const trackedMaintenanceMigrationUrl = new URL(
   import.meta.url,
 );
 
+const customIssueDetailsMigrationUrl = new URL(
+  "../supabase/migrations/20260816220000_add_custom_issue_details.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -102,4 +107,13 @@ test("vehicle work-list items are owner isolated and do not rewrite service hist
   assert.match(sql, /alter table public\.vehicle_maintenance_items enable row level security/i);
   assert.match(sql, /vehicles\.owner_id = \(select auth\.uid\(\)\)/i);
   assert.doesNotMatch(sql, /delete from public\.maintenance_records|update public\.maintenance_records/i);
+});
+
+test("custom issue observations add bounded details without touching completed history", async () => {
+  const sql = await readFile(customIssueDetailsMigrationUrl, "utf8");
+  assert.match(sql, /item_type in \('known_issue', 'custom', 'custom_issue'\)/i);
+  assert.match(sql, /add column if not exists date_found date/i);
+  assert.match(sql, /add column if not exists mileage_found integer/i);
+  assert.match(sql, /issue_status in \('watching', 'needs_repair', 'repaired'\)/i);
+  assert.doesNotMatch(sql, /delete from public\.maintenance_records|update public\.maintenance_records|drop table/i);
 });

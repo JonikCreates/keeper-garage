@@ -16,15 +16,18 @@ import {
   type KnownIssue,
   type VehicleProfile,
 } from "../lib/catalog";
+import { searchKnownIssues } from "../lib/knownIssueSearch";
 import { AuthPanel } from "./AuthPanel";
+import { CustomIssueForm } from "./CustomIssueForm";
 import { CustomMaintenanceForm } from "./CustomMaintenanceForm";
 import { MaintenanceExportMenu } from "./MaintenanceExportMenu";
 import { MaintenanceRecordPanel } from "./MaintenanceRecordPanel";
+import { RemoveTrackedItemButton, TrackedIssueAction } from "./TrackedIssueAction";
 import { useGarage } from "./useGarage";
 import { useKeeperAuth } from "./useKeeperAuth";
 import { useMaintenanceRecords } from "./useMaintenanceRecords";
 import { useTrackedMaintenance } from "./useTrackedMaintenance";
-import type { MaintenanceRecordRow } from "./supabase";
+import type { MaintenanceRecordRow, VehicleMaintenanceItemRow } from "./supabase";
 
 type LibraryView = "mine" | "all" | string;
 type Theme = "dark" | "light";
@@ -37,11 +40,12 @@ type DashboardItem = {
   name: string;
   category: string;
   severity: "critical" | "important" | "routine";
-  kind: "baseline" | "known_issue" | "custom";
+  kind: "baseline" | "known_issue" | "custom" | "custom_issue";
   planLabel: string;
   notes: string | null;
   catalog: MaintenanceCatalogItem | null;
   issue: KnownIssue | null;
+  trackedItem: VehicleMaintenanceItemRow | null;
   records: MaintenanceRecordRow[];
   status: MaintenanceStatus;
 };
@@ -277,6 +281,7 @@ export default function App() {
         notes: null,
         catalog: item,
         issue: null,
+        trackedItem: null,
         records,
         status: maintenancePlanStatus(item, records[0], currentVehicleMileage),
       };
@@ -290,12 +295,15 @@ export default function App() {
         category: item.category,
         severity: item.severity,
         kind: item.item_type,
-        planLabel: item.item_type === "known_issue" ? "Owner-tracked issue" : "Owner-added work",
+        planLabel: item.item_type === "known_issue" ? "Owner-tracked issue" : item.item_type === "custom_issue" ? "Owner-reported issue" : "Owner-added work",
         notes: item.notes,
         catalog: null,
         issue: issueSlug ? KNOWN_ISSUES.find((issue) => issue.slug === issueSlug) ?? null : null,
+        trackedItem: item,
         records,
-        status: records.length ? { label: "Done", tone: "current" } : { label: "Do soon", tone: "soon" },
+        status: records.length || item.issue_status === "repaired"
+          ? { label: "Done", tone: "current" }
+          : { label: item.issue_status === "watching" ? "Watching" : item.issue_status === "needs_repair" ? "Needs repair" : "Do soon", tone: "soon" },
       };
     });
     const toneRank = new Map(maintenanceGroups.map((group, index) => [group.tone, index]));
@@ -305,14 +313,15 @@ export default function App() {
       || left.name.localeCompare(right.name));
   }, [currentVehicleMileage, maintenance, serviceRecords.recordsBySlug, trackedMaintenance.items]);
 
-  const libraryIssues = useMemo(() => KNOWN_ISSUES.filter((issue) => {
-    const query = libraryQuery.trim().toLowerCase();
-    const textMatches = !query || `${issue.issue} ${issue.system} ${issue.description} ${issue.symptoms}`.toLowerCase().includes(query);
+  const browseIssues = useMemo(() => KNOWN_ISSUES.filter((issue) => {
     const platformMatches = (issue.appliesTo.platforms ?? ["F30"]).includes(profile.platform);
-    if (!textMatches || libraryView === "all") return textMatches && platformMatches;
-    if (libraryView === "mine") return textMatches && matchesApplicability(profile, issue.appliesTo);
-    return textMatches && issueMatchesTrim(issue, profile.platform, libraryView);
-  }), [libraryQuery, libraryView, profile]);
+    if (libraryView === "all") return platformMatches;
+    if (libraryView === "mine") return matchesApplicability(profile, issue.appliesTo);
+    return issueMatchesTrim(issue, profile.platform, libraryView);
+  }), [libraryView, profile]);
+  const issueSearchResults = useMemo(() => searchKnownIssues(libraryQuery, matchedIssues, profile), [libraryQuery, matchedIssues, profile]);
+  const libraryIssues = libraryQuery.trim() ? issueSearchResults.map((result) => result.issue) : browseIssues;
+  const issueSearchBySlug = useMemo(() => new Map(issueSearchResults.map((result) => [result.issue.slug, result])), [issueSearchResults]);
 
   function resetGenerationView() {
     setLibraryView("mine");
@@ -372,6 +381,18 @@ export default function App() {
       return;
     }
     await trackedMaintenance.addKnownIssue(issue);
+  }
+
+  function requireSavedVehicle() {
+    if (!auth.user) {
+      auth.clearStatus();
+      setAuthOpen(true);
+      return;
+    }
+    if (!garage.vehicleId) {
+      setSaveNotice("Save this vehicle before adding work to its maintenance plan.");
+      window.location.assign("#garage");
+    }
   }
 
   function closeAuth() {
@@ -531,12 +552,13 @@ export default function App() {
                 {groupedItems.map((item) => {
                   const latest = item.records[0];
                   return <details className={`maintenance-dashboard-item ${item.records.length ? "completed" : ""} ${item.kind}`} key={`${garage.vehicleId ?? "configured"}:${item.slug}`}>
-                    <summary><div className="maintenance-baseline-cell"><span className={`severity-dot ${item.severity}`} /><strong>{item.name}</strong>{item.kind !== "baseline" && <small>{item.kind === "known_issue" ? "Known issue" : "Custom"}</small>}</div><div data-label="Completed work"><strong>{latest?.work_performed ?? "—"}</strong></div><div data-label="Date"><strong>{latest ? shortServiceDate(latest.completed_at) : "—"}</strong></div><div data-label="Miles"><strong>{latest ? `${latest.mileage.toLocaleString()} mi` : "—"}</strong></div><div className="maintenance-plan-cell" data-label="Plan"><strong>{item.planLabel}</strong><small className={item.status.tone}>{item.status.label}</small></div><b aria-hidden="true">＋</b></summary>
+                    <summary><div className="maintenance-baseline-cell"><span className={`severity-dot ${item.severity}`} /><strong>{item.name}</strong>{item.kind !== "baseline" && <small>{item.kind === "known_issue" ? "Known issue" : item.kind === "custom_issue" ? "Custom issue" : "Custom"}</small>}</div><div data-label="Completed work"><strong>{latest?.work_performed ?? "—"}</strong></div><div data-label="Date"><strong>{latest ? shortServiceDate(latest.completed_at) : "—"}</strong></div><div data-label="Miles"><strong>{latest ? `${latest.mileage.toLocaleString()} mi` : "—"}</strong></div><div className="maintenance-plan-cell" data-label="Plan"><strong>{item.planLabel}</strong><small className={item.status.tone}>{item.status.label}</small></div><b aria-hidden="true">＋</b></summary>
                     <div className="maintenance-record-drawer">
                       {item.catalog && <div className="maintenance-technical-grid"><article><span>Factory position</span><p>{item.catalog.oem.summary}</p></article><article><span>Planning baseline</span><p>{item.catalog.community.summary}</p></article><article><span>Before service</span><ul>{item.catalog.diy.map((note) => <li key={note}>{note}</li>)}</ul></article></div>}
-                      {!item.catalog && <div className="maintenance-technical-grid tracked-item-context"><article><span>{item.kind === "known_issue" ? "Known issue" : "Custom item"}</span><p>{item.name}</p></article><article><span>Category</span><p>{item.category}</p></article><article><span>Work-list context</span><p>{item.notes ?? "Owner-added maintenance, repair, restoration, or cosmetic work."}</p></article></div>}
+                      {!item.catalog && <div className="maintenance-technical-grid tracked-item-context"><article><span>{item.kind === "known_issue" ? "Known issue" : item.kind === "custom_issue" ? "Owner observation" : "Custom item"}</span><p>{item.name}</p></article><article><span>{item.kind === "custom_issue" ? "First observed" : "Category"}</span><p>{item.kind === "custom_issue" ? [item.trackedItem?.date_found ? shortServiceDate(item.trackedItem.date_found) : null, item.trackedItem?.mileage_found !== null && item.trackedItem?.mileage_found !== undefined ? `${item.trackedItem.mileage_found.toLocaleString()} mi` : null].filter(Boolean).join(" · ") || "Not recorded" : item.category}</p></article><article><span>Work-list context</span><p>{item.notes ?? "Owner-added maintenance, repair, restoration, or cosmetic work."}</p></article></div>}
                       <footer>{(item.catalog?.sources ?? item.issue?.sources ?? []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><b>{source.type}</b>{source.title} ↗</a>)}</footer>
                       <MaintenanceRecordPanel item={item} records={item.records} signedIn={Boolean(auth.user)} isGuest={auth.isGuest} hasSavedVehicle={Boolean(garage.vehicleId)} defaultMileage={garage.mileage} saving={serviceRecords.savingSlug === item.slug} onOpenAuth={() => { auth.clearStatus(); setAuthOpen(true); }} onAdd={(workPerformed, mileage, completedAt) => serviceRecords.addRecord(item.slug, item.name, workPerformed, mileage, completedAt)} onDelete={serviceRecords.deleteRecord} />
+                      {item.kind !== "baseline" && <div className="tracked-item-removal"><div><strong>Active-plan controls</strong><p>Removal hides this tracked item from the plan. Any completed service records remain in your account.</p></div><RemoveTrackedItemButton removing={trackedMaintenance.removingSlug === item.slug} onRemove={() => trackedMaintenance.removeItem(item.slug)} /></div>}
                     </div>
                   </details>;
                 })}
@@ -549,10 +571,12 @@ export default function App() {
         <section className="library-section" id="library">
           <header className="section-heading"><div><p className="eyebrow">Stored research · {KNOWN_ISSUES.length} patterns</p><h2>{platform.label} issue library.</h2></div><p>Coverage follows the selected generation and its U.S.-market engine and transmission combinations. Each record keeps fitment, evidence type, symptoms, and next action visible.</p></header>
           <div className="library-toolbar">
-            <label className="search-field"><span>⌕</span><input value={libraryQuery} onChange={(event) => setLibraryQuery(event.target.value)} placeholder="Search symptoms, systems, or issues" aria-label="Search the issue library" /></label>
-            <label><span>Fitment view</span><select value={libraryView} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option><option value="all">All {profile.platform} research</option>{libraryTrimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
+            <label className="search-field"><span>⌕</span><input value={libraryQuery} onChange={(event) => setLibraryQuery(event.target.value)} placeholder="Search a part, symptom, issue, or common name…" aria-label="Search Known Issues" /></label>
+            <label><span>Fitment view</span><select value={libraryView} disabled={Boolean(libraryQuery.trim())} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option><option value="all">All {profile.platform} research</option>{libraryTrimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
             <strong>{libraryIssues.length} shown</strong>
           </div>
+          <div className="known-issue-search-context"><span>Searching for</span><strong>{profile.year} BMW {profile.trim} · {profile.platform} · {engineLabels[profile.engineCode] ?? profile.engineCode} · {profile.drivetrain}</strong><p>{libraryQuery.trim() ? "Search results are limited to records that match this exact vehicle configuration." : "Choose a broader fitment view to browse the full generation library."}</p></div>
+          {libraryQuery.trim() && <div className={`issue-search-status ${issueSearchResults[0]?.matchLabel === "High match" ? "exact" : "closest"}`}><strong>{issueSearchResults[0]?.matchLabel === "High match" ? "Best matches" : "No exact match found"}</strong><p>{issueSearchResults.length ? issueSearchResults[0]?.matchLabel === "High match" ? "Ranked by terminology, symptoms, components, common names, and vehicle fitment." : "Here are the closest matches for your selected vehicle. Review the details, or add your own issue below." : "No strong library match was found for this vehicle. You can still add it as a custom issue below."}</p></div>}
           <div className="issue-library-list">
             {libraryIssues.map((issue) => {
               const matched = matchesApplicability(profile, issue.appliesTo);
@@ -564,14 +588,18 @@ export default function App() {
                 ...(issue.appliesTo.transmissions ?? []),
               ];
               const addedToMaintenance = trackedMaintenance.itemSlugs.has(`issue-${issue.slug}`);
+              const searchMatch = issueSearchBySlug.get(issue.slug);
               return <details className={matched ? "matched" : ""} key={issue.slug}>
-                <summary><span className="issue-system">{issue.system}</span><div><h3>{issue.issue}</h3><p>{issue.description}</p></div><EvidenceTag value={issue.evidence} /><b>{matched ? "MATCH" : "LIBRARY"}</b></summary>
+                <summary><span className="issue-system">{issue.system}</span><div><h3>{issue.issue}</h3><p>{issue.description}</p></div><EvidenceTag value={issue.evidence} /><b className={searchMatch ? "issue-match-badge" : ""}>{searchMatch?.matchLabel ?? (matched ? "MATCH" : "LIBRARY")}</b></summary>
+                {searchMatch && <div className="issue-match-explanation"><span>Why this matched</span><p>{searchMatch.reason}</p>{issue.aliases?.length ? <small>Also known as: {issue.aliases.slice(0, 5).join(" · ")}</small> : null}</div>}
                 <div className="issue-detail-grid"><article><span>Watch for</span><p>{issue.symptoms}</p></article><article><span>Context</span><p>{issue.typicalMileage}</p></article><article><span>What to do</span><p>{issue.preventativeAction}</p></article><article><span>Applies to</span><p>{appliesTo.length ? appliesTo.join(" · ") : `All ${profile.platform} variants`}</p></article></div>
                 <footer>{issue.sources.map((source) => <a href={source.url} target="_blank" rel="noreferrer" key={source.url}><span>{source.type}</span>{source.title} ↗</a>)}</footer>
-                <div className="issue-maintenance-action"><div><span>My Garage work list</span><p>{matched ? "Add this issue to the selected vehicle, then record the repair when it is completed." : "Select a matching vehicle before adding this issue."}</p></div><button className="button button-primary" type="button" disabled={!matched || addedToMaintenance || trackedMaintenance.saving} onClick={() => void addIssueToMaintenance(issue)}>{addedToMaintenance ? "Added to maintenance" : "Add to maintenance"}</button></div>
+                <TrackedIssueAction matched={matched} added={addedToMaintenance} saving={trackedMaintenance.saving} removing={trackedMaintenance.removingSlug === `issue-${issue.slug}`} onAdd={() => addIssueToMaintenance(issue)} onRemove={() => trackedMaintenance.removeItem(`issue-${issue.slug}`)} />
               </details>;
             })}
           </div>
+          {libraryQuery.trim() && <CustomIssueForm query={libraryQuery} enabled={Boolean(auth.user && garage.vehicleId)} saving={trackedMaintenance.saving} defaultMileage={garage.mileage} onRequireVehicle={requireSavedVehicle} onAdd={trackedMaintenance.addCustomIssue} />}
+          {trackedMaintenance.error && <p className="maintenance-record-error">{trackedMaintenance.error}</p>}
         </section>
 
         <section className="sources-section" id="sources">

@@ -89,9 +89,12 @@ export type VehicleMaintenanceItemRow = {
   vehicle_id: string;
   item_slug: string;
   item_name: string;
-  item_type: "known_issue" | "custom";
+  item_type: "known_issue" | "custom" | "custom_issue";
   category: string;
   severity: "critical" | "important" | "routine";
   notes: string | null;
+  date_found: string | null;
+  mileage_found: number | null;
+  issue_status: "watching" | "needs_repair" | "repaired" | null;
   created_at: string;
 };

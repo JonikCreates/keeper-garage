@@ -42,10 +42,29 @@ test("maintenance is importance-sorted and accepts issue and custom work items",
   assert.match(app, /label: "Do soon"/);
   assert.match(app, /label: "Done \/ on plan"/);
   assert.match(app, /toneRank\.get\(left\.status\.tone\)/);
-  assert.match(app, /Add to maintenance/);
+  assert.match(app, /TrackedIssueAction/);
   assert.match(tracked, /from\("vehicle_maintenance_items"\)/);
   assert.match(tracked, /item_slug: `issue-\$\{issue\.slug\}`/);
   assert.match(custom, /Roof liner replacement/);
+});
+
+test("known issues support smart search, custom observations, and reversible tracking", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const tracked = await readFile(new URL("../src/useTrackedMaintenance.ts", import.meta.url), "utf8");
+  const search = await readFile(new URL("../lib/knownIssueSearch.ts", import.meta.url), "utf8");
+  const action = await readFile(new URL("../src/TrackedIssueAction.tsx", import.meta.url), "utf8");
+  const customIssue = await readFile(new URL("../src/CustomIssueForm.tsx", import.meta.url), "utf8");
+
+  assert.match(app, /searchKnownIssues\(libraryQuery, matchedIssues, profile\)/);
+  assert.match(search, /editDistance/);
+  assert.match(search, /alternate name/);
+  assert.match(tracked, /item_type: "custom_issue"/);
+  assert.match(tracked, /\.delete\(\)[\s\S]*\.eq\("owner_id", user\.id\)[\s\S]*\.eq\("vehicle_id", vehicleId\)/);
+  assert.match(action, /Confirm removal/);
+  assert.match(action, /leaves completed service records untouched/);
+  assert.match(customIssue, /Date found/);
+  assert.match(customIssue, /Mileage found/);
+  assert.match(customIssue, /Needs Repair/);
 });
 
 test("completed work exports from the full selected-vehicle record set", async () => {
