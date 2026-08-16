@@ -1,0 +1,118 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase, type MaintenanceRecordRow } from "./supabase";
+
+type MaintenanceRecordState = {
+  records: MaintenanceRecordRow[];
+  loading: boolean;
+  savingSlug: string | null;
+  error: string | null;
+};
+
+const initialState: MaintenanceRecordState = {
+  records: [],
+  loading: false,
+  savingSlug: null,
+  error: null,
+};
+
+export function useMaintenanceRecords(user: User | null, vehicleId: string | null) {
+  const [state, setState] = useState(initialState);
+
+  useEffect(() => {
+    if (!supabase || !user || !vehicleId) {
+      queueMicrotask(() => setState(initialState));
+      return;
+    }
+
+    const client = supabase;
+    const ownerId = user.id;
+    const selectedVehicleId = vehicleId;
+    let active = true;
+    async function loadRecords() {
+      setState({ ...initialState, loading: true });
+      const { data, error } = await client
+        .from("maintenance_records")
+        .select("*")
+        .eq("owner_id", ownerId)
+        .eq("vehicle_id", selectedVehicleId)
+        .order("completed_at", { ascending: false })
+        .order("created_at", { ascending: false })
+        .returns<MaintenanceRecordRow[]>();
+      if (!active) return;
+      setState({
+        records: data ?? [],
+        loading: false,
+        savingSlug: null,
+        error: error?.message ?? null,
+      });
+    }
+    void loadRecords();
+    return () => {
+      active = false;
+    };
+  }, [user, vehicleId]);
+
+  const recordsBySlug = useMemo(() => {
+    const grouped = new Map<string, MaintenanceRecordRow[]>();
+    for (const record of state.records) {
+      const existing = grouped.get(record.maintenance_slug) ?? [];
+      existing.push(record);
+      grouped.set(record.maintenance_slug, existing);
+    }
+    return grouped;
+  }, [state.records]);
+
+  const addRecord = useCallback(async (maintenanceSlug: string, maintenanceName: string, workPerformed: string, mileage: number, completedAt: string) => {
+    if (!supabase || !user || !vehicleId) return false;
+    setState((current) => ({ ...current, savingSlug: maintenanceSlug, error: null }));
+    const { data, error } = await supabase
+      .from("maintenance_records")
+      .insert({
+        owner_id: user.id,
+        vehicle_id: vehicleId,
+        maintenance_slug: maintenanceSlug,
+        maintenance_name: maintenanceName,
+        work_performed: workPerformed.trim(),
+        mileage,
+        completed_at: completedAt,
+      })
+      .select()
+      .single<MaintenanceRecordRow>();
+    if (error) {
+      setState((current) => ({ ...current, savingSlug: null, error: error.message }));
+      return false;
+    }
+    setState((current) => ({
+      ...current,
+      records: [data, ...current.records],
+      savingSlug: null,
+      error: null,
+    }));
+    return true;
+  }, [user, vehicleId]);
+
+  const deleteRecord = useCallback(async (recordId: string) => {
+    if (!supabase || !user || !vehicleId) return false;
+    const { error } = await supabase
+      .from("maintenance_records")
+      .delete()
+      .eq("id", recordId)
+      .eq("owner_id", user.id)
+      .eq("vehicle_id", vehicleId);
+    if (error) {
+      setState((current) => ({ ...current, error: error.message }));
+      return false;
+    }
+    setState((current) => ({ ...current, records: current.records.filter((record) => record.id !== recordId), error: null }));
+    return true;
+  }, [user, vehicleId]);
+
+  return {
+    ...state,
+    recordsBySlug,
+    addRecord,
+    deleteRecord,
+    clearError: () => setState((current) => ({ ...current, error: null })),
+  };
+}

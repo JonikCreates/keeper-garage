@@ -20,6 +20,8 @@ test("Supabase social login and account access states are explicit", async () =>
   assert.doesNotMatch(auth, /apple/i);
   assert.match(auth, /linkIdentity/);
   assert.match(access, /AccountKind = "visitor" \| "guest" \| "member"/);
+  assert.match(access, /identity\.provider !== "anonymous"/);
+  assert.match(auth, /getUser\(\)/);
   assert.match(access, /canSaveGarage: false/);
   assert.match(access, /canRecoverGarage: true/);
   assert.match(access, /canDownloadPdf: false/);
