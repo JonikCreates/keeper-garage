@@ -25,4 +25,5 @@ test("Supabase social login and account access states are explicit", async () =>
   assert.match(access, /canSaveGarage: false/);
   assert.match(access, /canRecoverGarage: true/);
   assert.match(access, /canDownloadPdf: false/);
+  assert.match(access, /kind: "member"[\s\S]*canDownloadPdf: true/);
 });

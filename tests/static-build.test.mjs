@@ -5,16 +5,16 @@ import test from "node:test";
 test("GitHub Pages build contains the Keeper application", async () => {
   const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
   const assets = await readdir(new URL("../dist/assets/", import.meta.url));
-  const script = assets.find((file) => file.endsWith(".js"));
+  const scripts = assets.filter((file) => file.endsWith(".js"));
 
   assert.match(html, /Keeper — Owner's Workshop Log/);
   assert.match(html, /\/keeper-garage\/assets\//);
-  assert.ok(script, "expected a compiled JavaScript asset");
+  assert.ok(scripts.length, "expected compiled JavaScript assets");
 
-  const bundle = await readFile(
+  const bundle = (await Promise.all(scripts.map((script) => readFile(
     new URL(`../dist/assets/${script}`, import.meta.url),
     "utf8",
-  );
+  )))).join("\n");
   assert.match(bundle, /Urgent/);
   assert.match(bundle, /Be on the lookout/);
   assert.match(bundle, /Owner's workshop log/);
@@ -56,6 +56,10 @@ test("GitHub Pages build contains the Keeper application", async () => {
   assert.match(bundle, /Completion history/);
   assert.match(bundle, /Maintenance for/);
   assert.match(bundle, /Completed work/);
+  assert.match(bundle, /Done \/ on plan/);
+  assert.match(bundle, /Add custom maintenance/);
+  assert.match(bundle, /Export as PDF/);
+  assert.match(bundle, /Export as image/);
   assert.match(bundle, /Connected accounts/);
   assert.match(bundle, /Your profile/);
   assert.match(bundle, /Security/);

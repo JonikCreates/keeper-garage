@@ -1,9 +1,8 @@
 import { useState } from "react";
-import type { MaintenanceCatalogItem } from "../lib/catalog";
 import type { MaintenanceRecordRow } from "./supabase";
 
 type MaintenanceRecordPanelProps = {
-  item: MaintenanceCatalogItem;
+  item: { slug: string; name: string };
   records: MaintenanceRecordRow[];
   signedIn: boolean;
   isGuest: boolean;

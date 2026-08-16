@@ -32,3 +32,32 @@ test("saved vehicles keep repeatable maintenance completion history", async () =
   assert.match(app, /maintenancePlanStatus/);
   assert.match(app, /auth\.isGuest \? "Guest garage" : "My garage"/);
 });
+
+test("maintenance is importance-sorted and accepts issue and custom work items", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const tracked = await readFile(new URL("../src/useTrackedMaintenance.ts", import.meta.url), "utf8");
+  const custom = await readFile(new URL("../src/CustomMaintenanceForm.tsx", import.meta.url), "utf8");
+
+  assert.match(app, /label: "Overdue"/);
+  assert.match(app, /label: "Do soon"/);
+  assert.match(app, /label: "Done \/ on plan"/);
+  assert.match(app, /toneRank\.get\(left\.status\.tone\)/);
+  assert.match(app, /Add to maintenance/);
+  assert.match(tracked, /from\("vehicle_maintenance_items"\)/);
+  assert.match(tracked, /item_slug: `issue-\$\{issue\.slug\}`/);
+  assert.match(custom, /Roof liner replacement/);
+});
+
+test("completed work exports from the full selected-vehicle record set", async () => {
+  const exporter = await readFile(new URL("../src/maintenanceExport.ts", import.meta.url), "utf8");
+  const menu = await readFile(new URL("../src/MaintenanceExportMenu.tsx", import.meta.url), "utf8");
+
+  assert.match(exporter, /completedExportRecords\(sourceRecords\)/);
+  assert.match(exporter, /work !== UNKNOWN_WORK/);
+  assert.match(exporter, /right\.completed_at\.localeCompare\(left\.completed_at\)/);
+  assert.match(exporter, /document\.addPage\(\)/);
+  assert.match(exporter, /Page \$\{page\} of \$\{totalPages\}/);
+  assert.match(exporter, /canvas\.height = logicalHeight \* scale/);
+  assert.match(menu, /Export as PDF/);
+  assert.match(menu, /Export as image/);
+});
