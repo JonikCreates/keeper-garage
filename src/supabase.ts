@@ -82,3 +82,16 @@ export type MaintenanceRecordRow = {
   mileage: number;
   created_at: string;
 };
+
+export type VehicleMaintenanceItemRow = {
+  id: string;
+  owner_id: string;
+  vehicle_id: string;
+  item_slug: string;
+  item_name: string;
+  item_type: "known_issue" | "custom";
+  category: string;
+  severity: "critical" | "important" | "routine";
+  notes: string | null;
+  created_at: string;
+};

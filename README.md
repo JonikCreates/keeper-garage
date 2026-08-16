@@ -17,6 +17,9 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - GitHub Pages-safe My Garage, Maintenance, and Known Issues routes with responsive navigation
 - Account-owned multi-vehicle picker with separate add and edit states
 - A vehicle-specific maintenance dashboard with saved-car switching, latest completed work, date, mileage, plan status, and repeatable service history
+- Importance-sorted maintenance groups that move overdue and due-soon work above untracked and completed/on-plan items
+- Vehicle-specific work lists for researched known issues and owner-added repairs, restoration, or cosmetic jobs
+- Member exports of every completed record for the selected vehicle as a paginated PDF or high-resolution PNG
 - Passwordless email, temporary guest access, and Supabase OAuth sign-in with Google
 - Profile and security controls for display name, email, phone, and linked identities
 - Explicit visitor, guest, and recoverable-member access states ready for future server-verified subscriptions and PDF exports
@@ -44,7 +47,7 @@ Verified phone updates activate after phone auth and an SMS provider are configu
 
 Future paid access must be decided by server-controlled subscription data and enforced by RLS or a protected server function. The frontend access resolver is only the presentation layer; it must never become the authority for a paywall or PDF entitlement.
 
-Database changes live in `supabase/migrations`. Vehicles and maintenance records use Row Level Security so authenticated users—including anonymous guests—can access only rows owned by their `auth.uid()`. Maintenance records are append-only events, allowing recurring work to retain each completed mileage instead of replacing the previous service.
+Database changes live in `supabase/migrations`. Vehicles, tracked maintenance items, and maintenance records use Row Level Security so authenticated users—including anonymous guests—can access only rows owned by their `auth.uid()`. Maintenance records are append-only events, allowing recurring work to retain each completed mileage instead of replacing the previous service. Export reads that complete selected-vehicle history and excludes plans, empty categories, and legacy records without recorded work details.
 
 ## Data policy
 

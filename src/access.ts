@@ -48,9 +48,9 @@ export function getAccountAccess(user: User | null): AccountAccess {
   return {
     kind: "member",
     label: "Member · recoverable garage",
-    description: "Your saved vehicles follow your account across devices. Downloadable work-history PDFs will be attached to member plans in a later release.",
+    description: "Your saved vehicles follow your account across devices. Completed service history can be exported as a print-ready PDF or shareable image.",
     canSaveGarage: true,
     canRecoverGarage: true,
-    canDownloadPdf: false,
+    canDownloadPdf: true,
   };
 }
