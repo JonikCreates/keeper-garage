@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { getAccountAccess } from "./access";
 import {
   authRedirectUrl,
   getAuthCapabilities,
@@ -14,15 +15,19 @@ const initialCapabilities: AuthCapabilities = {
   email: false,
   phone: false,
   google: false,
-  apple: false,
 };
+
+function oauthErrorFromUrl() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  return params.get("error_description")?.slice(0, 300) ?? null;
+}
 
 export function useKeeperAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(!hasSupabaseConfig);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(oauthErrorFromUrl);
   const [capabilities, setCapabilities] = useState(initialCapabilities);
   const [capabilitiesReady, setCapabilitiesReady] = useState(!hasSupabaseConfig);
   const [pendingPhone, setPendingPhone] = useState<string | null>(null);
@@ -31,10 +36,15 @@ export function useKeeperAuth() {
     if (!supabase) return;
 
     let active = true;
+    const oauthParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const oauthError = oauthParams.get("error_description");
+    if (oauthError) {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#garage`);
+    }
     void supabase.auth.getSession().then(({ data, error: sessionError }) => {
       if (!active) return;
       setSession(data.session);
-      setError(sessionError?.message ?? null);
+      if (sessionError) setError(sessionError.message);
       setReady(true);
     });
 
@@ -113,13 +123,17 @@ export function useKeeperAuth() {
     const client = supabase;
     if (!client) return false;
     if (!capabilities[provider]) {
-      setError(`${provider === "google" ? "Google" : "Apple"} sign-in is not connected yet.`);
+      setError("Google sign-in is not connected yet.");
       return false;
     }
     return run(async () => {
       const { error: authError } = await client.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: authRedirectUrl("profile") },
+        options: {
+          redirectTo: authRedirectUrl("profile"),
+          scopes: "openid email profile",
+          queryParams: { prompt: "select_account" },
+        },
       });
       return { error: authError };
     });
@@ -129,13 +143,17 @@ export function useKeeperAuth() {
     const client = supabase;
     if (!client) return false;
     if (!capabilities[provider]) {
-      setError(`${provider === "google" ? "Google" : "Apple"} account linking is not connected yet.`);
+      setError("Google account linking is not connected yet.");
       return false;
     }
     return run(async () => {
       const { error: authError } = await client.auth.linkIdentity({
         provider,
-        options: { redirectTo: authRedirectUrl("security") },
+        options: {
+          redirectTo: authRedirectUrl("security"),
+          scopes: "openid email profile",
+          queryParams: { prompt: "select_account" },
+        },
       });
       return { error: authError };
     });
@@ -212,12 +230,14 @@ export function useKeeperAuth() {
 
   const user = session?.user ?? null;
   const isGuest = Boolean(user?.is_anonymous);
+  const access = useMemo(() => getAccountAccess(user), [user]);
 
   return useMemo(() => ({
     configured: hasSupabaseConfig,
     session,
     user,
     isGuest,
+    access,
     linkedProviders: user?.identities?.map((identity) => identity.provider) ?? [],
     ready,
     busy,
@@ -239,5 +259,5 @@ export function useKeeperAuth() {
       setMessage(null);
       setError(null);
     },
-  }), [session, user, isGuest, ready, busy, message, error, capabilities, capabilitiesReady, pendingPhone, continueAsGuest, sendMagicLink, signInWithProvider, linkProvider, secureGuest, changeEmail, changePhone, verifyPhone, signOut]);
+  }), [session, user, isGuest, access, ready, busy, message, error, capabilities, capabilitiesReady, pendingPhone, continueAsGuest, sendMagicLink, signInWithProvider, linkProvider, secureGuest, changeEmail, changePhone, verifyPhone, signOut]);
 }

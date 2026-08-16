@@ -13,11 +13,12 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
-- A persistent forum-inspired theme: white and blue by day, charcoal and safety orange by night, controlled by a moving M Parallel-inspired wheel
+- A light-first forum theme: white and blue by default, charcoal and safety orange when dark mode is selected, controlled by a moving M Parallel-inspired wheel
 - GitHub Pages-safe My Garage, Maintenance, and Known Issues routes with responsive navigation
 - Account-owned multi-vehicle picker with separate add and edit states
-- Passwordless email, guest access, and provider-ready Google and Apple authentication
+- Passwordless email, temporary guest access, and Supabase OAuth sign-in with Google
 - Profile and security controls for display name, email, phone, and linked identities
+- Explicit visitor, guest, and recoverable-member access states ready for future server-verified subscriptions and PDF exports
 
 Keeper is a React + Vite site hosted by GitHub Pages. Supabase provides optional guest and email authentication plus an owner-isolated saved garage. The complete issue library remains available without an account.
 
@@ -36,7 +37,11 @@ pnpm test
 
 Copy `.env.example` to `.env.local` and add the project URL and publishable browser key when testing authentication locally. Never place a Supabase secret or service-role key in the frontend.
 
-Google and Apple sign-in activate automatically after those providers are enabled in Supabase. Verified phone updates activate after phone auth and an SMS provider are configured. Unavailable providers remain disabled instead of sending customers into a broken authentication flow.
+Google sign-in activates automatically after the provider is enabled in Supabase. The application requests the standard OpenID, profile, and email scopes, returns to the account panel after OAuth, and keeps Google disabled instead of sending customers into a broken flow when its credentials are unavailable. Provider credential and callback instructions are in [`docs/auth-setup.md`](docs/auth-setup.md).
+
+Verified phone updates activate after phone auth and an SMS provider are configured. Anonymous guests receive an owner-isolated Supabase account, but it cannot be recovered after sign-out or cleared browser storage until an identity is linked.
+
+Future paid access must be decided by server-controlled subscription data and enforced by RLS or a protected server function. The frontend access resolver is only the presentation layer; it must never become the authority for a paywall or PDF entitlement.
 
 Database changes live in `supabase/migrations`. The garage tables use Row Level Security so authenticated users—including anonymous guests—can access only rows owned by their `auth.uid()`.
 

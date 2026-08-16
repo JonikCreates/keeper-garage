@@ -154,8 +154,8 @@ export default function App() {
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   // REVIEW DECISION: hash routes keep each view directly addressable without creating GitHub Pages 404s or adding a routing dependency.
   const [page, setPage] = useState<AppPage>(getPageFromHash);
-  // REVIEW DECISION: theme is intentionally local to the browser so guest visitors keep their choice without needing account storage.
-  const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "light" ? "light" : "dark");
+  // REVIEW DECISION: new visitors start in light mode, while a deliberate theme choice remains local to that browser.
+  const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "dark" ? "dark" : "light");
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -256,7 +256,7 @@ export default function App() {
 
   async function saveGarage() {
     setSaveNotice(null);
-    if (!auth.user) {
+    if (!auth.access.canSaveGarage) {
       setAuthOpen(true);
       return;
     }
@@ -265,11 +265,22 @@ export default function App() {
     setSaveNotice(saved ? editing ? "Vehicle changes saved." : "Vehicle added to My Garage." : null);
   }
 
+  function closeAuth() {
+    setAuthOpen(false);
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("account")) {
+      url.searchParams.delete("account");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  }
+
   const accountLabel = !auth.ready
     ? "Checking…"
     : auth.isGuest
       ? "Guest garage"
-      : auth.user?.email ?? "Log in";
+      : auth.user
+        ? "Member account"
+        : "Log in";
 
   return (
     <div className="site-shell">
@@ -280,7 +291,7 @@ export default function App() {
       <header className="topbar">
         <a className="brand-lockup" href="#garage"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
         <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={`#${link.page}`} key={link.page}>{link.label}</a>)}</nav>
-        <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.user ? "active" : ""}`} onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>{accountLabel}</button></div>
+        <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.user ? "active" : ""} ${auth.access.kind}`} onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>{accountLabel}</button></div>
       </header>
 
       <main id="top">
@@ -318,10 +329,13 @@ export default function App() {
             <div className="garage-save">
               <label>Garage name<input value={garage.nickname} onChange={(event) => garage.setNickname(event.target.value)} maxLength={60} placeholder="My BMW" /></label>
               <label>Mileage<input value={garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" /></label>
-              <button className="button button-primary" disabled={garage.loading || garage.saving} onClick={() => void saveGarage()}>{garage.saving ? "Saving…" : garage.vehicleId ? "Save changes" : "Add to garage"}</button>
+              <button className="button button-primary" disabled={garage.loading || garage.saving} onClick={() => void saveGarage()}>{garage.saving ? "Saving…" : !auth.user ? "Sign in to save" : garage.vehicleId ? "Save changes" : "Add to garage"}</button>
             </div>
             {(saveNotice || garage.error) && <p className={`save-status ${garage.error ? "error" : ""}`}>{garage.error ?? saveNotice}</p>}
-            <p className="session-note">{auth.user ? `${auth.isGuest ? "Guest" : "Permanent"} account active. Every saved vehicle is protected by owner-only database policies.` : "Browse freely, then continue as a guest or use email when you want to save cars to My Garage."}</p>
+            <div className={`session-note ${auth.access.kind}`}>
+              <strong>{auth.access.label}</strong>
+              <span>{auth.access.description}</span>
+            </div>
             <a className="plan-launch" href="#maintenance"><span>Next work order</span><strong>View {maintenance.length}-item maintenance list</strong><b>→</b></a>
           </aside>
         </section>
@@ -426,7 +440,7 @@ export default function App() {
       </main>
 
       <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research, beginning with BMW E36, E39, E46, and F30. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify recalls, parts, fluids, capacities, and procedures against current VIN-specific information.</p><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">View source on GitHub ↗</a></footer>
-      <AuthPanel auth={auth} open={authOpen} onClose={() => setAuthOpen(false)} />
+      <AuthPanel auth={auth} open={authOpen} onClose={closeAuth} />
     </div>
   );
 }
