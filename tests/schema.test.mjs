@@ -22,6 +22,16 @@ const classicGenerationMigrationUrl = new URL(
   import.meta.url,
 );
 
+const maintenanceMigrationUrl = new URL(
+  "../supabase/migrations/20260816200000_add_maintenance_records.sql",
+  import.meta.url,
+);
+
+const maintenanceDetailsMigrationUrl = new URL(
+  "../supabase/migrations/20260816203000_add_maintenance_work_details.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -59,4 +69,22 @@ test("garage fitment supports researched E36 and F30 variants", async () => {
   assert.match(sql, /trim = '330i' and engine_code = 'B46'/i);
   assert.match(sql, /trim = '335i' and engine_code = 'N55'/i);
   assert.match(sql, /engine_code in \('S50US', 'S52US'\)/i);
+});
+
+test("maintenance history is repeatable and isolated to the vehicle owner", async () => {
+  const sql = await readFile(maintenanceMigrationUrl, "utf8");
+  assert.match(sql, /create table public\.maintenance_records/i);
+  assert.match(sql, /vehicle_id uuid not null references public\.vehicles\(id\) on delete cascade/i);
+  assert.match(sql, /mileage integer not null check \(mileage between 0 and 1000000\)/i);
+  assert.match(sql, /alter table public\.maintenance_records enable row level security/i);
+  assert.match(sql, /vehicles\.owner_id = \(select auth\.uid\(\)\)/i);
+  assert.doesNotMatch(sql, /unique[\s\S]*maintenance_slug/i);
+});
+
+test("maintenance work details preserve existing records during migration", async () => {
+  const sql = await readFile(maintenanceDetailsMigrationUrl, "utf8");
+  assert.match(sql, /add column if not exists work_performed text/i);
+  assert.match(sql, /set work_performed = 'Completed service — details not recorded'/i);
+  assert.match(sql, /alter column work_performed set not null/i);
+  assert.doesNotMatch(sql, /delete from|truncate|drop table/i);
 });

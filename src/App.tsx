@@ -12,12 +12,15 @@ import {
   getYearOptions,
   inferEngine,
   matchesApplicability,
+  type MaintenanceCatalogItem,
   type KnownIssue,
   type VehicleProfile,
 } from "../lib/catalog";
 import { AuthPanel } from "./AuthPanel";
+import { MaintenanceRecordPanel } from "./MaintenanceRecordPanel";
 import { useGarage } from "./useGarage";
 import { useKeeperAuth } from "./useKeeperAuth";
+import { useMaintenanceRecords } from "./useMaintenanceRecords";
 
 type LibraryView = "mine" | "all" | string;
 type Theme = "dark" | "light";
@@ -120,6 +123,27 @@ function issueMatchesTrim(issue: KnownIssue, platform: VehicleProfile["platform"
     (!rules.engines || rules.engines.some((engine) => (option.engines as readonly string[]).includes(engine)));
 }
 
+function shortServiceDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, { month: "2-digit", day: "2-digit", year: "2-digit", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function maintenancePlanStatus(item: MaintenanceCatalogItem, latest: { mileage: number; completed_at: string } | undefined, currentMileage: number | null) {
+  const miles = item.community.mileage ?? item.oem.mileage;
+  const months = item.community.months ?? item.oem.months;
+  if (!latest) return { label: "No history", tone: "unrecorded" };
+  if (!miles && !months) return { label: "Condition based", tone: "current" };
+
+  const dueMileage = miles ? latest.mileage + miles : null;
+  const completedDate = new Date(`${latest.completed_at}T00:00:00Z`);
+  const dueDate = months ? new Date(Date.UTC(completedDate.getUTCFullYear(), completedDate.getUTCMonth() + months, completedDate.getUTCDate())) : null;
+  const mileageRemaining = dueMileage !== null && currentMileage !== null ? dueMileage - currentMileage : null;
+  const timeRemaining = dueDate ? dueDate.getTime() - Date.now() : null;
+  const overdue = (mileageRemaining !== null && mileageRemaining <= 0) || (timeRemaining !== null && timeRemaining <= 0);
+  if (overdue) return { label: "Overdue", tone: "overdue" };
+  const dueSoon = (mileageRemaining !== null && mileageRemaining <= Math.max(1_000, (miles ?? 0) * .1)) || (timeRemaining !== null && timeRemaining <= 30 * 86_400_000);
+  return dueSoon ? { label: "Due soon", tone: "soon" } : { label: "On plan", tone: "current" };
+}
+
 function resolveProfile(platform: VehicleProfile["platform"], year: number, trim: string | undefined, current?: VehicleProfile): VehicleProfile {
   const options = getTrimOptions(platform, year);
   const selected = options.find((option) => option.value === trim) ?? options[0];
@@ -149,7 +173,6 @@ export default function App() {
   const [libraryView, setLibraryView] = useState<LibraryView>("mine");
   const [libraryQuery, setLibraryQuery] = useState("");
   const [watchExpanded, setWatchExpanded] = useState(false);
-  const [maintenanceExpanded, setMaintenanceExpanded] = useState(false);
   const [authOpen, setAuthOpen] = useState(() => new URLSearchParams(window.location.search).has("account"));
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   // REVIEW DECISION: hash routes keep each view directly addressable without creating GitHub Pages 404s or adding a routing dependency.
@@ -187,9 +210,9 @@ export default function App() {
     setProfile(vehicle);
     setLibraryView("mine");
     setWatchExpanded(false);
-    setMaintenanceExpanded(false);
   }, []);
   const garage = useGarage(auth.user, loadVehicle);
+  const serviceRecords = useMaintenanceRecords(auth.user, garage.vehicleId);
 
   const platform = getPlatform(profile.platform);
   const years = getYearOptions(profile.platform);
@@ -221,7 +244,6 @@ export default function App() {
   function resetGenerationView() {
     setLibraryView("mine");
     setWatchExpanded(false);
-    setMaintenanceExpanded(false);
   }
 
   function selectPlatform(nextPlatform: VehicleProfile["platform"]) {
@@ -279,8 +301,10 @@ export default function App() {
     : auth.isGuest
       ? "Guest garage"
       : auth.user
-        ? "Member account"
+        ? "My account"
         : "Log in";
+  const garageTitle = !auth.user ? "Garage preview" : auth.isGuest ? "Guest garage" : "My garage";
+  const currentVehicleMileage = garage.mileage.trim() ? Number(garage.mileage) : null;
 
   return (
     <div className="site-shell">
@@ -290,7 +314,7 @@ export default function App() {
       </section>
       <header className="topbar">
         <a className="brand-lockup" href="#garage"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
-        <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={`#${link.page}`} key={link.page}>{link.label}</a>)}</nav>
+        <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={`#${link.page}`} key={link.page}>{link.page === "garage" ? garageTitle : link.label}</a>)}</nav>
         <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.user ? "active" : ""} ${auth.access.kind}`} onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>{accountLabel}</button></div>
       </header>
 
@@ -306,7 +330,7 @@ export default function App() {
           <aside className="configuration-panel" aria-labelledby="config-title">
             <div className="configuration-heading"><span>Configure this visit</span><strong id="config-title">Your exact BMW</strong></div>
             <div className="garage-picker">
-              <div className="garage-picker-copy"><span>My garage</span><strong>{!auth.user ? "Sign in to save vehicles" : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : "No saved vehicles yet"}</strong></div>
+              <div className="garage-picker-copy"><span>{garageTitle}</span><strong>{!auth.user ? "Sign in to save vehicles" : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : "No saved vehicles yet"}</strong></div>
               {auth.user ? <>
                 <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") garage.startNewVehicle(); else garage.selectVehicle(event.target.value); }}>
                   {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} {vehicle.trim}</option>)}
@@ -394,13 +418,29 @@ export default function App() {
 
         {page === "maintenance" &&
         <section className="maintenance-section" id="maintenance">
-          <header className="section-heading"><div><p className="eyebrow">No account required</p><h2>Maintenance baseline.</h2></div><p>Factory documentation stays separate from the conservative planning layer. E36 preserves 25 workbook categories; E39 and E46 add engine, body, drivetrain, and transmission-specific rows. Exact manuals, VIN data, production dates, and component labels remain controlling.</p></header>
-          <div className="maintenance-list">
-            {maintenance.slice(0, maintenanceExpanded ? undefined : 8).map((item) => <details key={item.slug}>
-              <summary><span className={`severity-dot ${item.severity}`} /><div><h3>{item.name}</h3><p>{item.category} · {item.description}</p></div><div><span className="source-tag oem">DOCUMENTED</span><strong>{item.oem.label}</strong></div><div><span className="source-tag community">PLAN</span><strong>{item.community.label}</strong></div><b>＋</b></summary>
-              <div className="maintenance-detail"><article><span>Factory position</span><p>{item.oem.summary}</p></article><article><span>Planning baseline</span><p>{item.community.summary}</p></article><article><span>Before service</span><ul>{item.diy.map((note) => <li key={note}>{note}</li>)}</ul></article><footer>{item.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><b>{source.type}</b>{source.title} ↗</a>)}</footer></div>
-            </details>)}
-            {maintenance.length > 8 && <button className="expand-button" onClick={() => setMaintenanceExpanded((value) => !value)}>{maintenanceExpanded ? "Show the short list" : `Show all ${maintenance.length} service items`}</button>}
+          <div className="maintenance-vehicle-toolbar">
+            <label><span>Maintenance for</span><select aria-label="Maintenance vehicle" value={garage.vehicleId ?? "configured"} disabled={!auth.user || garage.loading || garage.vehicles.length === 0} onChange={(event) => garage.selectVehicle(event.target.value)}>
+              {!garage.vehicleId && <option value="configured">{profile.year} BMW {profile.trim} · not saved</option>}
+              {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} BMW {vehicle.trim}</option>)}
+            </select></label>
+            <div><span>Vehicle mileage</span><strong>{currentVehicleMileage === null ? "Not entered" : `${currentVehicleMileage.toLocaleString()} mi`}</strong></div>
+            <div><span>Completed records</span><strong>{serviceRecords.loading ? "Loading…" : serviceRecords.records.length}</strong></div>
+            {!auth.user && <button className="button button-primary" onClick={() => { auth.clearStatus(); setAuthOpen(true); }}>Sign in to use My Garage</button>}
+            {auth.user && !garage.vehicleId && <a className="button button-primary" href="#garage">Save this vehicle</a>}
+          </div>
+          <header className="maintenance-dashboard-heading"><div><p className="eyebrow">Vehicle-specific service dashboard</p><h2>Maintenance baseline.</h2></div><p>E36 preserves 25 workbook categories, and every selected vehicle receives only the engine, drivetrain, and transmission items that apply to it.</p></header>
+          {serviceRecords.error && <p className="maintenance-record-error">{serviceRecords.error}</p>}
+          <div className="maintenance-dashboard">
+            <div className="maintenance-dashboard-columns" aria-hidden="true"><span>Maintenance baseline</span><span>Completed work</span><span>Date</span><span>Miles</span><span>Plan</span><i /></div>
+            {maintenance.map((item) => {
+              const records = serviceRecords.recordsBySlug.get(item.slug) ?? [];
+              const latest = records[0];
+              const status = maintenancePlanStatus(item, latest, currentVehicleMileage);
+              return <details className={`maintenance-dashboard-item ${records.length ? "completed" : ""}`} key={`${garage.vehicleId ?? "configured"}:${item.slug}`}>
+                <summary><div className="maintenance-baseline-cell"><span className={`severity-dot ${item.severity}`} /><strong>{item.name}</strong></div><div data-label="Completed work"><strong>{latest?.work_performed ?? "—"}</strong></div><div data-label="Date"><strong>{latest ? shortServiceDate(latest.completed_at) : "—"}</strong></div><div data-label="Miles"><strong>{latest ? `${latest.mileage.toLocaleString()} mi` : "—"}</strong></div><div className="maintenance-plan-cell" data-label="Plan"><strong>{item.community.label}</strong><small className={status.tone}>{status.label}</small></div><b aria-hidden="true">＋</b></summary>
+                <div className="maintenance-record-drawer"><div className="maintenance-technical-grid"><article><span>Factory position</span><p>{item.oem.summary}</p></article><article><span>Planning baseline</span><p>{item.community.summary}</p></article><article><span>Before service</span><ul>{item.diy.map((note) => <li key={note}>{note}</li>)}</ul></article></div><footer>{item.sources.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><b>{source.type}</b>{source.title} ↗</a>)}</footer><MaintenanceRecordPanel item={item} records={records} signedIn={Boolean(auth.user)} isGuest={auth.isGuest} hasSavedVehicle={Boolean(garage.vehicleId)} defaultMileage={garage.mileage} saving={serviceRecords.savingSlug === item.slug} onOpenAuth={() => { auth.clearStatus(); setAuthOpen(true); }} onAdd={(workPerformed, mileage, completedAt) => serviceRecords.addRecord(item.slug, item.name, workPerformed, mileage, completedAt)} onDelete={serviceRecords.deleteRecord} /></div>
+              </details>;
+            })}
           </div>
         </section>}
 

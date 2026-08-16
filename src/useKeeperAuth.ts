@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { getAccountAccess } from "./access";
+import { getAccountAccess, isTemporaryGuest } from "./access";
 import {
   authRedirectUrl,
   getAuthCapabilities,
@@ -35,20 +35,27 @@ export function useKeeperAuth() {
   useEffect(() => {
     if (!supabase) return;
 
+    const client = supabase;
     let active = true;
     const oauthParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const oauthError = oauthParams.get("error_description");
     if (oauthError) {
       window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#garage`);
     }
-    void supabase.auth.getSession().then(({ data, error: sessionError }) => {
+    void client.auth.getSession().then(async ({ data, error: sessionError }) => {
       if (!active) return;
-      setSession(data.session);
+      let currentSession = data.session;
+      if (currentSession) {
+        const { data: userData } = await client.auth.getUser();
+        if (userData.user) currentSession = { ...currentSession, user: userData.user };
+      }
+      if (!active) return;
+      setSession(currentSession);
       if (sessionError) setError(sessionError.message);
       setReady(true);
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = client.auth.onAuthStateChange((_event, nextSession) => {
       if (active) {
         setSession(nextSession);
         setReady(true);
@@ -229,7 +236,7 @@ export function useKeeperAuth() {
   }, [run]);
 
   const user = session?.user ?? null;
-  const isGuest = Boolean(user?.is_anonymous);
+  const isGuest = isTemporaryGuest(user);
   const access = useMemo(() => getAccountAccess(user), [user]);
 
   return useMemo(() => ({

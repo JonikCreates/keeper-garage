@@ -70,3 +70,15 @@ export type VehicleRow = {
   created_at: string;
   updated_at: string;
 };
+
+export type MaintenanceRecordRow = {
+  id: string;
+  owner_id: string;
+  vehicle_id: string;
+  maintenance_slug: string;
+  maintenance_name: string;
+  work_performed: string;
+  completed_at: string;
+  mileage: number;
+  created_at: string;
+};

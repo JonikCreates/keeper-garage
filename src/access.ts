@@ -11,6 +11,16 @@ export type AccountAccess = {
   canDownloadPdf: boolean;
 };
 
+export function isTemporaryGuest(user: User | null) {
+  if (!user) return false;
+  const hasRecoverableIdentity = Boolean(
+    user.email ||
+    user.phone ||
+    user.identities?.some((identity) => identity.provider !== "anonymous"),
+  );
+  return Boolean(user.is_anonymous && !hasRecoverableIdentity);
+}
+
 // REVIEW DECISION: account capabilities live in one resolver so a future server-verified subscription can replace these free-tier rules without scattering paywall checks through the UI.
 export function getAccountAccess(user: User | null): AccountAccess {
   if (!user) {
@@ -24,7 +34,7 @@ export function getAccountAccess(user: User | null): AccountAccess {
     };
   }
 
-  if (user.is_anonymous) {
+  if (isTemporaryGuest(user)) {
     return {
       kind: "guest",
       label: "Guest · temporary garage",
