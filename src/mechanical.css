@@ -521,6 +521,125 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .account-avatar { color: var(--button-ink); background: var(--acid); }
 .security-section-heading small { color: var(--acid); border-color: color-mix(in srgb, var(--acid), var(--line) 55%); }
 
+.maintenance-overview { margin-bottom: 28px; padding: 22px 24px; display: flex; align-items: end; justify-content: space-between; gap: 30px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.maintenance-overview h2 { margin: 2px 0 5px; font: 900 clamp(36px, 5vw, 58px)/.92 "Arial Narrow", Arial, sans-serif; letter-spacing: -.035em; text-transform: uppercase; }
+.maintenance-overview > div > p:last-child { margin: 0; color: var(--muted); font-size: 10px; }
+.maintenance-overview dl { margin: 0; display: flex; align-items: stretch; border: 1px solid var(--line); background: var(--panel-2); }
+.maintenance-overview dl div { min-width: 105px; padding: 11px 14px; display: grid; gap: 5px; border-left: 3px solid var(--muted); }
+.maintenance-overview dl div + div { border-top: 0; }
+.maintenance-overview dl div.soon { border-left-color: var(--amber); }
+.maintenance-overview dl div.overdue { border-left-color: var(--red); }
+.maintenance-overview dt { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.maintenance-overview dd { margin: 0; font-size: 19px; font-weight: 900; }
+
+.maintenance-items-section { padding: 0; }
+.maintenance-items-section > header, .maintenance-history-section > header { margin-bottom: 14px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.maintenance-items-section h3, .fluid-summary-section h3, .maintenance-history-section h3 { margin: 0; font: 900 29px "Arial Narrow", Arial, sans-serif; text-transform: uppercase; }
+.maintenance-items-section > header > p { max-width: 430px; margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.maintenance-filters { margin-bottom: 18px; padding: 8px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid var(--line); background: var(--panel-2); }
+.maintenance-filters > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.maintenance-filters button { min-height: 34px; padding: 7px 11px; color: var(--muted); border: 1px solid transparent; background: transparent; cursor: pointer; font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.maintenance-filters button:hover, .maintenance-filters button.active { color: var(--button-ink); border-color: var(--acid); background: var(--acid); }
+.maintenance-filters label { display: flex; align-items: center; gap: 9px; color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.maintenance-filters select { min-height: 34px; padding: 7px 34px 7px 10px; color: var(--paper); border: 1px solid var(--line); background: var(--field); font-size: 9px; }
+
+.maintenance-dashboard.simplified { overflow: visible; display: grid; gap: 20px; border: 0; background: transparent; }
+.maintenance-status-section { overflow: hidden; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 2px 7px var(--shadow); }
+.maintenance-status-section > header { min-height: 66px; padding: 14px 17px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); }
+.maintenance-status-section > header > div { display: flex; align-items: center; gap: 10px; }
+.maintenance-status-section > header span { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 4px color-mix(in srgb, var(--muted) 18%, transparent); }
+.maintenance-status-section > header strong { font: 900 18px "Arial Narrow", Arial, sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+.maintenance-status-section > header b { min-width: 26px; padding: 4px 7px; text-align: center; border: 1px solid currentColor; font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.maintenance-status-section > header p { margin: 0; color: var(--muted); font-size: 8px; }
+.maintenance-status-section.overdue { border-top: 4px solid var(--red); }
+.maintenance-status-section.overdue > header { background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--red) 8%, var(--panel-2)) 0 9px, color-mix(in srgb, var(--red) 3%, var(--panel)) 9px 18px); }
+.maintenance-status-section.overdue > header span { background: var(--red); box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 18%, transparent); }
+.maintenance-status-section.overdue > header strong, .maintenance-status-section.overdue > header b { color: var(--red); }
+.maintenance-status-section.soon { border-top: 4px solid var(--amber); }
+.maintenance-status-section.soon > header { background: color-mix(in srgb, var(--amber) 7%, var(--panel-2)); }
+.maintenance-status-section.soon > header span { background: var(--amber); box-shadow: 0 0 0 4px color-mix(in srgb, var(--amber) 18%, transparent); }
+.maintenance-status-section.soon > header strong, .maintenance-status-section.soon > header b { color: var(--amber); }
+.maintenance-status-section.done { border-top: 4px solid var(--green); }
+.maintenance-status-section.done > header { background: color-mix(in srgb, var(--green) 6%, var(--panel-2)); }
+.maintenance-status-section.done > header span { background: var(--green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--green) 18%, transparent); }
+.maintenance-status-section.done > header strong, .maintenance-status-section.done > header b { color: var(--green); }
+.maintenance-status-section.done .maintenance-dashboard-item:not([open]) { background: color-mix(in srgb, var(--green) 2%, var(--panel)); }
+.maintenance-status-section.overdue .maintenance-dashboard-item { border-left: 3px solid color-mix(in srgb, var(--red) 70%, var(--line)); }
+.maintenance-status-section.soon .maintenance-dashboard-item { border-left: 3px solid color-mix(in srgb, var(--amber) 70%, var(--line)); }
+.maintenance-status-section.done .maintenance-dashboard-item { border-left: 3px solid color-mix(in srgb, var(--green) 70%, var(--line)); }
+.maintenance-status-empty { margin: 0; padding: 18px; color: var(--muted); background: var(--panel); font-size: 9px; }
+.maintenance-status-section .maintenance-dashboard-item > summary { grid-template-columns: minmax(190px, 1.35fr) minmax(145px, .8fr) minmax(155px, .9fr) 105px 22px; }
+.maintenance-item-name { display: grid; gap: 5px; }
+.maintenance-item-name strong { font-size: 14px !important; }
+.maintenance-item-name small, .maintenance-dashboard-item > summary > div small { color: var(--muted); font-size: 8px; line-height: 1.35; }
+.maintenance-status-pill { display: flex; align-items: center; gap: 6px; color: var(--muted); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.maintenance-status-pill.overdue { color: var(--red); }
+.maintenance-status-pill.soon { color: var(--amber); }
+.maintenance-status-pill.current { color: var(--green); }
+.maintenance-expanded-summary { padding-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.maintenance-expanded-summary article { padding: 13px; border: 1px solid var(--line); background: var(--panel-2); }
+.maintenance-expanded-summary span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.maintenance-expanded-summary strong { margin-top: 8px; display: block; font-size: 12px; }
+.maintenance-expanded-summary p { margin: 5px 0 0; color: var(--muted); font-size: 8px; }
+.maintenance-expanded-summary p.overdue { color: var(--red); }
+.maintenance-expanded-summary p.soon, .maintenance-expanded-summary p.unrecorded { color: var(--amber); }
+.maintenance-expanded-summary p.current { color: var(--green); }
+.maintenance-technical-notes { margin: 10px 0; border: 1px solid var(--line); background: var(--field); }
+.maintenance-technical-notes > summary { padding: 11px 13px; cursor: pointer; color: var(--muted); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.maintenance-technical-notes > p { padding: 0 13px 13px; color: var(--cream); font-size: 9px; }
+.maintenance-technical-notes > footer { padding: 0 13px 13px; display: flex; flex-wrap: wrap; gap: 7px; }
+.maintenance-technical-notes > footer a { padding: 7px 9px; color: var(--cream); border: 1px solid var(--line); background: var(--panel-2); font-size: 8px; }
+.maintenance-empty-state { margin: 0; padding: 22px; color: var(--muted); border: 1px dashed var(--line); background: var(--panel-2); font-size: 10px; text-align: center; }
+
+.custom-maintenance { margin: 18px 0 0; }
+.custom-maintenance form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.custom-maintenance form input, .custom-maintenance form select { min-height: 42px; width: 100%; padding: 9px 11px; color: var(--paper); border: 1px solid var(--line); background: var(--field); }
+.custom-plan-options { grid-column: 1 / -1; padding: 13px; display: flex; flex-wrap: wrap; gap: 8px 18px; border: 1px solid var(--line); }
+.custom-plan-options legend { padding: 0 6px; color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.custom-plan-options label, .custom-fluid-toggle { display: flex !important; grid-auto-flow: column; align-items: center; justify-content: start; gap: 7px !important; color: var(--paper) !important; }
+.custom-plan-options input, .custom-fluid-toggle input { min-height: 0 !important; width: auto !important; accent-color: var(--acid); }
+.custom-time-field { display: grid; grid-template-columns: 1fr 110px; align-items: end; gap: 7px; }
+.custom-time-field label { display: grid; gap: 7px; }
+.custom-maintenance-actions { display: flex; align-items: stretch; gap: 7px; }
+
+.maintenance-record-form.simplified { grid-template-columns: minmax(240px, 1.4fr) minmax(125px, .5fr) minmax(145px, .6fr); }
+.maintenance-record-form.simplified > .button { justify-self: start; }
+.maintenance-record-form textarea, .maintenance-record-form select { min-height: 42px; width: 100%; padding: 10px 12px; color: var(--paper); border: 1px solid var(--line); outline: 0; background: var(--field); font-size: 11px; }
+.maintenance-notes-field { grid-column: 1 / -1; }
+.fluid-entry-fields { grid-column: 1 / -1; padding: 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: 10px; border: 1px solid var(--line); background: var(--field); }
+.fluid-entry-fields legend { padding: 0 7px; color: var(--blue); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.fluid-entry-fields legend small { color: var(--muted); }
+.previous-fluid { grid-column: 1 / -1; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--paper); border: 1px solid color-mix(in srgb, var(--blue) 45%, var(--line)); background: var(--panel-2); cursor: pointer; text-align: left; }
+.previous-fluid span { color: var(--blue); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.previous-fluid strong { font-size: 9px; }
+
+.fluid-summary-section, .maintenance-history-section { margin-top: 34px; border-top: 3px solid var(--blue); }
+.fluid-summary-section > summary { padding: 18px 4px 14px; display: flex; align-items: end; justify-content: space-between; gap: 20px; cursor: pointer; list-style: none; }
+.fluid-summary-section > summary::-webkit-details-marker { display: none; }
+.fluid-summary-section > summary > span, .maintenance-history-section > header > strong { color: var(--muted); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.fluid-summary-section > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fluid-summary-section article { padding: 13px; display: grid; gap: 6px; border: 1px solid var(--line); background: var(--panel-2); }
+.fluid-summary-section article span, .fluid-summary-section article small { color: var(--muted); font-size: 8px; }
+.fluid-summary-section article strong { font-size: 10px; }
+.fluid-summary-section > div > p { color: var(--muted); font-size: 9px; }
+.maintenance-history-section { padding-top: 18px; }
+.maintenance-history-list { overflow: hidden; border: 1px solid var(--line); }
+.maintenance-history-list details { border-bottom: 1px solid var(--line); background: var(--panel); }
+.maintenance-history-list details:last-child { border-bottom: 0; }
+.maintenance-history-list summary { min-height: 62px; padding: 12px 14px; display: grid; grid-template-columns: 1fr minmax(180px, .7fr) 22px; align-items: center; gap: 15px; cursor: pointer; list-style: none; }
+.maintenance-history-list summary::-webkit-details-marker { display: none; }
+.maintenance-history-list summary div { display: grid; gap: 4px; }
+.maintenance-history-list summary strong { font-size: 12px; }
+.maintenance-history-list summary span, .maintenance-history-list summary small { color: var(--muted); font-size: 8px; }
+.maintenance-history-list summary b { color: var(--muted); font-size: 16px; }
+.maintenance-history-list details[open] summary b { color: var(--acid); transform: rotate(45deg); }
+.maintenance-history-list details > div { padding: 14px; display: grid; gap: 8px; border-top: 1px solid var(--line); background: var(--panel-2); }
+.maintenance-history-list details > div p { margin: 0; color: var(--cream); font-size: 9px; line-height: 1.55; }
+.maintenance-history-list details > div p strong { margin-right: 9px; color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.maintenance-history-list details > div button { width: fit-content; padding: 6px 8px; color: var(--muted); border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: 7px; text-transform: uppercase; }
+.maintenance-history-list details > div button:hover { color: var(--red); border-color: var(--red); }
+.maintenance-history-toggle { margin-top: 12px; }
+
 @media (max-width: 1300px) {
   main, .site-footer { margin-right: 18px; margin-left: 18px; }
 }
@@ -616,6 +735,29 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .known-issue-search-context p { grid-column: 1; }
   .custom-issue-panel, .custom-issue-form { grid-template-columns: 1fr; }
   .custom-issue-form label.wide { grid-column: 1; }
+  .maintenance-overview { padding: 6px 0 22px; align-items: flex-start; flex-direction: column; }
+  .maintenance-overview dl { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+  .maintenance-overview dl div { min-width: 0; padding: 9px; }
+  .maintenance-items-section > header, .maintenance-history-section > header { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .maintenance-filters { align-items: stretch; flex-direction: column; }
+  .maintenance-filters > div { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .maintenance-filters label { justify-content: space-between; }
+  .maintenance-filters select { flex: 1; }
+  .maintenance-status-section > header { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .maintenance-status-section .maintenance-dashboard-item > summary { grid-template-columns: minmax(0, 1fr) 22px; }
+  .maintenance-status-section .maintenance-dashboard-item > summary > div { grid-column: 1 / -1; display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: baseline; gap: 8px; }
+  .maintenance-status-section .maintenance-dashboard-item > summary > div::before { color: var(--muted); content: attr(data-label); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+  .maintenance-status-section .maintenance-dashboard-item > summary > .maintenance-item-name { grid-column: 1; display: grid; grid-template-columns: 1fr; gap: 5px; }
+  .maintenance-status-section .maintenance-dashboard-item > summary > .maintenance-item-name::before { display: none; }
+  .maintenance-status-section .maintenance-dashboard-item > summary > b { grid-column: 2; grid-row: 1; }
+  .maintenance-expanded-summary, .fluid-entry-fields, .fluid-summary-section > div { grid-template-columns: 1fr; }
+  .maintenance-record-form.simplified { grid-template-columns: 1fr; }
+  .maintenance-notes-field, .fluid-entry-fields { grid-column: 1; }
+  .custom-plan-options { grid-column: 1; display: grid; grid-template-columns: 1fr 1fr; }
+  .custom-time-field { grid-template-columns: 1fr 100px; }
+  .maintenance-history-list summary { grid-template-columns: 1fr 22px; }
+  .maintenance-history-list summary > small { grid-column: 1; }
+  .maintenance-history-list summary > b { grid-column: 2; grid-row: 1; }
   .page-masthead-actions .button { min-width: 0; padding-inline: 8px; font-size: 8px; text-align: center; white-space: normal; }
   .site-footer { margin: 0; border-right: 0; border-left: 0; border-radius: 0; }
   .auth-panel { padding: 26px 20px; border-left: 0; }

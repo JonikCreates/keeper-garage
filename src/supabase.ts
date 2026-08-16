@@ -78,6 +78,15 @@ export type MaintenanceRecordRow = {
   maintenance_slug: string;
   maintenance_name: string;
   work_performed: string;
+  notes: string | null;
+  fluid_brand: string | null;
+  fluid_product: string | null;
+  fluid_type: string | null;
+  fluid_viscosity: string | null;
+  fluid_specification: string | null;
+  fluid_quantity: number | null;
+  fluid_unit: string | null;
+  filter_product: string | null;
   completed_at: string;
   mileage: number;
   created_at: string;
@@ -96,5 +105,9 @@ export type VehicleMaintenanceItemRow = {
   date_found: string | null;
   mileage_found: number | null;
   issue_status: "watching" | "needs_repair" | "repaired" | null;
+  plan_type: "mileage" | "time" | "both" | "none";
+  mileage_interval: number | null;
+  time_interval_months: number | null;
+  tracks_fluid: boolean;
   created_at: string;
 };

@@ -37,6 +37,13 @@ function reportDate(value: string) {
     .format(new Date(`${value}T00:00:00Z`));
 }
 
+function recordExportText(record: MaintenanceRecordRow) {
+  const fluid = [record.fluid_brand, record.fluid_product, record.fluid_viscosity ?? record.fluid_type, record.fluid_specification].filter(Boolean).join(" · ");
+  const quantity = record.fluid_quantity !== null ? `${record.fluid_quantity} ${record.fluid_unit ?? "units"}` : "";
+  const filter = record.filter_product ? `Filter: ${record.filter_product}` : "";
+  return [record.work_performed.trim(), fluid, quantity, filter, record.notes].filter(Boolean).join(" — ");
+}
+
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -101,7 +108,7 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
   drawHeader(false);
   let y = drawTableHeader(158);
   records.forEach((record, index) => {
-    const workLines = document.splitTextToSize(record.work_performed.trim(), workWidth) as string[];
+    const workLines = document.splitTextToSize(recordExportText(record), workWidth) as string[];
     const rowHeight = Math.max(38, workLines.length * 12 + 18);
     if (y + rowHeight > pageHeight - 54) {
       document.addPage();
@@ -163,7 +170,7 @@ export async function createMaintenancePng(vehicle: ExportVehicle, sourceRecords
   const measuring = canvas.getContext("2d");
   if (!measuring) throw new Error("This browser cannot create the export image.");
   measuring.font = "600 22px Arial";
-  const rowLines = records.map((record) => wrappedCanvasLines(measuring, record.work_performed, width - margin * 2));
+  const rowLines = records.map((record) => wrappedCanvasLines(measuring, recordExportText(record), width - margin * 2));
   const rowHeights = rowLines.map((lines) => Math.max(86, lines.length * 28 + 54));
   const logicalHeight = 310 + rowHeights.reduce((total, height) => total + height, 0) + 78;
   canvas.width = width * scale;
