@@ -67,6 +67,11 @@ const vehicleRemovalMigrationUrl = new URL(
   import.meta.url,
 );
 
+const maintenanceCostsMigrationUrl = new URL(
+  "../supabase/migrations/20260817200000_add_maintenance_costs.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -151,6 +156,13 @@ test("maintenance redesign adds optional fluid and plan fields without rewriting
   assert.match(sql, /add column if not exists fluid_specification text/i);
   assert.match(sql, /maintenance_records_fluid_quantity_check/i);
   assert.doesNotMatch(sql, /delete from|truncate|drop table|update public\.maintenance_records/i);
+});
+
+test("maintenance costs use exact bounded cents without inventing prices for old records", async () => {
+  const sql = await readFile(maintenanceCostsMigrationUrl, "utf8");
+  assert.match(sql, /add column if not exists cost_cents integer/i);
+  assert.match(sql, /cost_cents is null or cost_cents between 0 and 100000000/i);
+  assert.doesNotMatch(sql, /update public\.maintenance_records|delete from|truncate|drop table/i);
 });
 
 test("account architecture blocks guest writes and centralizes trusted entitlements", async () => {

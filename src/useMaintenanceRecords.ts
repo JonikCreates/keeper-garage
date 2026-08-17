@@ -32,6 +32,7 @@ export type MaintenanceRecordInput = {
   fluidQuantity: number | null;
   fluidUnit: string | null;
   filterProduct: string | null;
+  costCents: number | null;
 };
 
 export function useMaintenanceRecords(user: User | null, vehicleId: string | null) {
@@ -106,6 +107,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
         fluid_quantity: input.fluidQuantity,
         fluid_unit: input.fluidUnit,
         filter_product: input.filterProduct,
+        cost_cents: input.costCents,
       })
       .select()
       .single<MaintenanceRecordRow>();

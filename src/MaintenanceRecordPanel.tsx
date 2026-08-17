@@ -46,6 +46,7 @@ export function MaintenanceRecordPanel({ item, records, tracksFluid, signedIn, i
   const [fluidQuantity, setFluidQuantity] = useState("");
   const [fluidUnit, setFluidUnit] = useState("Quarts");
   const [filterProduct, setFilterProduct] = useState("");
+  const [cost, setCost] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const previousFluid = useMemo(() => records.find((record) => fluidLabel(record)), [records]);
 
@@ -66,25 +67,28 @@ export function MaintenanceRecordPanel({ item, records, tracksFluid, signedIn, i
     setNotice(null);
     const parsedMileage = Number(mileage);
     const parsedQuantity = fluidQuantity.trim() ? Number(fluidQuantity) : null;
+    const parsedCost = cost.trim() ? Math.round(Number(cost) * 100) : null;
     if (!Number.isInteger(parsedMileage) || parsedMileage < 0 || parsedMileage > 1_000_000) return setNotice("Enter the mileage shown when the work was completed.");
     if (!workPerformed.trim()) return setNotice("Describe what work was completed.");
     if (parsedQuantity !== null && (!Number.isFinite(parsedQuantity) || parsedQuantity < 0 || parsedQuantity > 10_000)) return setNotice("Enter a valid fluid quantity.");
+    if (parsedCost !== null && (!/^\d{1,7}(\.\d{1,2})?$/.test(cost.trim()) || parsedCost < 0 || parsedCost > 100_000_000)) return setNotice("Enter a valid cost up to $1,000,000.00.");
     const saved = await onAdd({
       workPerformed: workPerformed.trim(), mileage: parsedMileage, completedAt, notes: optional(notes),
       fluidBrand: tracksFluid ? optional(fluidBrand) : null, fluidProduct: tracksFluid ? optional(fluidProduct) : null,
       fluidType: tracksFluid ? optional(fluidType) : null, fluidViscosity: tracksFluid ? optional(fluidViscosity) : null,
       fluidSpecification: tracksFluid ? optional(fluidSpecification) : null, fluidQuantity: tracksFluid ? parsedQuantity : null,
       fluidUnit: tracksFluid && parsedQuantity !== null ? optional(fluidUnit) : null, filterProduct: tracksFluid ? optional(filterProduct) : null,
+      costCents: parsedCost,
     });
     if (saved) {
-      setWorkPerformed(""); setMileage(""); setNotes("");
+      setWorkPerformed(""); setMileage(""); setCost(""); setNotes("");
       setNotice("Maintenance added to this vehicle’s history.");
     }
   }
 
   return <section className="maintenance-record-panel" aria-label={`${item.name} service history`}>
     <header><div><span>Log maintenance</span><strong>{records.length ? `Last completed ${displayDate(records[0].completed_at)}` : "No completed record yet"}</strong></div><a className="button button-quiet" href="#maintenance-history">View history</a></header>
-    {!signedIn && <div className="maintenance-record-gate"><p>A Keeper Profile is required to save completed work, mileage, fluids, and notes.</p><button className="button button-primary" type="button" onClick={onOpenAuth}>Create Account or Log In</button></div>}
+    {!signedIn && <div className="maintenance-record-gate"><p>A Keeper Profile is required to save completed work, mileage, cost, fluids, and notes.</p><button className="button button-primary" type="button" onClick={onOpenAuth}>Create Account or Log In</button></div>}
     {signedIn && !hasSavedVehicle && <div className="maintenance-record-gate"><p>Save this vehicle in My Garage before recording completed work.</p><a className="button button-primary" href="#garage">Save this vehicle</a></div>}
     {signedIn && hasSavedVehicle && <>
       {isGuest && <p className="maintenance-guest-note">Guest Mode is demo-only. Sign in before recording personal service history.</p>}
@@ -92,6 +96,7 @@ export function MaintenanceRecordPanel({ item, records, tracksFluid, signedIn, i
         <label>Work completed<input aria-label={`${item.name} completed work`} value={workPerformed} onChange={(event) => setWorkPerformed(event.target.value.slice(0, 240))} maxLength={240} placeholder="What was replaced or serviced?" required /></label>
         <label>Mileage<input aria-label={`${item.name} completed mileage`} value={mileage} onChange={(event) => setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="82,450" required /></label>
         <label>Date<input aria-label={`${item.name} completed date`} type="date" value={completedAt} max={localDateValue()} onChange={(event) => setCompletedAt(event.target.value)} required /></label>
+        <label>Cost (USD)<span className="currency-input"><b aria-hidden="true">$</b><input aria-label={`${item.name} completed cost`} value={cost} onChange={(event) => setCost(event.target.value.replace(/[^\d.]/g, "").slice(0, 10))} inputMode="decimal" placeholder="0.00" /></span></label>
         {tracksFluid && <fieldset className="fluid-entry-fields"><legend>Fluid / product used <small>Optional</small></legend>
           {previousFluid && <button className="previous-fluid" type="button" onClick={usePreviousFluid}><span>Previously used</span><strong>{fluidLabel(previousFluid)}</strong></button>}
           <label>Brand<input value={fluidBrand} maxLength={100} onChange={(event) => setFluidBrand(event.target.value)} placeholder="Mobil 1" /></label>

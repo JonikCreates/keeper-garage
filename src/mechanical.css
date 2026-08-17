@@ -370,7 +370,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .maintenance-detail article, .issue-detail-grid article { border-radius: 2px; background: var(--panel-2); }
 .maintenance-detail footer a, .issue-library-list footer a { border-radius: 2px; background: var(--field); }
 .source-tag.completed { color: var(--green); }
-.maintenance-vehicle-toolbar { margin-bottom: 18px; padding: 16px; display: grid; grid-template-columns: minmax(250px, 1.5fr) minmax(120px, .55fr) minmax(120px, .55fr) auto auto; align-items: end; gap: 10px; border: 1px solid var(--line); border-top: 4px solid var(--acid); border-radius: 3px; background: var(--panel-2); }
+.maintenance-vehicle-toolbar { margin-bottom: 18px; padding: 16px; display: grid; grid-template-columns: minmax(230px, 1.4fr) repeat(3, minmax(110px, .5fr)) auto auto; align-items: end; gap: 10px; border: 1px solid var(--line); border-top: 4px solid var(--acid); border-radius: 3px; background: var(--panel-2); }
 .maintenance-vehicle-toolbar label, .maintenance-vehicle-toolbar > div { min-width: 0; display: grid; gap: 7px; }
 .maintenance-vehicle-toolbar span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; }
 .maintenance-vehicle-toolbar select { min-height: 44px; width: 100%; padding: 10px 36px 10px 12px; color: var(--paper); border: 1px solid var(--line); outline: 0; background: var(--field); font-size: 12px; font-weight: 800; }
@@ -378,6 +378,8 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .maintenance-vehicle-toolbar select:disabled { opacity: .72; }
 .maintenance-vehicle-toolbar > div { min-height: 44px; padding: 8px 11px; justify-content: center; border: 1px solid var(--line); background: var(--field); }
 .maintenance-vehicle-toolbar > div strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.maintenance-vehicle-toolbar > div.maintenance-total-spent { border-color: color-mix(in srgb, var(--blue) 55%, var(--line)); }
+.maintenance-vehicle-toolbar > div.maintenance-total-spent strong { color: var(--blue); font-size: 14px; }
 .maintenance-export { min-height: 44px !important; padding: 0 !important; position: relative; display: flex !important; align-items: stretch; border: 0 !important; background: transparent !important; }
 .maintenance-export > .button { min-height: 44px; }
 .maintenance-export > small { max-width: 116px; align-self: center; color: var(--muted); font-size: 7px; line-height: 1.35; }
@@ -463,6 +465,10 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .maintenance-record-form label { display: grid; gap: 7px; color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .maintenance-record-form input { min-height: 42px; width: 100%; padding: 10px 12px; color: var(--paper); border: 1px solid var(--line); outline: 0; background: var(--field); font-size: 11px; color-scheme: light dark; }
 .maintenance-record-form input:focus { border-color: var(--acid); box-shadow: 0 0 0 2px color-mix(in srgb, var(--acid) 18%, transparent); }
+.currency-input { min-height: 42px; display: grid; grid-template-columns: 28px 1fr; align-items: center; border: 1px solid var(--line); background: var(--field); }
+.currency-input:focus-within { border-color: var(--acid); box-shadow: 0 0 0 2px color-mix(in srgb, var(--acid) 18%, transparent); }
+.currency-input b { color: var(--muted); text-align: right; font: 800 12px Arial, sans-serif; }
+.currency-input input { min-width: 0; border: 0; box-shadow: none !important; }
 .maintenance-record-form .button { min-height: 42px; border-radius: 0; cursor: pointer; }
 .maintenance-record-form .button:disabled { cursor: wait; opacity: .55; }
 .maintenance-record-notice { margin-top: 10px; color: var(--green); }
@@ -699,7 +705,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .custom-time-field label { display: grid; gap: 7px; }
 .custom-maintenance-actions { display: flex; align-items: stretch; gap: 7px; }
 
-.maintenance-record-form.simplified { grid-template-columns: minmax(240px, 1.4fr) minmax(125px, .5fr) minmax(145px, .6fr); }
+.maintenance-record-form.simplified { grid-template-columns: minmax(230px, 1.3fr) minmax(115px, .5fr) minmax(140px, .6fr) minmax(120px, .5fr); }
 .maintenance-record-form.simplified > .button { justify-self: start; }
 .maintenance-record-form textarea, .maintenance-record-form select { min-height: 42px; width: 100%; padding: 10px 12px; color: var(--paper); border: 1px solid var(--line); outline: 0; background: var(--field); font-size: 11px; }
 .maintenance-notes-field { grid-column: 1 / -1; }

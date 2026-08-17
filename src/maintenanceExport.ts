@@ -4,6 +4,19 @@ export type ExportVehicle = Pick<VehicleRow, "brand" | "model" | "model_year" | 
 
 const UNKNOWN_WORK = "completed service — details not recorded";
 
+// REVIEW DECISION: aggregate integer cents and format only at the UI/export boundary so saved totals stay exact.
+export function maintenanceTotalCents(records: MaintenanceRecordRow[]) {
+  return records.reduce((total, record) => total + (record.cost_cents ?? 0), 0);
+}
+
+export function formatUsdCents(value: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value / 100);
+}
+
+function recordCost(record: MaintenanceRecordRow) {
+  return record.cost_cents === null ? "-" : formatUsdCents(record.cost_cents);
+}
+
 export function completedExportRecords(records: MaintenanceRecordRow[]) {
   return records
     .filter((record) => {
@@ -37,11 +50,15 @@ function reportDate(value: string) {
     .format(new Date(`${value}T00:00:00Z`));
 }
 
+function printableReportText(value: string) {
+  return value.replace(/[‐‑‒–—―]/g, "-").replace(/[·•]/g, "|");
+}
+
 function recordExportText(record: MaintenanceRecordRow) {
-  const fluid = [record.fluid_brand, record.fluid_product, record.fluid_viscosity ?? record.fluid_type, record.fluid_specification].filter(Boolean).join(" · ");
+  const fluid = [record.fluid_brand, record.fluid_product, record.fluid_viscosity ?? record.fluid_type, record.fluid_specification].filter(Boolean).join(" | ");
   const quantity = record.fluid_quantity !== null ? `${record.fluid_quantity} ${record.fluid_unit ?? "units"}` : "";
   const filter = record.filter_product ? `Filter: ${record.filter_product}` : "";
-  return [record.work_performed.trim(), fluid, quantity, filter, record.notes].filter(Boolean).join(" — ");
+  return printableReportText([record.work_performed.trim(), fluid, quantity, filter, record.notes].filter(Boolean).join(" - "));
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -63,9 +80,11 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
   const pageHeight = 792;
   const margin = 48;
   const contentWidth = pageWidth - margin * 2;
-  const workWidth = 320;
-  const dateX = 390;
-  const mileageX = pageWidth - margin;
+  const workWidth = 210;
+  const dateX = 304;
+  const mileageX = 446;
+  const costX = pageWidth - margin - 10;
+  const totalSpent = maintenanceTotalCents(records);
 
   function drawHeader(continued: boolean) {
     document.setTextColor(20, 91, 151);
@@ -86,11 +105,11 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
     document.setFont("helvetica", "bold");
     document.setFontSize(12);
     document.setTextColor(20, 30, 42);
-    document.text(continued ? "Maintenance & Service History - continued" : "Maintenance & Service History", margin, 140);
+    document.text(continued ? "Maintenance & Service History - continued" : "Maintenance & Service History", margin, 136);
     document.setFont("helvetica", "normal");
     document.setFontSize(9);
     document.setTextColor(78, 89, 103);
-    document.text(`${records.length} completed service record${records.length === 1 ? "" : "s"}`, pageWidth - margin, 140, { align: "right" });
+    document.text(`${records.length} completed record${records.length === 1 ? "" : "s"}  |  ${formatUsdCents(totalSpent)} total spent`, pageWidth - margin, 153, { align: "right" });
   }
 
   function drawTableHeader(y: number) {
@@ -101,19 +120,20 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
     document.setTextColor(61, 76, 92);
     document.text("WORK COMPLETED", margin + 10, y + 17);
     document.text("DATE", dateX, y + 17);
-    document.text("MILEAGE", mileageX - 10, y + 17, { align: "right" });
+    document.text("MILEAGE", mileageX, y + 17, { align: "right" });
+    document.text("COST", costX, y + 17, { align: "right" });
     return y + 26;
   }
 
   drawHeader(false);
-  let y = drawTableHeader(158);
+  let y = drawTableHeader(166);
   records.forEach((record, index) => {
     const workLines = document.splitTextToSize(recordExportText(record), workWidth) as string[];
     const rowHeight = Math.max(38, workLines.length * 12 + 18);
     if (y + rowHeight > pageHeight - 54) {
       document.addPage();
       drawHeader(true);
-      y = drawTableHeader(158);
+      y = drawTableHeader(166);
     }
     if (index % 2 === 1) {
       document.setFillColor(249, 251, 253);
@@ -129,7 +149,8 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
     document.setFontSize(9);
     document.setTextColor(68, 80, 93);
     document.text(reportDate(record.completed_at), dateX, y + 16);
-    document.text(`${record.mileage.toLocaleString("en-US")} mi`, mileageX - 10, y + 16, { align: "right" });
+    document.text(`${record.mileage.toLocaleString("en-US")} mi`, mileageX, y + 16, { align: "right" });
+    document.text(recordCost(record), costX, y + 16, { align: "right" });
     y += rowHeight;
   });
 
@@ -139,7 +160,7 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
     document.setFont("helvetica", "normal");
     document.setFontSize(8);
     document.setTextColor(110, 120, 132);
-    document.text("Account-holder entered records · Keeper does not independently verify service completion", margin, pageHeight - 28);
+    document.text("Account-holder entered records | Keeper does not independently verify service completion", margin, pageHeight - 28);
     document.text(`Page ${page} of ${totalPages}`, pageWidth - margin, pageHeight - 28, { align: "right" });
   }
   return document.output("blob");
@@ -198,7 +219,7 @@ export async function createMaintenancePng(vehicle: ExportVehicle, sourceRecords
   context.fillText("Maintenance & Service History", margin, 228);
   context.fillStyle = "#4e5967";
   context.font = "400 17px Arial";
-  context.fillText(`${records.length} completed service record${records.length === 1 ? "" : "s"}`, margin, 258);
+  context.fillText(`${records.length} completed service record${records.length === 1 ? "" : "s"}  |  ${formatUsdCents(maintenanceTotalCents(records))} total spent`, margin, 258);
 
   let y = 294;
   records.forEach((record, index) => {
@@ -212,7 +233,7 @@ export async function createMaintenancePng(vehicle: ExportVehicle, sourceRecords
     rowLines[index].forEach((line, lineIndex) => context.fillText(line, margin + 20, y + 34 + lineIndex * 28));
     context.fillStyle = "#4e5967";
     context.font = "400 18px Arial";
-    context.fillText(`${reportDate(record.completed_at)}  |  ${record.mileage.toLocaleString("en-US")} mi`, margin + 20, y + height - 20);
+    context.fillText(`${reportDate(record.completed_at)}  |  ${record.mileage.toLocaleString("en-US")} mi  |  ${recordCost(record)}`, margin + 20, y + height - 20);
     context.strokeStyle = "#dbe2e9";
     context.beginPath();
     context.moveTo(margin, y + height);
@@ -222,7 +243,7 @@ export async function createMaintenancePng(vehicle: ExportVehicle, sourceRecords
   });
   context.fillStyle = "#6e7884";
   context.font = "400 15px Arial";
-  context.fillText("Keeper Garage - completed work only · Account-holder entered records; service completion is not independently verified.", margin, logicalHeight - 34);
+  context.fillText("Keeper Garage - completed work only | Account-holder entered records; service completion is not independently verified.", margin, logicalHeight - 34);
 
   return new Promise<Blob>((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("The image export could not be created.")), "image/png"));
 }
