@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BRAND_OPTIONS,
   KNOWN_ISSUES,
-  PLATFORM_OPTIONS,
   PROJECT_IDEAS,
   getEngineOptions,
+  getEngineLabel,
+  getDrivetrainOptions,
   getMaintenanceCatalog,
   getPlatform,
+  getPlatformOptions,
   getTransmissionOptions,
   getTrimOptions,
   getYearOptions,
@@ -15,6 +17,7 @@ import {
   type MaintenanceCatalogItem,
   type KnownIssue,
   type VehicleProfile,
+  type VehicleBrand,
 } from "../lib/catalog";
 import { searchKnownIssues } from "../lib/knownIssueSearch";
 import { AuthPanel, type AuthIntent } from "./AuthPanel";
@@ -218,11 +221,12 @@ const severityRank: Record<DashboardItem["severity"], number> = { critical: 0, i
 function resolveProfile(platform: VehicleProfile["platform"], year: number, trim: string | undefined, current?: VehicleProfile): VehicleProfile {
   const options = getTrimOptions(platform, year);
   const selected = options.find((option) => option.value === trim) ?? options[0];
-  const drivetrains = [...selected.drivetrains] as string[];
+  const drivetrains = getDrivetrainOptions(platform, selected.value, year);
   const drivetrain = drivetrains.includes(current?.drivetrain ?? "") ? current!.drivetrain : drivetrains[0];
   const transmissions = getTransmissionOptions(platform, selected.value, drivetrain, year);
   const transmission = transmissions.includes(current?.transmission ?? "") ? current!.transmission : transmissions[0];
   return {
+    brand: getPlatform(platform).brand,
     platform,
     year,
     trim: selected.value,
@@ -234,6 +238,7 @@ function resolveProfile(platform: VehicleProfile["platform"], year: number, trim
 
 export default function App() {
   const [profile, setProfile] = useState<VehicleProfile>({
+    brand: "BMW",
     platform: "F30",
     year: 2014,
     trim: "328i",
@@ -299,17 +304,19 @@ export default function App() {
 
   useEffect(() => {
     if (auth.access.kind !== "guest") return;
-    queueMicrotask(() => setProfile({ platform: "F30", year: 2014, trim: "328i", engineCode: "N20", drivetrain: "RWD", transmission: "8-speed automatic" }));
+    queueMicrotask(() => setProfile({ brand: "BMW", platform: "F30", year: 2014, trim: "328i", engineCode: "N20", drivetrain: "RWD", transmission: "8-speed automatic" }));
   }, [auth.access.kind]);
 
   const platform = getPlatform(profile.platform);
+  const platformOptions = getPlatformOptions(profile.brand);
   const years = getYearOptions(profile.platform);
   const trimOptions = getTrimOptions(profile.platform, profile.year);
   const libraryTrimOptions = getTrimOptions(profile.platform);
-  const selectedTrim = trimOptions.find((option) => option.value === profile.trim) ?? trimOptions[0];
-  const drivetrains = [...selectedTrim.drivetrains] as string[];
+  const drivetrains = getDrivetrainOptions(profile.platform, profile.trim, profile.year);
   const transmissions = getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain, profile.year);
   const engines = getEngineOptions(profile.platform, profile.trim, profile.year, profile.transmission);
+  const selectedEngineLabel = engineLabels[profile.engineCode] ?? getEngineLabel(profile);
+  const profileLabel = `${profile.year} ${profile.brand} ${profile.trim} · ${platform.label}`;
 
   const maintenance = useMemo(() => getMaintenanceCatalog(profile), [profile]);
   const matchedIssues = useMemo(
@@ -320,11 +327,12 @@ export default function App() {
   const watchIssues = matchedIssues.filter((issue) => issue.urgency === "watch");
   const projects = PROJECT_IDEAS.filter((project) => matchesApplicability(profile, project.appliesTo));
   const demoMode = auth.access.kind === "guest";
-  const selectedSavedVehicle = demoMode ? DEMO_VEHICLE : garage.vehicles.find((vehicle) => vehicle.id === garage.vehicleId) ?? null;
+  const demoVehicleSelected = demoMode && profile.brand === "BMW" && profile.platform === "F30" && profile.year === 2014 && profile.trim === "328i" && profile.engineCode === "N20" && profile.drivetrain === "RWD" && profile.transmission === "8-speed automatic";
+  const selectedSavedVehicle = demoVehicleSelected ? DEMO_VEHICLE : garage.vehicles.find((vehicle) => vehicle.id === garage.vehicleId) ?? null;
   const vehicleRemovalTarget = garage.vehicles.find((vehicle) => vehicle.id === vehicleRemovalTargetId) ?? null;
-  const currentVehicleMileage = demoMode ? DEMO_VEHICLE.mileage : garage.mileage.trim() ? Number(garage.mileage) : null;
-  const displayRecords = demoMode ? DEMO_MAINTENANCE_RECORDS : serviceRecords.records;
-  const displayTrackedItems = demoMode ? DEMO_TRACKED_ITEMS : trackedMaintenance.items;
+  const currentVehicleMileage = demoVehicleSelected ? DEMO_VEHICLE.mileage : demoMode ? null : garage.mileage.trim() ? Number(garage.mileage) : null;
+  const displayRecords = useMemo(() => demoVehicleSelected ? DEMO_MAINTENANCE_RECORDS : demoMode ? [] : serviceRecords.records, [demoMode, demoVehicleSelected, serviceRecords.records]);
+  const displayTrackedItems = useMemo(() => demoVehicleSelected ? DEMO_TRACKED_ITEMS : demoMode ? [] : trackedMaintenance.items, [demoMode, demoVehicleSelected, trackedMaintenance.items]);
   const displayRecordsBySlug = useMemo(() => {
     const grouped = new Map<string, MaintenanceRecordRow[]>();
     for (const record of displayRecords) {
@@ -420,6 +428,13 @@ export default function App() {
     setWatchExpanded(false);
   }
 
+  function selectBrand(brand: VehicleBrand) {
+    resetGenerationView();
+    const nextPlatform = getPlatformOptions(brand)[0];
+    if (!nextPlatform) return;
+    setProfile((current) => resolveProfile(nextPlatform.value, nextPlatform.yearEnd, undefined, { ...current, brand }));
+  }
+
   function selectPlatform(nextPlatform: VehicleProfile["platform"]) {
     resetGenerationView();
     const year = getPlatform(nextPlatform).yearEnd;
@@ -482,7 +497,7 @@ export default function App() {
 
   async function confirmVehicleRemoval() {
     if (!vehicleRemovalTarget) return;
-    const label = `${vehicleRemovalTarget.model_year} BMW ${vehicleRemovalTarget.trim}`;
+    const label = `${vehicleRemovalTarget.model_year} ${vehicleRemovalTarget.brand} ${vehicleRemovalTarget.trim}`;
     const hadOtherVehicles = garage.vehicles.length > 1;
     const removed = await garage.removeVehicle(vehicleRemovalTarget.id);
     if (!removed) return;
@@ -548,15 +563,15 @@ export default function App() {
         {page === "garage" && <>
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow">BMW archive · E36 / E39 / E46 / F30</p>
+            <p className="eyebrow">Multi-brand workshop archive · 16 vehicle families</p>
             <h1>Know what your car needs next.</h1>
             <p className="hero-intro">Factory information, researched owner patterns, and specialist maintenance guidance—filtered for the exact generation, year, engine, drivetrain, and transmission.</p>
             <div className="hero-actions"><a href="#maintenance" className="button button-primary">Open maintenance list</a><a href="#issues" className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
           </div>
           <aside className="configuration-panel" aria-labelledby="config-title">
-            <div className="configuration-heading"><span>Configure this visit</span><strong id="config-title">Your exact BMW</strong></div>
+            <div className="configuration-heading"><span>Configure this visit</span><strong id="config-title">Your exact vehicle</strong></div>
             <div className="garage-picker">
-              <div className="garage-picker-copy"><span>{garageTitle}</span><strong>{demoMode ? "2014 BMW 328i · Demo Vehicle" : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : auth.access.kind === "setup" ? "Finish Profile setup to load your garage" : "No saved vehicles yet"}</strong></div>
+              <div className="garage-picker-copy"><span>{garageTitle}</span><strong>{demoVehicleSelected ? "2014 BMW 328i · Demo Vehicle" : demoMode ? `${profileLabel} · Guest preview` : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : auth.access.kind === "setup" ? "Finish Profile setup to load your garage" : "No saved vehicles yet"}</strong></div>
               {auth.dataUser ? <>
                 <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") garage.startNewVehicle(); else garage.selectVehicle(event.target.value); }}>
                   {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} {vehicle.trim}</option>)}
@@ -567,18 +582,18 @@ export default function App() {
             </div>
             <p className="configuration-flow">Choose in order. Each selection narrows the choices that follow.</p>
             <div className="config-grid">
-              <label>Brand<select value={BRAND_OPTIONS[0].value} onChange={() => undefined}>{BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
-              <label>Model<select value={profile.platform} onChange={(event) => selectPlatform(event.target.value as VehicleProfile["platform"])}>{PLATFORM_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
+              <label>Brand<select value={profile.brand} onChange={(event) => selectBrand(event.target.value as VehicleBrand)}>{BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
+              <label>Model<select value={profile.platform} onChange={(event) => selectPlatform(event.target.value as VehicleProfile["platform"])}>{platformOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
               <label>Year<select value={profile.year} onChange={(event) => selectYear(Number(event.target.value))}>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
               <label>Type<select value={profile.trim} onChange={(event) => selectTrim(event.target.value)}>{trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
               <label>Drivetrain<select value={profile.drivetrain} onChange={(event) => selectDrivetrain(event.target.value)}>{drivetrains.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label>Transmission<select value={profile.transmission} onChange={(event) => selectTransmission(event.target.value)}>{transmissions.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label>Engine<select value={profile.engineCode} disabled={engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>{engines.map((engine) => <option value={engine} key={engine}>{engineLabels[engine] ?? engine}</option>)}</select></label>
+              <label>Engine<select value={profile.engineCode} disabled={engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>{engines.map((engine) => <option value={engine} key={engine}>{engineLabels[engine] ?? getEngineLabel({ ...profile, engineCode: engine })}</option>)}</select></label>
             </div>
-            {(engines.length > 1 || profile.platform === "E36") && <div className="inference-note"><strong>{engineLabels[profile.engineCode] ?? profile.engineCode} selected</strong><p>Keeper uses the year as a starting point. Confirm the VIN, production date, emissions label, engine stamp, and transmission tag before ordering parts or fluids.</p></div>}
+            {(engines.length > 1 || profile.platform === "E36") && <div className="inference-note"><strong>{selectedEngineLabel} selected</strong><p>Keeper uses the year as a starting point. Confirm the VIN, production date, emissions label, engine stamp, and transmission tag before ordering parts or fluids.</p></div>}
             <div className="garage-save">
-              <label>Garage name<input value={demoMode ? DEMO_VEHICLE.nickname : garage.nickname} onChange={(event) => garage.setNickname(event.target.value)} maxLength={60} placeholder="My BMW" disabled={!auth.access.canSaveGarage} /></label>
-              <label>Mileage<input value={demoMode ? String(DEMO_VEHICLE.mileage) : garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" disabled={!auth.access.canSaveMileage} /></label>
+              <label>Garage name<input value={demoVehicleSelected ? DEMO_VEHICLE.nickname : demoMode ? "" : garage.nickname} onChange={(event) => garage.setNickname(event.target.value)} maxLength={60} placeholder={`My ${profile.brand}`} disabled={!auth.access.canSaveGarage} /></label>
+              <label>Mileage<input value={demoVehicleSelected ? String(DEMO_VEHICLE.mileage) : demoMode ? "" : garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" disabled={!auth.access.canSaveMileage} /></label>
               <button className="button button-primary" disabled={garage.loading || garage.saving} onClick={() => void saveGarage()}>{garage.saving ? "Saving…" : !auth.access.canSaveGarage ? auth.access.kind === "legacy" ? "Upgrade to save" : "Create Profile to save" : garage.vehicleId ? "Save changes" : "Add to garage"}</button>
             </div>
             {auth.access.kind === "account" && garage.vehicleId && <div className="garage-danger-zone"><div><span>Vehicle settings</span><p>Only remove a vehicle when you intend to permanently delete its Keeper records.</p></div><button className="button button-danger-outline" type="button" disabled={garage.loading || garage.saving || garage.removing} onClick={() => void openVehicleRemoval()}>Remove from Garage</button></div>}
@@ -601,7 +616,7 @@ export default function App() {
         {(page === "maintenance" || page === "issues") && <>
         <section className="page-masthead">
           <div>
-            <p className="eyebrow">{profile.year} BMW {profile.trim} · {profile.platform}</p>
+            <p className="eyebrow">{profileLabel}</p>
             <h1>{page === "maintenance" ? "Maintenance list." : "Known issues."}</h1>
             <p>{page === "maintenance" ? "Factory positions and conservative planning intervals, filtered to the car you configured." : "Urgent warning signs, recurring owner patterns, and supporting evidence kept separate from routine service."}</p>
           </div>
@@ -609,8 +624,8 @@ export default function App() {
         </section>
 
         <section className="vehicle-band">
-          <div><span>Selected profile</span><strong>{profile.year} BMW {profile.trim} · {profile.platform}</strong></div>
-          <div><span>Engine</span><strong>{engineLabels[profile.engineCode]}</strong></div>
+          <div><span>Selected profile</span><strong>{profileLabel}</strong></div>
+          <div><span>Engine</span><strong>{selectedEngineLabel}</strong></div>
           <div><span>Drive</span><strong>{profile.drivetrain}</strong></div>
           <div><span>Matched research</span><strong>{matchedIssues.length} issue patterns · {maintenance.length} service items</strong></div>
         </section>
@@ -624,7 +639,7 @@ export default function App() {
             <div className="lane-label"><span>01</span><div><h3>Urgent</h3><p>Stop-driving symptoms and VIN-specific safety actions.</p></div></div>
             <div className="lane-items">
               {urgentIssues.map((issue) => <article className="priority-card" key={issue.slug}><EvidenceTag value={issue.evidence} /><div><h4>{issue.issue}</h4><p>{issue.preventativeAction}</p><small>Watch for: {issue.symptoms}</small></div>{issue.sources[0] && <a href={issue.sources[0].url} target="_blank" rel="noreferrer">Official source ↗</a>}</article>)}
-              {emergencyChecks.map((item) => <article className="priority-card emergency-card" key={item.title}><span className="priority-kind">Any BMW</span><div><h4>{item.title}</h4><p>{item.body}</p></div><span className="action-label">STOP / CHECK</span></article>)}
+              {emergencyChecks.map((item) => <article className="priority-card emergency-card" key={item.title}><span className="priority-kind">Any vehicle</span><div><h4>{item.title}</h4><p>{item.body}</p></div><span className="action-label">STOP / CHECK</span></article>)}
             </div>
           </div>
 
@@ -646,10 +661,11 @@ export default function App() {
         {page === "maintenance" &&
         <section className="maintenance-section" id="maintenance">
           <div className="maintenance-vehicle-toolbar">
-            <label><span>Maintenance for</span><select aria-label="Maintenance vehicle" value={demoMode ? "demo" : garage.vehicleId ?? "configured"} disabled={demoMode || garage.loading || garage.vehicles.length === 0} onChange={(event) => garage.selectVehicle(event.target.value)}>
-              {demoMode && <option value="demo">2014 BMW 328i · Demo Vehicle</option>}
-              {!demoMode && !garage.vehicleId && <option value="configured">{profile.year} BMW {profile.trim} · not saved</option>}
-              {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} BMW {vehicle.trim}</option>)}
+            <label><span>Maintenance for</span><select aria-label="Maintenance vehicle" value={demoVehicleSelected ? "demo" : garage.vehicleId ?? "configured"} disabled={demoMode || garage.loading || garage.vehicles.length === 0} onChange={(event) => garage.selectVehicle(event.target.value)}>
+              {demoVehicleSelected && <option value="demo">2014 BMW 328i · Demo Vehicle</option>}
+              {demoMode && !demoVehicleSelected && <option value="configured">{profile.year} {profile.brand} {profile.trim} · Guest preview</option>}
+              {!demoMode && !garage.vehicleId && <option value="configured">{profile.year} {profile.brand} {profile.trim} · not saved</option>}
+              {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} {vehicle.brand} {vehicle.trim}</option>)}
             </select></label>
             <div><span>Vehicle mileage</span><strong>{currentVehicleMileage === null ? "Not entered" : `${currentVehicleMileage.toLocaleString()} mi`}</strong></div>
             <div><span>Completed records</span><strong>{serviceRecords.loading && !demoMode ? "Loading…" : displayRecords.length}</strong></div>
@@ -716,7 +732,7 @@ export default function App() {
             <label><span>Fitment view</span><select value={libraryView} disabled={Boolean(libraryQuery.trim())} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option><option value="all">All {profile.platform} research</option>{libraryTrimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
             <strong>{libraryIssues.length} shown</strong>
           </div>
-          <div className="known-issue-search-context"><span>Searching for</span><strong>{profile.year} BMW {profile.trim} · {profile.platform} · {engineLabels[profile.engineCode] ?? profile.engineCode} · {profile.drivetrain}</strong><p>{libraryQuery.trim() ? "Search results are limited to records that match this exact vehicle configuration." : "Choose a broader fitment view to browse the full generation library."}</p></div>
+          <div className="known-issue-search-context"><span>Searching for</span><strong>{profileLabel} · {selectedEngineLabel} · {profile.drivetrain}</strong><p>{libraryQuery.trim() ? "Search results are limited to records that match this exact vehicle configuration." : "Choose a broader fitment view to browse the full generation library."}</p></div>
           {libraryQuery.trim() && <div className={`issue-search-status ${issueSearchResults[0]?.matchLabel === "High match" ? "exact" : "closest"}`}><strong>{issueSearchResults[0]?.matchLabel === "High match" ? "Best matches" : "No exact match found"}</strong><p>{issueSearchResults.length ? issueSearchResults[0]?.matchLabel === "High match" ? "Ranked by terminology, symptoms, components, common names, and vehicle fitment." : "Here are the closest matches for your selected vehicle. Review the details, or add your own issue below." : "No strong library match was found for this vehicle. You can still add it as a custom issue below."}</p></div>}
           <div className="issue-library-list">
             {libraryIssues.map((issue) => {
@@ -746,7 +762,7 @@ export default function App() {
         <section className="sources-section" id="sources">
           <p className="eyebrow">Evidence policy</p>
           <h2>Useful, without pretending every forum post is a fact.</h2>
-          <div className="evidence-grid"><article><span>01</span><h3>BMW / official</h3><p>Maintenance schedules, recalls, and service bulletins define factory positions, affected production, and VIN-specific actions.</p></article><article><span>02</span><h3>Community consensus</h3><p>Repeated patterns from BMW specialists, platform forums, and technical videos become watch items—not automatic diagnoses.</p></article><article><span>03</span><h3>Individual experience</h3><p>StartMyCar and isolated owner reports help discover symptoms, but remain visibly labeled and carry the lowest confidence.</p></article></div>
+          <div className="evidence-grid"><article><span>01</span><h3>Manufacturer / official</h3><p>Maintenance schedules, recalls, and service bulletins define factory positions, affected production, and VIN-specific actions.</p></article><article><span>02</span><h3>Community consensus</h3><p>Repeated patterns from marque specialists, platform forums, and technical videos become watch items—not automatic diagnoses.</p></article><article><span>03</span><h3>Individual experience</h3><p>Isolated owner reports help discover symptoms, but remain visibly labeled and carry the lowest confidence.</p></article></div>
         </section>
         </>}
 
@@ -754,7 +770,7 @@ export default function App() {
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
-      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research, beginning with BMW E36, E39, E46, and F30. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a></footer>
+      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a></footer>
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>

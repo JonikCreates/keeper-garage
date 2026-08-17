@@ -1,4 +1,6 @@
 import { CLASSIC_KNOWN_ISSUES, getClassicMaintenanceCatalog } from "./classicCatalog";
+import { getExpandedMaintenanceCatalog } from "./expandedCatalog";
+import { EXPANDED_PLATFORMS, EXPANDED_VARIANTS } from "./expandedCatalogData";
 
 export type SourceType = "OEM" | "Community consensus" | "Individual experience";
 
@@ -19,8 +21,12 @@ export type Applicability = {
   transmissions?: string[];
 };
 
+export type VehicleBrand = "BMW" | "Subaru" | "Porsche" | "Mazda";
+export type VehiclePlatform = "F30" | "E46" | "E39" | "E36" | "E9X" | "F10" | "F10M5" | "VA" | "9961" | "9962" | "9971" | "9972" | "NA" | "NB" | "NC" | "ND";
+
 export type VehicleProfile = {
-  platform: "F30" | "E46" | "E39" | "E36";
+  brand: VehicleBrand;
+  platform: VehiclePlatform;
   year: number;
   trim: string;
   engineCode: string;
@@ -71,16 +77,23 @@ export type ProjectIdea = {
 
 export const BRAND_OPTIONS = [
   { value: "BMW", label: "BMW" },
+  { value: "Subaru", label: "Subaru" },
+  { value: "Porsche", label: "Porsche" },
+  { value: "Mazda", label: "Mazda" },
 ] as const;
 
-export const PLATFORM_OPTIONS = [
-  { value: "F30", label: "3 Series (F30)", yearStart: 2012, yearEnd: 2018 },
-  { value: "E46", label: "3 Series (E46)", yearStart: 1999, yearEnd: 2006 },
-  { value: "E39", label: "5 Series (E39)", yearStart: 1997, yearEnd: 2003 },
-  { value: "E36", label: "3 Series (E36)", yearStart: 1992, yearEnd: 1999 },
-] as const;
+export type PlatformOption = { value: VehiclePlatform; brand: VehicleBrand; label: string; yearStart: number; yearEnd: number };
+export type TrimOption = { platform: VehiclePlatform; value: string; label: string; yearStart: number; yearEnd: number; engines: string[]; drivetrains: string[]; transmissions: string[] };
 
-export const TRIM_OPTIONS = [
+export const PLATFORM_OPTIONS: PlatformOption[] = [
+  { value: "F30", brand: "BMW", label: "3 Series (F30)", yearStart: 2012, yearEnd: 2018 },
+  { value: "E46", brand: "BMW", label: "3 Series (E46)", yearStart: 1999, yearEnd: 2006 },
+  { value: "E39", brand: "BMW", label: "5 Series (E39)", yearStart: 1997, yearEnd: 2003 },
+  { value: "E36", brand: "BMW", label: "3 Series (E36)", yearStart: 1992, yearEnd: 1999 },
+  ...EXPANDED_PLATFORMS as PlatformOption[],
+];
+
+export const TRIM_OPTIONS: TrimOption[] = [
   { platform: "F30", value: "320i", label: "320i", yearStart: 2013, yearEnd: 2018, engines: ["N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "328i", label: "328i", yearStart: 2012, yearEnd: 2016, engines: ["N26", "N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "328d", label: "328d — Diesel", yearStart: 2014, yearEnd: 2018, engines: ["N47T"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic"] },
@@ -128,9 +141,26 @@ export const TRIM_OPTIONS = [
   { platform: "E36", value: "328is", label: "328is", yearStart: 1996, yearEnd: 1999, engines: ["M52B28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
   { platform: "E36", value: "328ic", label: "328ic", yearStart: 1996, yearEnd: 1999, engines: ["M52B28"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "4-speed automatic"] },
   { platform: "E36", value: "M3", label: "M3", yearStart: 1995, yearEnd: 1999, engines: ["S50US", "S52US"], drivetrains: ["RWD"], transmissions: ["5-speed manual", "5-speed automatic"] },
-] as const;
+];
 
 export function getTrimOptions(platform: VehicleProfile["platform"], year?: number) {
+  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+    && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
+  if (expanded.length) {
+    return [...new Set(expanded.map((variant) => variant.trim))].map((trim): TrimOption => {
+      const matches = expanded.filter((variant) => variant.trim === trim);
+      return {
+        platform,
+        value: trim,
+        label: matches[0].label,
+        yearStart: Math.min(...matches.map((variant) => variant.yearStart)),
+        yearEnd: Math.max(...matches.map((variant) => variant.yearEnd)),
+        engines: [...new Set(matches.map((variant) => variant.engineCode))],
+        drivetrains: [...new Set(matches.map((variant) => variant.drivetrain))],
+        transmissions: [...new Set(matches.map((variant) => variant.transmission))],
+      };
+    });
+  }
   return TRIM_OPTIONS.filter((option) => option.platform === platform &&
     (year === undefined || (year >= option.yearStart && year <= option.yearEnd)));
 }
@@ -139,12 +169,26 @@ export function getPlatform(platform: VehicleProfile["platform"]) {
   return PLATFORM_OPTIONS.find((option) => option.value === platform) ?? PLATFORM_OPTIONS[0];
 }
 
+export function getPlatformOptions(brand: VehicleBrand) {
+  return PLATFORM_OPTIONS.filter((option) => option.brand === brand);
+}
+
+export function getBrandForPlatform(platform: VehicleProfile["platform"]) {
+  return getPlatform(platform).brand;
+}
+
 export function getYearOptions(platform: VehicleProfile["platform"]) {
   const option = getPlatform(platform);
   return Array.from({ length: option.yearEnd - option.yearStart + 1 }, (_, index) => option.yearEnd - index);
 }
 
 export function getEngineOptions(platform: VehicleProfile["platform"], trim: string, year: number, transmission?: string) {
+  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+    && variant.trim === trim
+    && year >= variant.yearStart
+    && year <= variant.yearEnd
+    && (!transmission || variant.transmission === transmission));
+  if (expanded.length) return [...new Set(expanded.map((variant) => variant.engineCode))];
   const option = TRIM_OPTIONS.find((candidate) => candidate.platform === platform && candidate.value === trim);
   if (!option) return [];
   const engines = [...option.engines] as string[];
@@ -165,6 +209,11 @@ export function getEngineOptions(platform: VehicleProfile["platform"], trim: str
 }
 
 export function getTransmissionOptions(platform: VehicleProfile["platform"], trim: string, drivetrain: string, year?: number) {
+  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+    && variant.trim === trim
+    && variant.drivetrain === drivetrain
+    && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
+  if (expanded.length) return [...new Set(expanded.map((variant) => variant.transmission))];
   const option = TRIM_OPTIONS.find((candidate) => candidate.platform === platform && candidate.value === trim);
   if (!option) return [];
   const transmissions = [...option.transmissions] as string[];
@@ -180,10 +229,26 @@ export function getTransmissionOptions(platform: VehicleProfile["platform"], tri
   return transmissions;
 }
 
+export function getDrivetrainOptions(platform: VehicleProfile["platform"], trim: string, year?: number) {
+  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+    && variant.trim === trim
+    && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
+  if (expanded.length) return [...new Set(expanded.map((variant) => variant.drivetrain))];
+  return [...(TRIM_OPTIONS.find((candidate) => candidate.platform === platform && candidate.value === trim)?.drivetrains ?? [])];
+}
+
 export function inferEngine(platform: VehicleProfile["platform"], trim: string, year: number, transmission?: string, current?: string) {
   const engines = getEngineOptions(platform, trim, year, transmission);
   if (engines.includes(current ?? "")) return current as string;
   return engines[0] ?? "Unknown";
+}
+
+export function getEngineLabel(profile: VehicleProfile) {
+  return EXPANDED_VARIANTS.find((variant) => variant.platform === profile.platform
+    && variant.trim === profile.trim
+    && profile.year >= variant.yearStart
+    && profile.year <= variant.yearEnd
+    && variant.engineCode === profile.engineCode)?.engineLabel ?? profile.engineCode;
 }
 
 export function matchesApplicability(profile: VehicleProfile, rule: Applicability) {
@@ -543,6 +608,9 @@ function resolveE36Maintenance(item: MaintenanceCatalogItem, profile: VehiclePro
 }
 
 export function getMaintenanceCatalog(profile: VehicleProfile) {
+  if (EXPANDED_VARIANTS.some((variant) => variant.platform === profile.platform)) {
+    return getExpandedMaintenanceCatalog(profile);
+  }
   if (profile.platform === "E39" || profile.platform === "E46") {
     return getClassicMaintenanceCatalog(profile);
   }

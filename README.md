@@ -1,8 +1,8 @@
 # Keeper
 
-Configuration-aware maintenance research for the U.S.-spec BMW E36, E39, E46, and F30 generations, published as a standalone static site at [jonikcreates.github.io/keeper-garage](https://jonikcreates.github.io/keeper-garage/).
+Configuration-aware maintenance research for U.S.-spec BMW, Mazda, Porsche, and Subaru enthusiast platforms, published as a standalone static site at [jonikcreates.github.io/keeper-garage](https://jonikcreates.github.io/keeper-garage/).
 
-The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the F30 320i, 328i, 328d, 330e, 330i, 335i, and 340i. Maintenance and issue records carry applicability rules for generation, year, body style, engine, drivetrain, and transmission, so a saved vehicle only receives relevant recommendations.
+The platform library covers 16 vehicle families. Maintenance and issue records carry applicability rules for brand, generation, year, model type, engine, drivetrain, and transmission, so a saved vehicle only receives relevant recommendations.
 
 ## What it covers
 
@@ -10,6 +10,11 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - E39 M52, M54, M62, and S62 schedules across Sedan, Touring, manual, and automatic configurations
 - E46 M52TU, M54, M56, and S54 schedules across Sedan, Coupe, Convertible, Touring, AWD, manual, automatic, and SMG configurations
 - F30 320i, 328i, 328d, 330e, 330i, 335i, and 340i trims
+- BMW E9x 3 Series/M3, F10 5 Series, and F10 M5
+- Subaru VA WRX, WRX STI, Type RA, and S209
+- Porsche 911 996.1, 996.2, 997.1, and 997.2 Carrera, Turbo, Targa, GT, RS, GTS, and special-model branches
+- Mazda MX-5 Miata NA, NB, NC, and ND, including Mazdaspeed, PRHT, RF, manual, and automatic branches
+- 133 exact schedule variants and 5,112 applicable workbook-derived maintenance entries
 - Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
@@ -55,4 +60,4 @@ Database changes live in `supabase/migrations`. Vehicles, tracked maintenance it
 
 ## Data policy
 
-BMW schedules, bulletins, and recalls remain visibly separated from community consensus and individual owner reports. The issue library is an inspection and research tool, not a diagnosis. Parts, fluids, repair procedures, recall eligibility, and fitment must be verified for the exact VIN.
+Manufacturer schedules, bulletins, and recalls remain visibly separated from preventive ownership guidance, community consensus, and individual owner reports. The issue library is an inspection and research tool, not a diagnosis. Parts, fluids, repair procedures, recall eligibility, and fitment must be verified for the exact VIN.

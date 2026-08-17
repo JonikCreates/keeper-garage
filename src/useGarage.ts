@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { getPlatform, type VehicleProfile } from "../lib/catalog";
+import { PLATFORM_OPTIONS, getPlatform, type VehicleProfile } from "../lib/catalog";
 import { friendlyGarageError } from "./keeperApi";
 import { supabase, type VehicleRemovalResult, type VehicleRemovalSummary, type VehicleRow } from "./supabase";
 
@@ -21,7 +21,7 @@ const initialState: GarageState = {
   ownerId: null,
   vehicles: [],
   vehicleId: null,
-  nickname: "My BMW",
+  nickname: "My vehicle",
   mileage: "",
   loading: false,
   saving: false,
@@ -30,16 +30,11 @@ const initialState: GarageState = {
   error: null,
 };
 
-const platformByModel: Record<VehicleRow["model"], VehicleProfile["platform"]> = {
-  "3 Series (F30)": "F30",
-  "3 Series (E46)": "E46",
-  "5 Series (E39)": "E39",
-  "3 Series (E36)": "E36",
-};
-
 function vehicleProfile(vehicle: VehicleRow): VehicleProfile {
+  const platform = PLATFORM_OPTIONS.find((option) => option.label === vehicle.model && option.brand === vehicle.brand) ?? PLATFORM_OPTIONS[0];
   return {
-    platform: platformByModel[vehicle.model],
+    brand: vehicle.brand,
+    platform: platform.value,
     year: vehicle.model_year,
     trim: vehicle.trim,
     engineCode: vehicle.engine_code,
@@ -125,7 +120,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     setState((current) => ({
       ...current,
       vehicleId: null,
-      nickname: "My BMW",
+      nickname: "My vehicle",
       mileage: "",
       savedAt: null,
       error: null,
@@ -141,8 +136,8 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     const selectedVehicle = state.vehicles.find((vehicle) => vehicle.id === state.vehicleId);
     const vehicle = {
       owner_id: user.id,
-      nickname: state.nickname.trim() || "My BMW",
-      brand: "BMW" as const,
+      nickname: state.nickname.trim() || `My ${profile.brand}`,
+      brand: profile.brand,
       model: platform.label,
       model_year: profile.year,
       trim: profile.trim,
@@ -207,7 +202,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       ...current,
       vehicles: remainingVehicles,
       vehicleId: selected?.id ?? null,
-      nickname: selected?.nickname ?? "My BMW",
+      nickname: selected?.nickname ?? "My vehicle",
       mileage: selected?.mileage === null || selected?.mileage === undefined ? "" : String(selected.mileage),
       removing: false,
       savedAt: selected?.updated_at ?? null,
