@@ -211,6 +211,26 @@ function nextDueLabel(item: Pick<DashboardItem, "mileageInterval" | "timeInterva
   return [mileage, date].filter(Boolean).join(" / ");
 }
 
+function garageAttentionLabel(item: DashboardItem, currentMileage: number | null) {
+  const latest = item.records[0];
+  if (!latest) return item.mileageInterval || item.timeIntervalMonths ? "First baseline not recorded" : item.planLabel;
+  const details: string[] = [];
+  if (item.mileageInterval) {
+    const dueMileage = latest.mileage + item.mileageInterval;
+    if (currentMileage === null) details.push(`Due at ${dueMileage.toLocaleString()} mi`);
+    else {
+      const remaining = dueMileage - currentMileage;
+      details.push(remaining <= 0 ? `${Math.abs(remaining).toLocaleString()} mi overdue` : `${remaining.toLocaleString()} mi remaining`);
+    }
+  }
+  if (item.timeIntervalMonths) {
+    const dueDate = new Date(`${latest.completed_at}T00:00:00Z`);
+    dueDate.setUTCMonth(dueDate.getUTCMonth() + item.timeIntervalMonths);
+    details.push(new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric", timeZone: "UTC" }).format(dueDate));
+  }
+  return details.join(" / ") || item.planLabel;
+}
+
 function maintenanceRecordFluid(record: MaintenanceRecordRow) {
   const product = [record.fluid_brand, record.fluid_product, record.fluid_viscosity ?? record.fluid_type].filter(Boolean).join(" · ");
   const quantity = record.fluid_quantity !== null ? `${record.fluid_quantity} ${record.fluid_unit ?? "units"}` : "";
@@ -401,6 +421,13 @@ export default function App() {
   }, [currentVehicleMileage, displayRecordsBySlug, displayTrackedItems, maintenance]);
 
   const maintenanceCategories = useMemo(() => [...new Set(dashboardItems.map((item) => item.category))].sort(), [dashboardItems]);
+  // REVIEW DECISION: derive the Garage summary from the Maintenance list so both views always agree.
+  const overdueItems = useMemo(() => dashboardItems.filter((item) => item.status.tone === "overdue"), [dashboardItems]);
+  const dueSoonItems = useMemo(() => dashboardItems.filter((item) => item.status.tone === "soon" || item.status.tone === "unrecorded"), [dashboardItems]);
+  const onPlanItems = useMemo(() => dashboardItems.filter((item) => item.status.tone === "current"), [dashboardItems]);
+  const attentionItems = useMemo(() => [...overdueItems, ...dueSoonItems].slice(0, 4), [dueSoonItems, overdueItems]);
+  const activeTrackedIssues = useMemo(() => displayTrackedItems.filter((item) =>
+    (item.item_type === "known_issue" || item.item_type === "custom_issue") && item.issue_status !== "repaired").length, [displayTrackedItems]);
   const visibleDashboardItems = useMemo(() => dashboardItems.filter((item) => {
     if (maintenanceCategory !== "all" && item.category !== maintenanceCategory) return false;
     if (maintenanceFilter === "overdue") return item.status.tone === "overdue";
@@ -548,30 +575,70 @@ export default function App() {
 
   const accountLabel = !auth.ready ? "Checking…" : auth.access.kind === "account" ? "My Profile" : auth.access.kind === "setup" ? "Finish setup" : "Sign In";
   const garageTitle = auth.access.kind === "account" ? "My Garage" : auth.access.kind === "legacy" ? "Existing Garage" : auth.access.kind === "setup" ? "Profile setup" : "Demo Garage";
+  const hasPersonalVehicle = Boolean(selectedSavedVehicle);
+  const garageHealth = overdueItems.length
+    ? { label: "Action needed", tone: "overdue", detail: `${overdueItems.length} overdue item${overdueItems.length === 1 ? "" : "s"} should be reviewed first.` }
+    : dueSoonItems.length
+      ? { label: "Planning needed", tone: "soon", detail: `${dueSoonItems.length} item${dueSoonItems.length === 1 ? "" : "s"} are due soon or still need a baseline.` }
+      : { label: "On plan", tone: "current", detail: "Recorded work is currently on plan." };
 
   return (
     <div className="site-shell">
-      <section className="forum-banner" aria-label="Keeper workshop network">
-        <div><span>Keeper workshop network</span><strong>Owner-built maintenance archive</strong></div>
-        <p><span>Service schedules</span><i /><span>Known issues</span><i /><span>Garage records</span></p>
+      <section className="forum-banner" aria-label="Keeper workshop archive">
+        <div><span>Keeper Workshop Archive</span><strong>Owner-built maintenance intelligence</strong></div>
+        <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
       </section>
       <header className="topbar">
         <a className="brand-lockup" href="#garage"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
         <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={`#${link.page}`} key={link.page}>{link.label}</a>)}</nav>
-        <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><a className="github-link" href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a><button className={`account-button ${auth.access.kind === "account" ? "active" : ""} ${auth.access.kind}`} onClick={() => openAccount("account")}>{accountLabel}</button></div>
+        <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><button className={`account-button ${auth.access.kind === "account" ? "active" : ""} ${auth.access.kind}`} onClick={() => openAccount("account")}>{accountLabel}</button></div>
       </header>
 
       <main id="top">
         {page === "garage" && <>
-        <section className="hero">
-          <div className="hero-copy">
+        <section className={`hero ${hasPersonalVehicle ? "personal-garage-layout" : ""}`}>
+          {hasPersonalVehicle && selectedSavedVehicle ? <section className="personal-garage-dashboard" aria-labelledby="personal-garage-title">
+            <header className="personal-garage-identity">
+              <p className="eyebrow">{garageTitle}</p>
+              <span>{selectedSavedVehicle.nickname}</span>
+              <h1 id="personal-garage-title">{selectedSavedVehicle.model_year} {selectedSavedVehicle.brand} {selectedSavedVehicle.trim}</h1>
+              <p><strong>{currentVehicleMileage === null ? "Mileage not entered" : `${currentVehicleMileage.toLocaleString()} miles`}</strong><i />{selectedSavedVehicle.model}</p>
+              <div><a href="#maintenance" className="button button-primary">View Maintenance</a><a href="#issues" className="button button-quiet">Known Issues</a></div>
+            </header>
+            <aside className={`garage-health-card ${garageHealth.tone}`}>
+              <span>Maintenance status</span>
+              <strong>{garageHealth.label}</strong>
+              <p>{garageHealth.detail}</p>
+            </aside>
+            <dl className="personal-garage-specs">
+              <div><dt>Engine</dt><dd>{selectedEngineLabel}</dd></div>
+              <div><dt>Drivetrain</dt><dd>{profile.drivetrain}</dd></div>
+              <div><dt>Transmission</dt><dd>{profile.transmission}</dd></div>
+              <div><dt>Platform</dt><dd>{platform.label}</dd></div>
+            </dl>
+            <div className="personal-garage-stats">
+              <div><span>Completed services</span><strong>{displayRecords.length}</strong></div>
+              <div><span>Tracked issues</span><strong>{activeTrackedIssues}</strong></div>
+              <div><span>Recorded spending</span><strong>{formatUsdCents(totalSpentCents)}</strong></div>
+              <div><span>Matched research</span><strong>{matchedIssues.length} patterns</strong></div>
+            </div>
+            <section className="garage-attention-preview" aria-labelledby="garage-attention-title">
+              <header><div><span>What needs attention</span><h2 id="garage-attention-title">Next up</h2></div><a href="#maintenance">View full maintenance →</a></header>
+              <div className="garage-attention-counts" aria-label="Maintenance status counts">
+                <div className="overdue"><span>Overdue</span><strong>{overdueItems.length}</strong></div>
+                <div className="soon"><span>Due soon</span><strong>{dueSoonItems.length}</strong></div>
+                <div className="current"><span>On plan</span><strong>{onPlanItems.length}</strong></div>
+              </div>
+              {attentionItems.length ? <ol>{attentionItems.map((item) => <li key={item.slug}><div><span className={item.status.tone}>{item.status.label}</span><strong>{item.name}</strong></div><small>{garageAttentionLabel(item, currentVehicleMileage)}</small></li>)}</ol> : <p className="garage-attention-clear">Nothing is overdue or due soon based on the records currently entered.</p>}
+            </section>
+          </section> : <div className="hero-copy">
             <p className="eyebrow">Multi-brand workshop archive · 16 vehicle families</p>
             <h1>Know what your car needs next.</h1>
             <p className="hero-intro">Factory information, researched owner patterns, and specialist maintenance guidance—filtered for the exact generation, year, engine, drivetrain, and transmission.</p>
             <div className="hero-actions"><a href="#maintenance" className="button button-primary">Open maintenance list</a><a href="#issues" className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
-          </div>
+          </div>}
           <aside className="configuration-panel" aria-labelledby="config-title">
-            <div className="configuration-heading"><span>Configure this visit</span><strong id="config-title">Your exact vehicle</strong></div>
+            <div className="configuration-heading"><span>{hasPersonalVehicle ? "Edit saved vehicle" : "Configure this visit"}</span><strong id="config-title">{hasPersonalVehicle ? "Vehicle Settings" : "Your exact vehicle"}</strong></div>
             <div className="garage-picker">
               <div className="garage-picker-copy"><span>{garageTitle}</span><strong>{demoVehicleSelected ? "2014 BMW 328i · Demo Vehicle" : demoMode ? `${profileLabel} · Guest preview` : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : auth.access.kind === "setup" ? "Finish Profile setup to load your garage" : "No saved vehicles yet"}</strong></div>
               {auth.dataUser ? <>
@@ -582,7 +649,7 @@ export default function App() {
                 <p>{auth.access.kind === "legacy" ? "Read-only until this existing garage is linked to a Keeper Profile." : garage.vehicleId ? `Editing ${garage.nickname}. Changes update this saved vehicle.` : "Creating a new garage entry. Your other vehicles will not be changed."}</p>
               </> : <button className="button button-quiet garage-login" onClick={() => openAccount("save")}>{demoMode ? "Create a Profile to build your garage" : "Finish Keeper Profile setup"}</button>}
             </div>
-            <p className="configuration-flow">Choose in order. Each selection narrows the choices that follow.</p>
+            <p className="configuration-flow">{hasPersonalVehicle ? "Update the exact specification or ownership details below." : "Choose in order. Each selection narrows the choices that follow."}</p>
             <div className="config-grid">
               <label>Brand<select value={profile.brand} onChange={(event) => selectBrand(event.target.value as VehicleBrand)}>{BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
               <label>Model<select value={profile.platform} onChange={(event) => selectPlatform(event.target.value as VehicleProfile["platform"])}>{platformOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
@@ -773,7 +840,7 @@ export default function App() {
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
-      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a></footer>
+      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">Open source on GitHub ↗</a></footer>
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>
