@@ -22,6 +22,11 @@ const classicGenerationMigrationUrl = new URL(
   import.meta.url,
 );
 
+const expandedFitmentMigrationUrl = new URL(
+  "../supabase/migrations/20260817143000_add_expanded_multibrand_fitment.sql",
+  import.meta.url,
+);
+
 const maintenanceMigrationUrl = new URL(
   "../supabase/migrations/20260816200000_add_maintenance_records.sql",
   import.meta.url,
@@ -197,4 +202,14 @@ test("vehicle removal is owner-authorized, cascade-rooted, and promotes a safe n
   assert.match(sql, /revoke all on function public\.remove_keeper_vehicle\(uuid\) from public, anon/i);
   assert.doesNotMatch(sql, /delete from public\.maintenance_records|delete from public\.vehicle_maintenance_items/i);
   assert.match(trackedSql, /vehicle_id uuid not null references public\.vehicles\(id\) on delete cascade/i);
+});
+
+test("expanded fitment remains allow-listed without weakening account isolation", async () => {
+  const sql = await readFile(expandedFitmentMigrationUrl, "utf8");
+  for (const value of ["Subaru", "Porsche", "Mazda", "3 Series / M3 (E9x)", "5 Series (F10)", "M5 (F10)", "WRX / WRX STI (VA)", "911 (996.1)", "911 (997.2)", "MX-5 Miata (NA)", "MX-5 Miata (ND)"]) {
+    assert.match(sql, new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.match(sql, /drop constraint if exists vehicles_brand_check/i);
+  assert.match(sql, /add constraint vehicles_supported_fitment check/i);
+  assert.doesNotMatch(sql, /disable row level security|drop policy|delete from|truncate/i);
 });

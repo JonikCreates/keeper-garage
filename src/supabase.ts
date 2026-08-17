@@ -90,8 +90,8 @@ export type VehicleRow = {
   id: string;
   owner_id: string;
   nickname: string;
-  brand: "BMW";
-  model: "3 Series (F30)" | "3 Series (E46)" | "5 Series (E39)" | "3 Series (E36)";
+  brand: "BMW" | "Subaru" | "Porsche" | "Mazda";
+  model: string;
   model_year: number;
   trim: string;
   engine_code: string;
