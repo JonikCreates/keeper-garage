@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 function generatedJson(source, exportName, nextExport) {
-  const expression = new RegExp(`export const ${exportName} = ([\\s\\S]*?);\\n\\nexport const ${nextExport}`);
+  const expression = new RegExp(`export const ${exportName} = ([\\s\\S]*?);\\r?\\n\\r?\\nexport const ${nextExport}`);
   const match = source.match(expression);
   assert.ok(match, `${exportName} should be generated as inspectable JSON`);
   return JSON.parse(match[1]);
@@ -53,4 +53,18 @@ test("brand and model selectors cascade instead of staying BMW-locked", async ()
   assert.match(catalog, /getPlatformOptions\(brand: VehicleBrand\)/);
   assert.match(garage, /brand: profile\.brand/);
   assert.doesNotMatch(garage, /brand: "BMW" as const/);
+});
+
+test("every expanded vehicle family has multiple fitment-aware known issues", async () => {
+  const source = await readFile(new URL("../lib/expandedKnownIssues.ts", import.meta.url), "utf8");
+  for (const platform of ["E9X", "F10", "F10M5", "VA", "9961", "9962", "9971", "9972", "NA", "NB", "NC", "ND"]) {
+    const direct = source.match(new RegExp(`platforms: \\[[^\\]]*"${platform}"`, "g")) ?? [];
+    const helper = source.match(new RegExp(`platforms\\("${platform}"\\)`, "g")) ?? [];
+    assert.ok(direct.length + helper.length >= 3, `${platform} should have at least three researched issue patterns`);
+  }
+  assert.match(source, /Recall 17V-676/);
+  assert.match(source, /WRG-21 fuel-pump impeller recall/);
+  assert.match(source, /NHTSA investigation PE13-009/);
+  assert.match(source, /TSB 05-007\/16/);
+  assert.match(source, /Recall 12V-475/);
 });

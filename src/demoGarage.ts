@@ -29,16 +29,17 @@ const record = (input: Partial<MaintenanceRecordRow> & Pick<MaintenanceRecordRow
   fluid_quantity: null,
   fluid_unit: null,
   filter_product: null,
+  cost_cents: null,
   created_at: `${input.completed_at}T12:00:00.000Z`,
   ...input,
 });
 
 export const DEMO_MAINTENANCE_RECORDS: MaintenanceRecordRow[] = [
-  record({ id: "00000000-0000-4000-8000-000000000101", maintenance_slug: "engine-oil-filter", maintenance_name: "Engine oil & filter", work_performed: "Oil and filter replaced", completed_at: "2026-08-10", mileage: 82000, fluid_brand: "Liqui Moly", fluid_product: "Special Tec LL", fluid_type: "Engine oil", fluid_viscosity: "5W-30", fluid_specification: "BMW Longlife-01", fluid_quantity: 5.2, fluid_unit: "qt", filter_product: "MANN HU 816 x", notes: "Demo record entered by the sample account holder." }),
-  record({ id: "00000000-0000-4000-8000-000000000102", maintenance_slug: "engine-coolant", maintenance_name: "Engine coolant", work_performed: "Cooling system drained, filled, and bled", completed_at: "2025-01-18", mileage: 78000, fluid_brand: "BMW", fluid_product: "HT-12 Coolant", fluid_type: "Coolant", fluid_specification: "BMW HT-12", fluid_quantity: 1.5, fluid_unit: "gal" }),
-  record({ id: "00000000-0000-4000-8000-000000000103", maintenance_slug: "cabin-filter", maintenance_name: "Cabin microfilter", work_performed: "Cabin microfilter replaced", completed_at: "2025-01-18", mileage: 78000, filter_product: "MANN CUK 25 001" }),
-  record({ id: "00000000-0000-4000-8000-000000000104", maintenance_slug: "brake-fluid", maintenance_name: "Brake fluid", work_performed: "Brake hydraulic system flushed", completed_at: "2023-04-22", mileage: 61000, fluid_brand: "ATE", fluid_product: "SL.6", fluid_type: "Brake fluid", fluid_specification: "DOT 4 LV", fluid_quantity: 1, fluid_unit: "L" }),
-  record({ id: "00000000-0000-4000-8000-000000000105", maintenance_slug: "custom-headliner", maintenance_name: "Headliner repair", work_performed: "Sagging rear headliner section re-adhered", completed_at: "2026-07-02", mileage: 81200, notes: "Example of owner-entered cosmetic work." }),
+  record({ id: "00000000-0000-4000-8000-000000000101", maintenance_slug: "engine-oil-filter", maintenance_name: "Engine oil & filter", work_performed: "Oil and filter replaced", completed_at: "2026-08-10", mileage: 82000, cost_cents: 7842, fluid_brand: "Liqui Moly", fluid_product: "Special Tec LL", fluid_type: "Engine oil", fluid_viscosity: "5W-30", fluid_specification: "BMW Longlife-01", fluid_quantity: 5.2, fluid_unit: "qt", filter_product: "MANN HU 816 x", notes: "Demo record entered by the sample account holder." }),
+  record({ id: "00000000-0000-4000-8000-000000000102", maintenance_slug: "engine-coolant", maintenance_name: "Engine coolant", work_performed: "Cooling system drained, filled, and bled", completed_at: "2025-01-18", mileage: 78000, cost_cents: 28900, fluid_brand: "BMW", fluid_product: "HT-12 Coolant", fluid_type: "Coolant", fluid_specification: "BMW HT-12", fluid_quantity: 1.5, fluid_unit: "gal" }),
+  record({ id: "00000000-0000-4000-8000-000000000103", maintenance_slug: "cabin-filter", maintenance_name: "Cabin microfilter", work_performed: "Cabin microfilter replaced", completed_at: "2025-01-18", mileage: 78000, cost_cents: 3687, filter_product: "MANN CUK 25 001" }),
+  record({ id: "00000000-0000-4000-8000-000000000104", maintenance_slug: "brake-fluid", maintenance_name: "Brake fluid", work_performed: "Brake hydraulic system flushed", completed_at: "2023-04-22", mileage: 61000, cost_cents: 16500, fluid_brand: "ATE", fluid_product: "SL.6", fluid_type: "Brake fluid", fluid_specification: "DOT 4 LV", fluid_quantity: 1, fluid_unit: "L" }),
+  record({ id: "00000000-0000-4000-8000-000000000105", maintenance_slug: "custom-headliner", maintenance_name: "Headliner repair", work_performed: "Sagging rear headliner section re-adhered", completed_at: "2026-07-02", mileage: 81200, cost_cents: 22500, notes: "Example of owner-entered cosmetic work." }),
 ];
 
 export const DEMO_TRACKED_ITEMS: VehicleMaintenanceItemRow[] = [{

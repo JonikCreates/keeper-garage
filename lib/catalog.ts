@@ -1,6 +1,7 @@
 import { CLASSIC_KNOWN_ISSUES, getClassicMaintenanceCatalog } from "./classicCatalog";
 import { getExpandedMaintenanceCatalog } from "./expandedCatalog";
 import { EXPANDED_PLATFORMS, EXPANDED_VARIANTS } from "./expandedCatalogData";
+import { EXPANDED_KNOWN_ISSUES } from "./expandedKnownIssues";
 
 export type SourceType = "OEM" | "Community consensus" | "Individual experience";
 
@@ -61,7 +62,7 @@ export type KnownIssue = {
   typicalMileage: string;
   severity: "critical" | "important" | "routine";
   urgency: "urgent" | "watch";
-  evidence: "BMW recall" | "BMW bulletin" | "Community consensus";
+  evidence: "BMW recall" | "BMW bulletin" | "Safety recall" | "Manufacturer bulletin" | "Community consensus";
   preventativeAction: string;
   appliesTo: Applicability;
   sources: CatalogSource[];
@@ -961,7 +962,7 @@ const issues: KnownIssue[] = [
   },
 ];
 
-export const KNOWN_ISSUES = [...issues, ...CLASSIC_KNOWN_ISSUES];
+export const KNOWN_ISSUES = [...issues, ...CLASSIC_KNOWN_ISSUES, ...EXPANDED_KNOWN_ISSUES];
 
 export const PROJECT_IDEAS: ProjectIdea[] = [
   { slug: "tires", title: "Replace aging run-flats with a quality tire setup", description: "A fresh, correctly sized tire is often the biggest ride, grip, and noise improvement on an F30.", payoff: "Ride · grip · confidence", appliesTo: {} },

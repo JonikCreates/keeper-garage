@@ -82,6 +82,9 @@ test("simplified maintenance separates statuses and stores fluid details on serv
   assert.match(panel, /Previously used/);
   assert.match(panel, /OEM specification/);
   assert.match(records, /fluid_product: input\.fluidProduct/);
+  assert.match(panel, /Cost \(USD\)/);
+  assert.match(records, /cost_cents: input\.costCents/);
+  assert.match(app, /Total spent/);
   assert.match(custom, /Other \/ Custom Category/);
   assert.match(custom, /No Scheduled Interval/);
 });
@@ -115,6 +118,9 @@ test("completed work exports from the full selected-vehicle record set", async (
   assert.match(exporter, /right\.completed_at\.localeCompare\(left\.completed_at\)/);
   assert.match(exporter, /document\.addPage\(\)/);
   assert.match(exporter, /Page \$\{page\} of \$\{totalPages\}/);
+  assert.match(exporter, /maintenanceTotalCents/);
+  assert.match(exporter, /total spent/);
+  assert.match(exporter, /document\.text\("COST"/);
   assert.match(exporter, /canvas\.height = logicalHeight \* scale/);
   assert.match(menu, /Export as PDF/);
   assert.match(menu, /Export as image/);
