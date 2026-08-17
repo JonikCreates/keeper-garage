@@ -13,9 +13,9 @@ type AuthPanelProps = {
   onClose: () => void;
 };
 
-function GoogleButton({ label, enabled, busy, onClick }: { label: string; enabled: boolean; busy: boolean; onClick: () => void }) {
-  return <button className="provider-button google" type="button" disabled={busy || !enabled} onClick={onClick}>
-    <span className="provider-mark" aria-hidden="true">G</span><span>{enabled ? label : "Google setup required"}</span><b>↗</b>
+function GoogleButton({ label, configured, disabled = false, busy, onClick }: { label: string; configured: boolean; disabled?: boolean; busy: boolean; onClick: () => void }) {
+  return <button className="provider-button google" type="button" disabled={busy || disabled || !configured} onClick={onClick}>
+    <span className="provider-mark" aria-hidden="true">G</span><span>{configured ? label : "Google setup required"}</span><b>↗</b>
   </button>;
 }
 
@@ -145,7 +145,7 @@ export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanel
           <button className="text-button" type="button" onClick={() => setView("forgot")}>Forgot Password?</button>
         </form>
         <div className="auth-divider"><span>or</span></div>
-        <GoogleButton label="Continue with Google" enabled={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.signInWithProvider("google")} />
+        <GoogleButton label="Continue with Google" configured={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.signInWithProvider("google")} />
         <div className="auth-switch"><span>Don&apos;t have a Keeper Profile?</span><button type="button" onClick={() => { setView("signup"); setLocalError(null); }}>Create Account</button></div>
         <article className="guest-mode-note"><strong>Explore without an account</strong><p>Close this panel to use the Demo Garage. Guest Mode cannot permanently save, sync, or export records.</p></article>
       </div>}
@@ -161,7 +161,7 @@ export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanel
           <button className="button button-primary" disabled={auth.busy || !acceptedLegal}>{auth.busy ? "Creating…" : "Create Account"}</button>
         </form>
         <div className="auth-divider"><span>or create with Google</span></div>
-        <GoogleButton label="Create with Google" enabled={auth.capabilities.google && acceptedLegal} busy={auth.busy} onClick={() => void auth.signInWithProvider("google", true)} />
+        <GoogleButton label="Create with Google" configured={auth.capabilities.google} disabled={!acceptedLegal} busy={auth.busy} onClick={() => void auth.signInWithProvider("google", true)} />
         <div className="auth-switch"><span>Already have a Keeper Profile?</span><button type="button" onClick={() => setView("login")}>Log In</button></div>
       </div>}
 
@@ -182,7 +182,7 @@ export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanel
       {auth.user && auth.isLegacyGuest && <div className="account-center legacy-upgrade">
         <div className="legacy-found-banner"><span>Existing garage found</span><h3>Your records are preserved.</h3><p>This older anonymous garage is now read-only. Upgrade in place to keep the same owner ID and every saved vehicle, maintenance item, and completed record.</p></div>
         <LegalAgreement checked={acceptedLegal} onChange={setAcceptedLegal} />
-        <GoogleButton label="Connect Google & Keep Garage" enabled={auth.capabilities.google && acceptedLegal} busy={auth.busy} onClick={() => void auth.linkProvider("google")} />
+        <GoogleButton label="Connect Google & Keep Garage" configured={auth.capabilities.google} disabled={!acceptedLegal} busy={auth.busy} onClick={() => void auth.linkProvider("google")} />
         <div className="auth-divider"><span>or verify email</span></div>
         <form className="account-form" onSubmit={submitLegacyEmail}>
           <label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={60} autoComplete="name" required /></label>
@@ -213,7 +213,7 @@ export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanel
           <div className="tab-heading"><span>Account access</span><h3>Security</h3><p>Passwords remain within Supabase Auth. Keeper never stores them in garage tables.</p></div>
           <form className="security-section account-form" onSubmit={(event) => { event.preventDefault(); void auth.changeEmail(email.trim()); }}><div className="security-section-heading"><div><span>Email</span><strong>{auth.user.email ?? "No email"}</strong></div><small>{auth.user.email_confirmed_at ? "Verified" : "Unverified"}</small></div><label>New email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label><button className="button button-quiet" disabled={auth.busy}>Change Email</button></form>
           <form className="security-section account-form" onSubmit={submitNewPassword}><div className="security-section-heading"><div><span>Password</span><strong>Change password</strong></div><small>Supabase Auth</small></div><label>Current password (if required)<input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" /></label><label>New password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label><label>Confirm new password<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label><button className="button button-quiet" disabled={auth.busy}>Change Password</button></form>
-          {!auth.linkedProviders.includes("google") && <div className="security-section"><div className="security-section-heading"><div><span>Recovery option</span><strong>Google</strong></div><small>Optional</small></div><GoogleButton label="Connect Google" enabled={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.linkProvider("google")} /></div>}
+          {!auth.linkedProviders.includes("google") && <div className="security-section"><div className="security-section-heading"><div><span>Recovery option</span><strong>Google</strong></div><small>Optional</small></div><GoogleButton label="Connect Google" configured={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.linkProvider("google")} /></div>}
           <div className="security-proof"><b>Owner-only data</b><p>Supabase Row Level Security verifies the active account and vehicle ownership on every garage request.</p></div>
           <button className="sign-out-button" disabled={auth.busy} onClick={() => void auth.signOut()}>Log Out</button>
           <div className="account-danger-zone"><button type="button" onClick={() => setDeleteOpen((value) => !value)}>Request Account Deletion</button>{deleteOpen && <div><p>This requests deletion review for the Profile, vehicles, maintenance history, notes, and garage records. It does not delete anything immediately.</p><label>Type DELETE to confirm<input value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} /></label><button className="button button-danger" disabled={deleteConfirmation !== "DELETE" || auth.busy} onClick={() => void auth.requestAccountDeletion()}>Submit Deletion Request</button></div>}</div>
