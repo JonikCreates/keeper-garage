@@ -1,56 +1,89 @@
 import type { User } from "@supabase/supabase-js";
 
-export type AccountKind = "visitor" | "guest" | "member";
+export type AccountKind = "guest" | "legacy" | "setup" | "account";
+export type EntitlementKey = "authenticated_account";
 
 export type AccountAccess = {
   kind: AccountKind;
   label: string;
   description: string;
+  canExploreDemo: boolean;
   canSaveGarage: boolean;
-  canRecoverGarage: boolean;
+  canSaveMileage: boolean;
+  canSaveMaintenance: boolean;
+  canCustomize: boolean;
+  canSync: boolean;
+  canExport: boolean;
   canDownloadPdf: boolean;
 };
 
 export function isTemporaryGuest(user: User | null) {
   if (!user) return false;
   const hasRecoverableIdentity = Boolean(
-    user.email ||
-    user.phone ||
-    user.identities?.some((identity) => identity.provider !== "anonymous"),
+    user.email
+    || user.phone
+    || user.identities?.some((identity) => identity.provider !== "anonymous"),
   );
   return Boolean(user.is_anonymous && !hasRecoverableIdentity);
 }
 
-// REVIEW DECISION: account capabilities live in one resolver so a future server-verified subscription can replace these free-tier rules without scattering paywall checks through the UI.
-export function getAccountAccess(user: User | null): AccountAccess {
+export function isPermanentIdentity(user: User | null) {
+  return Boolean(user && !isTemporaryGuest(user));
+}
+
+const noPersistentAccess = {
+  canSaveGarage: false,
+  canSaveMileage: false,
+  canSaveMaintenance: false,
+  canCustomize: false,
+  canSync: false,
+  canExport: false,
+  canDownloadPdf: false,
+};
+
+// REVIEW DECISION: every account-only capability resolves here. A future subscription can replace the server-issued entitlement without scattering premium checks across Keeper.
+export function getAccountAccess(user: User | null, entitlements: ReadonlySet<string> = new Set()): AccountAccess {
   if (!user) {
     return {
-      kind: "visitor",
-      label: "Visitor · public research",
-      description: "Browse every maintenance and issue page. Sign in or start a guest session before saving a vehicle.",
-      canSaveGarage: false,
-      canRecoverGarage: false,
-      canDownloadPdf: false,
+      kind: "guest",
+      label: "Guest Mode · demo only",
+      description: "Explore Keeper with a sample vehicle. Guest changes are not stored, synced, or exportable.",
+      canExploreDemo: true,
+      ...noPersistentAccess,
     };
   }
 
   if (isTemporaryGuest(user)) {
     return {
-      kind: "guest",
-      label: "Guest · temporary garage",
-      description: "Vehicles are protected in Supabase, but this garage cannot be recovered after signing out or clearing this browser until you link Google or email.",
-      canSaveGarage: true,
-      canRecoverGarage: false,
-      canDownloadPdf: false,
+      kind: "legacy",
+      label: "Existing garage found · read only",
+      description: "This older anonymous garage is preserved. Link email or Google to keep the same owner ID and restore saving.",
+      canExploreDemo: true,
+      ...noPersistentAccess,
+    };
+  }
+
+  if (!entitlements.has("authenticated_account")) {
+    return {
+      kind: "setup",
+      label: "Keeper Profile · setup required",
+      description: "Review the current Terms and Privacy notice to activate account features.",
+      canExploreDemo: true,
+      ...noPersistentAccess,
     };
   }
 
   return {
-    kind: "member",
-    label: "Member · recoverable garage",
-    description: "Your saved vehicles follow your account across devices. Completed service history can be exported as a print-ready PDF or shareable image.",
+    kind: "account",
+    label: "Keeper Account",
+    description: "Your garage is stored in Supabase and follows this Keeper Profile across devices.",
+    canExploreDemo: true,
     canSaveGarage: true,
-    canRecoverGarage: true,
+    canSaveMileage: true,
+    canSaveMaintenance: true,
+    canCustomize: true,
+    canSync: true,
+    canExport: true,
     canDownloadPdf: true,
   };
 }

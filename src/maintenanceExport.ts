@@ -139,7 +139,7 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
     document.setFont("helvetica", "normal");
     document.setFontSize(8);
     document.setTextColor(110, 120, 132);
-    document.text("Keeper Garage - completed work only", margin, pageHeight - 28);
+    document.text("Account-holder entered records · Keeper does not independently verify service completion", margin, pageHeight - 28);
     document.text(`Page ${page} of ${totalPages}`, pageWidth - margin, pageHeight - 28, { align: "right" });
   }
   return document.output("blob");
@@ -222,7 +222,7 @@ export async function createMaintenancePng(vehicle: ExportVehicle, sourceRecords
   });
   context.fillStyle = "#6e7884";
   context.font = "400 15px Arial";
-  context.fillText("Keeper Garage - completed work only", margin, logicalHeight - 34);
+  context.fillText("Keeper Garage - completed work only · Account-holder entered records; service completion is not independently verified.", margin, logicalHeight - 34);
 
   return new Promise<Blob>((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("The image export could not be created.")), "image/png"));
 }

@@ -1,0 +1,62 @@
+import type { MaintenanceRecordRow, VehicleMaintenanceItemRow, VehicleRow } from "./supabase";
+
+export const DEMO_VEHICLE: VehicleRow = {
+  id: "00000000-0000-4000-8000-000000000001",
+  owner_id: "00000000-0000-4000-8000-000000000000",
+  nickname: "Demo F30",
+  brand: "BMW",
+  model: "3 Series (F30)",
+  model_year: 2014,
+  trim: "328i",
+  engine_code: "N20",
+  drivetrain: "RWD",
+  transmission: "8-speed automatic",
+  mileage: 83500,
+  is_primary: true,
+  created_at: "2026-08-01T12:00:00.000Z",
+  updated_at: "2026-08-16T12:00:00.000Z",
+};
+
+const record = (input: Partial<MaintenanceRecordRow> & Pick<MaintenanceRecordRow, "id" | "maintenance_slug" | "maintenance_name" | "work_performed" | "completed_at" | "mileage">): MaintenanceRecordRow => ({
+  owner_id: DEMO_VEHICLE.owner_id,
+  vehicle_id: DEMO_VEHICLE.id,
+  notes: null,
+  fluid_brand: null,
+  fluid_product: null,
+  fluid_type: null,
+  fluid_viscosity: null,
+  fluid_specification: null,
+  fluid_quantity: null,
+  fluid_unit: null,
+  filter_product: null,
+  created_at: `${input.completed_at}T12:00:00.000Z`,
+  ...input,
+});
+
+export const DEMO_MAINTENANCE_RECORDS: MaintenanceRecordRow[] = [
+  record({ id: "00000000-0000-4000-8000-000000000101", maintenance_slug: "engine-oil-filter", maintenance_name: "Engine oil & filter", work_performed: "Oil and filter replaced", completed_at: "2026-08-10", mileage: 82000, fluid_brand: "Liqui Moly", fluid_product: "Special Tec LL", fluid_type: "Engine oil", fluid_viscosity: "5W-30", fluid_specification: "BMW Longlife-01", fluid_quantity: 5.2, fluid_unit: "qt", filter_product: "MANN HU 816 x", notes: "Demo record entered by the sample account holder." }),
+  record({ id: "00000000-0000-4000-8000-000000000102", maintenance_slug: "engine-coolant", maintenance_name: "Engine coolant", work_performed: "Cooling system drained, filled, and bled", completed_at: "2025-01-18", mileage: 78000, fluid_brand: "BMW", fluid_product: "HT-12 Coolant", fluid_type: "Coolant", fluid_specification: "BMW HT-12", fluid_quantity: 1.5, fluid_unit: "gal" }),
+  record({ id: "00000000-0000-4000-8000-000000000103", maintenance_slug: "cabin-filter", maintenance_name: "Cabin microfilter", work_performed: "Cabin microfilter replaced", completed_at: "2025-01-18", mileage: 78000, filter_product: "MANN CUK 25 001" }),
+  record({ id: "00000000-0000-4000-8000-000000000104", maintenance_slug: "brake-fluid", maintenance_name: "Brake fluid", work_performed: "Brake hydraulic system flushed", completed_at: "2023-04-22", mileage: 61000, fluid_brand: "ATE", fluid_product: "SL.6", fluid_type: "Brake fluid", fluid_specification: "DOT 4 LV", fluid_quantity: 1, fluid_unit: "L" }),
+  record({ id: "00000000-0000-4000-8000-000000000105", maintenance_slug: "custom-headliner", maintenance_name: "Headliner repair", work_performed: "Sagging rear headliner section re-adhered", completed_at: "2026-07-02", mileage: 81200, notes: "Example of owner-entered cosmetic work." }),
+];
+
+export const DEMO_TRACKED_ITEMS: VehicleMaintenanceItemRow[] = [{
+  id: "00000000-0000-4000-8000-000000000201",
+  owner_id: DEMO_VEHICLE.owner_id,
+  vehicle_id: DEMO_VEHICLE.id,
+  item_slug: "custom-headliner",
+  item_name: "Headliner repair",
+  item_type: "custom",
+  category: "Interior & Upholstery",
+  severity: "routine",
+  notes: null,
+  date_found: null,
+  mileage_found: null,
+  issue_status: "repaired",
+  plan_type: "none",
+  mileage_interval: null,
+  time_interval_months: null,
+  tracks_fluid: false,
+  created_at: "2026-07-01T12:00:00.000Z",
+}];

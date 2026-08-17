@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getPlatform, type VehicleProfile } from "../lib/catalog";
+import { friendlyGarageError } from "./keeperApi";
 import { supabase, type VehicleRow } from "./supabase";
 
 type GarageState = {
+  ownerId: string | null;
   vehicles: VehicleRow[];
   vehicleId: string | null;
   nickname: string;
@@ -15,6 +17,7 @@ type GarageState = {
 };
 
 const initialState: GarageState = {
+  ownerId: null,
   vehicles: [],
   vehicleId: null,
   nickname: "My BMW",
@@ -61,7 +64,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     const currentUser = user;
     let active = true;
     async function loadVehicles() {
-      setState({ ...initialState, loading: true });
+      setState({ ...initialState, ownerId: currentUser.id, loading: true });
       const { data, error } = await client
         .from("vehicles")
         .select("*")
@@ -71,7 +74,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
         .returns<VehicleRow[]>();
       if (!active) return;
       if (error) {
-        setState((current) => ({ ...current, loading: false, error: error.message }));
+        setState((current) => ({ ...current, loading: false, error: friendlyGarageError() }));
         return;
       }
       const vehicles = sortVehicles(data ?? []);
@@ -82,6 +85,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       }
       onVehicleLoaded(vehicleProfile(selected));
       setState({
+        ownerId: currentUser.id,
         vehicles,
         vehicleId: selected.id,
         nickname: selected.nickname,
@@ -126,7 +130,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
   }, []);
 
   const saveVehicle = useCallback(async (profile: VehicleProfile) => {
-    if (!supabase || !user) return false;
+    if (!supabase || !user || state.ownerId !== user.id) return false;
     setState((current) => ({ ...current, saving: true, error: null }));
 
     const mileage = state.mileage.trim() ? Number(state.mileage) : null;
@@ -152,7 +156,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     const { data, error } = await request;
 
     if (error) {
-      setState((current) => ({ ...current, saving: false, error: error.message }));
+      setState((current) => ({ ...current, saving: false, error: friendlyGarageError() }));
       return false;
     }
 
@@ -169,10 +173,12 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       error: null,
     }));
     return true;
-  }, [state.vehicleId, state.vehicles, state.nickname, state.mileage, user]);
+  }, [state.ownerId, state.vehicleId, state.vehicles, state.nickname, state.mileage, user]);
+
+  const visibleState = user && state.ownerId === user.id ? state : initialState;
 
   return {
-    ...state,
+    ...visibleState,
     setNickname: (nickname: string) => setState((current) => ({ ...current, nickname })),
     setMileage: (mileage: string) => setState((current) => ({ ...current, mileage })),
     selectVehicle,

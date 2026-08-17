@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { friendlyGarageError } from "./keeperApi";
 import { supabase, type MaintenanceRecordRow } from "./supabase";
 
 type MaintenanceRecordState = {
+  scope: string | null;
   records: MaintenanceRecordRow[];
   loading: boolean;
   savingSlug: string | null;
@@ -10,6 +12,7 @@ type MaintenanceRecordState = {
 };
 
 const initialState: MaintenanceRecordState = {
+  scope: null,
   records: [],
   loading: false,
   savingSlug: null,
@@ -33,6 +36,7 @@ export type MaintenanceRecordInput = {
 
 export function useMaintenanceRecords(user: User | null, vehicleId: string | null) {
   const [state, setState] = useState(initialState);
+  const scope = user && vehicleId ? `${user.id}:${vehicleId}` : null;
 
   useEffect(() => {
     if (!supabase || !user || !vehicleId) {
@@ -45,7 +49,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
     const selectedVehicleId = vehicleId;
     let active = true;
     async function loadRecords() {
-      setState({ ...initialState, loading: true });
+      setState({ ...initialState, scope: `${ownerId}:${selectedVehicleId}`, loading: true });
       const { data, error } = await client
         .from("maintenance_records")
         .select("*")
@@ -56,10 +60,11 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
         .returns<MaintenanceRecordRow[]>();
       if (!active) return;
       setState({
+        scope: `${ownerId}:${selectedVehicleId}`,
         records: data ?? [],
         loading: false,
         savingSlug: null,
-        error: error?.message ?? null,
+        error: error ? friendlyGarageError() : null,
       });
     }
     void loadRecords();
@@ -70,13 +75,14 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
 
   const recordsBySlug = useMemo(() => {
     const grouped = new Map<string, MaintenanceRecordRow[]>();
-    for (const record of state.records) {
+    const records = state.scope === scope ? state.records : [];
+    for (const record of records) {
       const existing = grouped.get(record.maintenance_slug) ?? [];
       existing.push(record);
       grouped.set(record.maintenance_slug, existing);
     }
     return grouped;
-  }, [state.records]);
+  }, [scope, state.records, state.scope]);
 
   const addRecord = useCallback(async (maintenanceSlug: string, maintenanceName: string, input: MaintenanceRecordInput) => {
     if (!supabase || !user || !vehicleId) return false;
@@ -104,7 +110,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
       .select()
       .single<MaintenanceRecordRow>();
     if (error) {
-      setState((current) => ({ ...current, savingSlug: null, error: error.message }));
+      setState((current) => ({ ...current, savingSlug: null, error: friendlyGarageError() }));
       return false;
     }
     setState((current) => ({
@@ -125,7 +131,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
       .eq("owner_id", user.id)
       .eq("vehicle_id", vehicleId);
     if (error) {
-      setState((current) => ({ ...current, error: error.message }));
+      setState((current) => ({ ...current, error: friendlyGarageError() }));
       return false;
     }
     setState((current) => ({ ...current, records: current.records.filter((record) => record.id !== recordId), error: null }));
@@ -133,7 +139,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
   }, [user, vehicleId]);
 
   return {
-    ...state,
+    ...(state.scope === scope ? state : initialState),
     recordsBySlug,
     addRecord,
     deleteRecord,

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MaintenanceRecordRow, VehicleRow } from "./supabase";
 import { completedExportRecords, downloadMaintenanceHistory } from "./maintenanceExport";
+import { getKeeperVehicleExport } from "./keeperApi";
 
 type MaintenanceExportMenuProps = {
   vehicle: VehicleRow | null;
@@ -34,7 +35,9 @@ export function MaintenanceExportMenu({ vehicle, records, canExport, onRequireAc
     setError(null);
     setExporting(format);
     try {
-      await downloadMaintenanceHistory(format, vehicle, records);
+      // REVIEW DECISION: export data is fetched again through an owner-checking RPC so a forged vehicle ID or modified React state cannot authorize a report.
+      const payload = await getKeeperVehicleExport(vehicle.id);
+      await downloadMaintenanceHistory(format, payload.vehicle, payload.records);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The service history could not be exported.");
     } finally {
@@ -51,7 +54,7 @@ export function MaintenanceExportMenu({ vehicle, records, canExport, onRequireAc
       <button type="button" role="menuitem" onClick={() => void exportHistory("pdf")}><strong>Export as PDF</strong><span>Print-ready service record</span></button>
       <button type="button" role="menuitem" onClick={() => void exportHistory("png")}><strong>Export as image</strong><span>High-resolution PNG</span></button>
     </div>}
-    {!canExport && vehicle && <small>Connect Google to export</small>}
+    {!canExport && vehicle && <small>A Keeper Profile is required to export</small>}
     {vehicle && exportableCount === 0 && <small>Log completed work to export</small>}
     {error && <small className="maintenance-export-error">{error}</small>}
   </div>;

@@ -27,10 +27,11 @@ test("saved vehicles keep repeatable maintenance completion history", async () =
   assert.match(panel, /Work completed/);
   assert.match(panel, /<label>Mileage/);
   assert.match(app, /Maintenance history/);
-  assert.match(app, /recordsBySlug\.get\(item\.slug\)/);
+  assert.match(app, /displayRecordsBySlug\.get\(item\.slug\)/);
   assert.match(app, /aria-label="Maintenance vehicle"/);
   assert.match(app, /maintenancePlanStatus/);
-  assert.match(app, /auth\.isGuest \? "Guest garage" : "My garage"/);
+  assert.match(app, /Demo Vehicle/);
+  assert.match(app, /auth\.access\.canSaveMaintenance/);
 });
 
 test("maintenance is importance-sorted and accepts issue and custom work items", async () => {
@@ -57,7 +58,7 @@ test("simplified maintenance separates statuses and stores fluid details on serv
   assert.match(app, /maintenance-status-section \$\{section\.key\}/);
   assert.match(app, /What does this vehicle need\?/);
   assert.match(app, /Current fluids/);
-  assert.match(app, /What have I actually done\?/);
+  assert.match(app, /What has been recorded\?/);
   assert.match(panel, /Previously used/);
   assert.match(panel, /OEM specification/);
   assert.match(records, /fluid_product: input\.fluidProduct/);
@@ -87,6 +88,7 @@ test("known issues support smart search, custom observations, and reversible tra
 test("completed work exports from the full selected-vehicle record set", async () => {
   const exporter = await readFile(new URL("../src/maintenanceExport.ts", import.meta.url), "utf8");
   const menu = await readFile(new URL("../src/MaintenanceExportMenu.tsx", import.meta.url), "utf8");
+  const api = await readFile(new URL("../src/keeperApi.ts", import.meta.url), "utf8");
 
   assert.match(exporter, /completedExportRecords\(sourceRecords\)/);
   assert.match(exporter, /work !== UNKNOWN_WORK/);
@@ -96,4 +98,21 @@ test("completed work exports from the full selected-vehicle record set", async (
   assert.match(exporter, /canvas\.height = logicalHeight \* scale/);
   assert.match(menu, /Export as PDF/);
   assert.match(menu, /Export as image/);
+  assert.match(menu, /getKeeperVehicleExport\(vehicle\.id\)/);
+  assert.match(api, /rpc\("get_keeper_vehicle_export"/);
+  assert.match(exporter, /does not independently verify service completion/);
+});
+
+test("guest mode is a demo and persistent actions require an account", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const demo = await readFile(new URL("../src/demoGarage.ts", import.meta.url), "utf8");
+  const panel = await readFile(new URL("../src/AuthPanel.tsx", import.meta.url), "utf8");
+
+  assert.match(demo, /2014/);
+  assert.match(demo, /DEMO_MAINTENANCE_RECORDS/);
+  assert.match(app, /demoMode \? DEMO_MAINTENANCE_RECORDS/);
+  assert.match(app, /openAccount\("export"\)/);
+  assert.match(app, /auth\.access\.canCustomize/);
+  assert.match(panel, /Guest Mode cannot permanently save, sync, or export records/);
+  assert.doesNotMatch(panel, /Continue as guest/);
 });

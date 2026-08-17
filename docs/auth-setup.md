@@ -1,6 +1,6 @@
-# Keeper authentication setup
+# Keeper account setup
 
-Keeper uses Supabase Auth project `bxryksfjsicgiaqfuzlm`. The frontend only contains the project URL and publishable browser key. Provider secrets belong in the Supabase dashboard and must never be committed or added to Vite environment variables.
+Keeper uses Supabase Auth project `bxryksfjsicgiaqfuzlm`. The frontend contains only the project URL and publishable browser key. Provider secrets, SMTP credentials, JWT signing material, and the service-role key belong in managed server settings and must never be committed or added to Vite environment variables.
 
 ## URLs already configured
 
@@ -17,6 +17,29 @@ Keeper uses Supabase Auth project `bxryksfjsicgiaqfuzlm`. The frontend only cont
 4. Keep scopes to `openid`, email, and profile unless the product genuinely needs more.
 5. Enter the client ID and client secret under Supabase → Authentication → Sign In / Providers → Google, enable the provider, and save.
 
+## Email and password
+
+1. Open Supabase → Authentication → Sign In / Providers → Email.
+2. Keep Email enabled and keep Confirm email enabled so a newly entered address is not trusted before verification.
+3. Keep secure password storage and email delivery inside Supabase Auth; Keeper never stores passwords.
+4. Add the production and local URLs above to Authentication → URL Configuration. Account flows use the same allowed path with `account=verify`, `account=recovery`, or `account=legacy-password` query values.
+5. Before commercial launch, configure a custom SMTP provider under Authentication → SMTP Settings. Supabase's trial sender is rate-limited and not a production email service.
+6. Test signup verification, resend, login, password recovery, expired links, and a password update on both desktop and mobile.
+
+## Existing anonymous garages
+
+Do not disable or delete existing anonymous users until their garages have been upgraded. Keeper no longer creates anonymous users, and database policies make existing anonymous garages read-only. Linking Google or verifying an email keeps the same Supabase user ID, preserving owned vehicles and related records. Supabase manual identity linking must remain enabled for Google upgrades.
+
+## Required release checks
+
+- Guest visitors have no Supabase session and cannot write to owner tables.
+- Existing anonymous accounts can read their own garage but cannot insert, update, delete, or export.
+- A permanent user without current legal acceptance cannot write.
+- User A cannot read or export a vehicle owned by User B.
+- Export uses `get_keeper_vehicle_export`, which independently checks the entitlement and vehicle owner.
+- Signing out immediately clears active garage state before Demo Mode renders.
+- No `.env`, service-role key, OAuth secret, SMTP secret, or access token is tracked by Git.
+
 ## Release check
 
-After Google is enabled, reload Keeper and confirm its button changes from “Google setup required” to “Continue with Google.” Complete a new member sign-in, confirm the account panel reopens, save a vehicle, sign out, sign back in, and verify the same garage returns.
+After Google is enabled, reload Keeper and confirm its button changes from “Google setup required” to “Continue with Google.” Create or sign into a Keeper Profile, accept the current legal versions, save a vehicle, sign out, sign back in, and verify the same garage returns.

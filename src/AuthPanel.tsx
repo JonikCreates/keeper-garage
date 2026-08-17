@@ -1,49 +1,51 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { ReturnTypeKeeperAuth } from "./authTypes";
+import { PRIVACY_VERSION, TERMS_VERSION } from "./legal";
 import { useKeeperProfile } from "./useKeeperProfile";
-import type { AuthProvider } from "./supabase";
 
+type SignedOutView = "login" | "signup" | "forgot" | "verify";
 type AccountTab = "profile" | "security";
 
 type AuthPanelProps = {
   auth: ReturnTypeKeeperAuth;
   open: boolean;
+  intent?: "account" | "save" | "export";
   onClose: () => void;
 };
 
-function ProviderButton({ provider, enabled, linked = false, busy, onClick }: {
-  provider: AuthProvider;
-  enabled: boolean;
-  linked?: boolean;
-  busy: boolean;
-  onClick: () => void;
-}) {
-  const name = "Google";
-  return (
-    <button className={`provider-button ${provider} ${linked ? "linked" : ""}`} disabled={busy || linked || !enabled} onClick={onClick}>
-      <span className="provider-mark" aria-hidden="true">G</span>
-      <span>{linked ? `${name} connected` : enabled ? `Continue with ${name}` : `${name} setup required`}</span>
-      <b>{linked ? "✓" : "↗"}</b>
-    </button>
-  );
+function GoogleButton({ label, enabled, busy, onClick }: { label: string; enabled: boolean; busy: boolean; onClick: () => void }) {
+  return <button className="provider-button google" type="button" disabled={busy || !enabled} onClick={onClick}>
+    <span className="provider-mark" aria-hidden="true">G</span><span>{enabled ? label : "Google setup required"}</span><b>↗</b>
+  </button>;
 }
 
-function normalizePhone(value: string) {
-  return value.replace(/[\s().-]/g, "");
+function LegalAgreement({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return <label className="legal-consent">
+    <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+    <span>I agree to the <a href="#terms" target="_blank">Terms of Service</a> and <a href="#privacy" target="_blank">Privacy Policy</a>.</span>
+  </label>;
 }
 
-export function AuthPanel({ auth, open, onClose }: AuthPanelProps) {
-  const requestedTab = new URLSearchParams(window.location.search).get("account");
-  const [activeTab, setActiveTab] = useState<AccountTab>(requestedTab === "security" ? "security" : "profile");
+function passwordProblem(password: string, confirmation: string) {
+  if (password.length < 10) return "Use at least 10 characters for your password.";
+  if (password !== confirmation) return "The passwords do not match.";
+  return null;
+}
+
+export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanelProps) {
+  const requestedView = new URLSearchParams(window.location.search).get("account");
+  const [view, setView] = useState<SignedOutView>(requestedView === "verify" ? "verify" : "login");
+  const [activeTab, setActiveTab] = useState<AccountTab>("profile");
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [phoneCode, setPhoneCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const profile = useKeeperProfile(auth.user);
-
-  const joinedDate = auth.user?.created_at
-    ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(auth.user.created_at))
-    : null;
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const profile = useKeeperProfile(auth.access.kind === "account" ? auth.user : null);
 
   useEffect(() => {
     if (!open) return;
@@ -54,166 +56,176 @@ export function AuthPanel({ auth, open, onClose }: AuthPanelProps) {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+    queueMicrotask(() => {
+      setLocalError(null);
+      setDeleteOpen(false);
+      setDeleteConfirmation("");
+    });
+  }, [open]);
+
   if (!open) return null;
 
-  async function submitLoginEmail(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!email.trim()) return;
-    await auth.sendMagicLink(email.trim());
-  }
+  const intentCopy = intent === "export"
+    ? { title: "Export Your Garage Records", body: "A Keeper Profile is required to save and export vehicle records." }
+    : intent === "save"
+      ? { title: "Create a Keeper Profile", body: "Sign in or create an account to save maintenance records and access your garage from any device." }
+      : { title: "Keeper Garage", body: "Your garage. Anywhere." };
 
-  async function submitEmailChange(event: FormEvent<HTMLFormElement>) {
+  async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!email.trim()) return;
-    if (auth.isGuest) await auth.secureGuest(email.trim());
-    else await auth.changeEmail(email.trim());
-  }
-
-  async function submitPhone(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const normalized = normalizePhone(phone);
-    if (!/^\+[1-9]\d{7,14}$/.test(normalized)) {
-      setLocalError("Use international format, such as +1 555 555 0123.");
-      return;
-    }
     setLocalError(null);
-    if (await auth.changePhone(normalized)) setPhone(normalized);
-  }
-
-  async function submitPhoneCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!/^\d{6}$/.test(phoneCode)) {
-      setLocalError("Enter the six-digit verification code.");
-      return;
+    if (await auth.signIn(email.trim(), password)) {
+      setPassword("");
+      window.location.hash = "profile";
     }
-    setLocalError(null);
-    if (await auth.verifyPhone(phoneCode)) setPhoneCode("");
   }
 
-  const accountName = profile.displayName || auth.user?.email || (auth.isGuest ? "Guest driver" : "Keeper driver");
+  async function submitSignup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const problem = passwordProblem(password, confirmPassword);
+    if (!displayName.trim()) return setLocalError("Enter a display name.");
+    if (!acceptedLegal) return setLocalError("You must agree to the Terms and Privacy Policy to create a Keeper Profile.");
+    if (problem) return setLocalError(problem);
+    setLocalError(null);
+    if (await auth.signUp(displayName.trim(), email.trim(), password)) {
+      setPassword("");
+      setConfirmPassword("");
+      setView("verify");
+    }
+  }
 
-  return (
-    <div className="auth-backdrop" role="presentation" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose();
-    }}>
-      <section className="auth-panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-        <header>
-          <div>
-            <p className="eyebrow">Keeper account</p>
-            <h2 id="auth-title">{auth.user ? "Your garage identity." : "Welcome to Keeper."}</h2>
-          </div>
-          <button className="close-button" onClick={onClose} aria-label="Close account panel">×</button>
-        </header>
+  async function submitRecovery(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLocalError(null);
+    await auth.requestPasswordReset(email.trim());
+  }
 
-        {!auth.configured && <div className="auth-notice error">Authentication is not configured in this build. The research library remains public.</div>}
-        {auth.configured && (!auth.ready || !auth.capabilitiesReady) && <div className="auth-notice">Checking secure sign-in options…</div>}
+  async function submitNewPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const problem = passwordProblem(password, confirmPassword);
+    if (problem) return setLocalError(problem);
+    setLocalError(null);
+    if (await auth.updatePassword(password, currentPassword || undefined)) {
+      setPassword("");
+      setConfirmPassword("");
+      setCurrentPassword("");
+    }
+  }
 
-        {auth.configured && auth.ready && auth.capabilitiesReady && !auth.user && (
-          <div className="signed-out-stack">
-            <section className="social-auth-block">
-              <span>Member sign-in</span>
-              <h3>Open a recoverable garage</h3>
-              <p>Google authentication is handled by Google through Supabase. Keeper never receives or stores your Google password, and your garage can follow you across devices.</p>
-              <div className="provider-list">
-                <ProviderButton provider="google" enabled={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.signInWithProvider("google")} />
-              </div>
-              {!auth.capabilities.google && <p className="provider-footnote">Google is waiting for its OAuth developer credentials to be enabled in Supabase.</p>}
-            </section>
+  async function submitLegacyEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!displayName.trim()) return setLocalError("Enter a display name.");
+    if (!acceptedLegal) return setLocalError("Agree to the current Terms and Privacy Policy before upgrading this garage.");
+    setLocalError(null);
+    await auth.beginLegacyEmailUpgrade(displayName.trim(), email.trim());
+  }
 
-            <div className="auth-divider"><span>or use email</span></div>
+  const accountName = profile.displayName || auth.user?.user_metadata?.display_name || auth.user?.user_metadata?.full_name || auth.user?.email || "Keeper driver";
+  const joinedDate = auth.user?.created_at
+    ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(auth.user.created_at))
+    : null;
 
-            <form className="account-form" onSubmit={submitLoginEmail}>
-              <span>Passwordless email</span>
-              <h3>Email me a secure member link</h3>
-              <p>No password to create, reuse, or forget. This creates the same recoverable member access as social sign-in.</p>
-              <label>Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
-              <button className="button button-primary" disabled={auth.busy || !auth.capabilities.email}>{auth.busy ? "Sending…" : "Email me a sign-in link"}</button>
-            </form>
+  return <div className="auth-backdrop" role="presentation" onMouseDown={(event) => {
+    if (event.target === event.currentTarget) onClose();
+  }}>
+    <section className="auth-panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <header><div><p className="eyebrow">Keeper Profile</p><h2 id="auth-title">{auth.user ? "Your garage identity." : intentCopy.title}</h2><p>{!auth.user && intentCopy.body}</p></div><button className="close-button" onClick={onClose} aria-label="Close account panel">×</button></header>
 
-            <div className="auth-divider"><span>or browse privately</span></div>
+      {!auth.configured && <div className="auth-notice error">Authentication is not configured in this build. Guest Mode remains demo-only.</div>}
+      {auth.configured && (!auth.ready || !auth.capabilitiesReady) && <div className="auth-notice">Checking secure account access…</div>}
 
-            <article className="auth-choice guest-choice">
-              <span>Temporary access</span>
-              <h3>Continue as guest on this browser</h3>
-              <p>You can save vehicles immediately, but the anonymous account cannot be recovered after sign-out or cleared browser data until you connect email or Google.</p>
-              <button className="button button-quiet" disabled={auth.busy || !auth.capabilities.anonymous} onClick={() => void auth.continueAsGuest()}>
-                {auth.busy ? "Starting…" : "Continue as guest"}
-              </button>
-            </article>
-          </div>
-        )}
+      {auth.configured && auth.ready && auth.capabilitiesReady && !auth.user && view === "login" && <div className="signed-out-stack">
+        <form className="account-form auth-primary-form" onSubmit={submitLogin}>
+          <span>Welcome back</span><h3>Log in to Keeper</h3>
+          <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
+          <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /></label>
+          <button className="button button-primary" disabled={auth.busy}>{auth.busy ? "Signing in…" : "Log In"}</button>
+          <button className="text-button" type="button" onClick={() => setView("forgot")}>Forgot Password?</button>
+        </form>
+        <div className="auth-divider"><span>or</span></div>
+        <GoogleButton label="Continue with Google" enabled={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.signInWithProvider("google")} />
+        <div className="auth-switch"><span>Don&apos;t have a Keeper Profile?</span><button type="button" onClick={() => { setView("signup"); setLocalError(null); }}>Create Account</button></div>
+        <article className="guest-mode-note"><strong>Explore without an account</strong><p>Close this panel to use the Demo Garage. Guest Mode cannot permanently save, sync, or export records.</p></article>
+      </div>}
 
-        {auth.user && (
-          <div className="account-center">
-            <div className="account-summary">
-              <div className="account-avatar" aria-hidden="true">{accountName.slice(0, 1).toUpperCase()}</div>
-              <div><span>{auth.access.label}</span><strong>{accountName}</strong><small>{joinedDate ? `Joined ${joinedDate}` : "Secure account"}</small></div>
-            </div>
-            <div className={`account-access-note ${auth.access.kind}`}><strong>Current access</strong><p>{auth.access.description}</p></div>
+      {auth.configured && auth.ready && !auth.user && view === "signup" && <div className="signed-out-stack">
+        <form className="account-form auth-primary-form" onSubmit={submitSignup}>
+          <span>New Keeper account</span><h3>Create Your Keeper Profile</h3><p>Build your garage and access it from any device.</p>
+          <label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={60} autoComplete="name" required /></label>
+          <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
+          <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label>
+          <label>Confirm password<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label>
+          <LegalAgreement checked={acceptedLegal} onChange={setAcceptedLegal} />
+          <button className="button button-primary" disabled={auth.busy || !acceptedLegal}>{auth.busy ? "Creating…" : "Create Account"}</button>
+        </form>
+        <div className="auth-divider"><span>or create with Google</span></div>
+        <GoogleButton label="Create with Google" enabled={auth.capabilities.google && acceptedLegal} busy={auth.busy} onClick={() => void auth.signInWithProvider("google", true)} />
+        <div className="auth-switch"><span>Already have a Keeper Profile?</span><button type="button" onClick={() => setView("login")}>Log In</button></div>
+      </div>}
 
-            <nav className="account-tabs" aria-label="Account settings">
-              <button className={activeTab === "profile" ? "active" : ""} onClick={() => setActiveTab("profile")}>Profile</button>
-              <button className={activeTab === "security" ? "active" : ""} onClick={() => setActiveTab("security")}>Security</button>
-            </nav>
+      {auth.configured && auth.ready && !auth.user && view === "forgot" && <form className="account-form auth-primary-form" onSubmit={submitRecovery}>
+        <span>Account recovery</span><h3>Reset your password</h3><p>Enter your account email. Keeper uses a generic response so this page does not reveal whether an address has an account.</p>
+        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
+        <button className="button button-primary" disabled={auth.busy}>{auth.busy ? "Sending…" : "Send Reset Link"}</button>
+        <button className="text-button" type="button" onClick={() => setView("login")}>Back to Log In</button>
+      </form>}
 
-            {activeTab === "profile" && (
-              <section className="account-tab-panel" aria-labelledby="profile-tab-title">
-                <div className="tab-heading"><span>Public-facing details</span><h3 id="profile-tab-title">Your profile</h3><p>This name appears inside your Keeper garage. Your contact details stay private in Supabase Auth.</p></div>
-                <form className="account-form" onSubmit={(event) => { event.preventDefault(); void profile.save(); }}>
-                  <label>Display name<input value={profile.displayName} onChange={(event) => profile.setDisplayName(event.target.value)} maxLength={60} placeholder="Your name" autoComplete="name" required /></label>
-                  <label>Account email<input value={auth.user.email ?? "Not added"} disabled /></label>
-                  <button className="button button-primary" disabled={profile.loading || profile.saving}>{profile.saving ? "Saving…" : "Save profile"}</button>
-                </form>
-                {profile.message && <div className="auth-notice success">{profile.message}</div>}
-                {profile.error && <div className="auth-notice error">{profile.error}</div>}
-              </section>
-            )}
+      {auth.configured && auth.ready && !auth.user && view === "verify" && <form className="account-form auth-primary-form" onSubmit={(event) => { event.preventDefault(); void auth.resendVerification(email.trim()); }}>
+        <span>Email verification</span><h3>Check your inbox</h3><p>Open the verification link before signing in. Expired link? Enter the same address and request a replacement.</p>
+        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
+        <button className="button button-quiet" disabled={auth.busy}>Resend Verification</button>
+        <button className="text-button" type="button" onClick={() => setView("login")}>Return to Log In</button>
+      </form>}
 
-            {activeTab === "security" && (
-              <section className="account-tab-panel security-panel" aria-labelledby="security-tab-title">
-                <div className="tab-heading"><span>Access and recovery</span><h3 id="security-tab-title">Security</h3><p>Connect more than one trusted sign-in method so your garage is easier to recover.</p></div>
+      {auth.user && auth.isLegacyGuest && <div className="account-center legacy-upgrade">
+        <div className="legacy-found-banner"><span>Existing garage found</span><h3>Your records are preserved.</h3><p>This older anonymous garage is now read-only. Upgrade in place to keep the same owner ID and every saved vehicle, maintenance item, and completed record.</p></div>
+        <LegalAgreement checked={acceptedLegal} onChange={setAcceptedLegal} />
+        <GoogleButton label="Connect Google & Keep Garage" enabled={auth.capabilities.google && acceptedLegal} busy={auth.busy} onClick={() => void auth.linkProvider("google")} />
+        <div className="auth-divider"><span>or verify email</span></div>
+        <form className="account-form" onSubmit={submitLegacyEmail}>
+          <label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={60} autoComplete="name" required /></label>
+          <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
+          <button className="button button-primary" disabled={auth.busy || !acceptedLegal}>Verify Email & Keep Garage</button>
+        </form>
+        <button className="sign-out-button" disabled={auth.busy} onClick={() => void auth.signOut()}>Leave legacy garage and return to Demo Mode</button>
+      </div>}
 
-                <div className="security-section">
-                  <div className="security-section-heading"><div><span>Social identity</span><strong>Connected accounts</strong></div><small>Provider-secured</small></div>
-                  <div className="provider-list">
-                    <ProviderButton provider="google" enabled={auth.capabilities.google} linked={auth.linkedProviders.includes("google")} busy={auth.busy} onClick={() => void auth.linkProvider("google")} />
-                  </div>
-                  {!auth.capabilities.google && <p className="provider-footnote">Google needs its OAuth developer credentials connected in Supabase before customers can use it.</p>}
-                </div>
+      {auth.user && auth.access.kind === "setup" && <div className="account-center">
+        <div className="account-summary"><div className="account-avatar">{accountName.slice(0, 1).toUpperCase()}</div><div><span>Keeper Profile</span><strong>{accountName}</strong><small>Account activation required</small></div></div>
+        <section className="account-form legal-activation"><span>Current legal documents</span><h3>Finish setting up Keeper</h3><p>Review the current pre-launch Terms and Privacy notice. Acceptance is stored with document versions and a server timestamp.</p><LegalAgreement checked={acceptedLegal} onChange={setAcceptedLegal} /><button className="button button-primary" disabled={!acceptedLegal || auth.busy} onClick={() => void auth.acceptLegal()}>Activate Keeper Profile</button><small>Terms {TERMS_VERSION} · Privacy {PRIVACY_VERSION}</small></section>
+        <button className="sign-out-button" disabled={auth.busy} onClick={() => void auth.signOut()}>Log Out</button>
+      </div>}
 
-                <form className="security-section account-form" onSubmit={submitEmailChange}>
-                  <div className="security-section-heading"><div><span>Email</span><strong>{auth.user.email ?? "No email added"}</strong></div><small>{auth.user.email_confirmed_at ? "Verified" : "Unverified"}</small></div>
-                  <label>{auth.user.email ? "New email address" : "Add email address"}<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
-                  <button className="button button-quiet" disabled={auth.busy}>{auth.isGuest ? "Secure guest with email" : auth.user.email ? "Change email" : "Add email"}</button>
-                </form>
+      {auth.user && auth.access.kind === "account" && <div className="account-center">
+        <div className="account-summary"><div className="account-avatar">{accountName.slice(0, 1).toUpperCase()}</div><div><span>{auth.access.label}</span><strong>{accountName}</strong><small>{joinedDate ? `Joined ${joinedDate}` : "Synced account"}</small></div></div>
+        <div className="account-access-note account"><strong>Current access</strong><p>{auth.access.description}</p></div>
+        <nav className="account-tabs" aria-label="Account settings"><button className={activeTab === "profile" ? "active" : ""} onClick={() => setActiveTab("profile")}>Profile</button><button className={activeTab === "security" ? "active" : ""} onClick={() => setActiveTab("security")}>Security</button></nav>
 
-                <div className="security-section">
-                  <div className="security-section-heading"><div><span>Phone</span><strong>{auth.user.phone ?? "No phone added"}</strong></div><small>{auth.user.phone ? "Verified" : "Optional"}</small></div>
-                  <form className="account-form compact" onSubmit={submitPhone}>
-                    <label>{auth.user.phone ? "New phone number" : "Phone number"}<input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="+1 555 555 0123" autoComplete="tel" disabled={!auth.capabilities.phone} required /></label>
-                    <button className="button button-quiet" disabled={auth.busy || !auth.capabilities.phone}>{auth.user.phone ? "Change phone" : "Add phone"}</button>
-                  </form>
-                  {!auth.capabilities.phone && <p className="provider-footnote">Verified phone numbers will activate after an SMS provider is connected in Supabase.</p>}
-                  {auth.pendingPhone && (
-                    <form className="account-form compact verification-form" onSubmit={submitPhoneCode}>
-                      <label>Six-digit code<input value={phoneCode} onChange={(event) => setPhoneCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" required /></label>
-                      <button className="button button-primary" disabled={auth.busy}>Verify phone</button>
-                    </form>
-                  )}
-                </div>
+        {activeTab === "profile" && <section className="account-tab-panel">
+          <div className="tab-heading"><span>Keeper identity</span><h3>Your profile</h3><p>This display name appears only within your Keeper experience.</p></div>
+          <form className="account-form" onSubmit={(event) => { event.preventDefault(); void profile.save(); }}><label>Display name<input value={profile.displayName} onChange={(event) => profile.setDisplayName(event.target.value)} maxLength={60} autoComplete="name" required /></label><label>Account email<input value={auth.user?.email ?? "No email available"} disabled /></label><button className="button button-primary" disabled={profile.loading || profile.saving}>{profile.saving ? "Saving…" : "Save Profile"}</button></form>
+          <nav className="account-legal-links"><a href="#terms">Terms of Service</a><a href="#privacy">Privacy Policy</a></nav>
+        </section>}
 
-                <div className="security-proof"><b>Owner-only data</b><p>Supabase Row Level Security checks your unique account ID on every profile and garage request.</p></div>
-                <button className="sign-out-button" disabled={auth.busy} onClick={() => void auth.signOut()}>Sign out{auth.isGuest ? " and leave this guest garage" : ""}</button>
-              </section>
-            )}
-          </div>
-        )}
+        {activeTab === "security" && <section className="account-tab-panel security-panel">
+          <div className="tab-heading"><span>Account access</span><h3>Security</h3><p>Passwords remain within Supabase Auth. Keeper never stores them in garage tables.</p></div>
+          <form className="security-section account-form" onSubmit={(event) => { event.preventDefault(); void auth.changeEmail(email.trim()); }}><div className="security-section-heading"><div><span>Email</span><strong>{auth.user.email ?? "No email"}</strong></div><small>{auth.user.email_confirmed_at ? "Verified" : "Unverified"}</small></div><label>New email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label><button className="button button-quiet" disabled={auth.busy}>Change Email</button></form>
+          <form className="security-section account-form" onSubmit={submitNewPassword}><div className="security-section-heading"><div><span>Password</span><strong>Change password</strong></div><small>Supabase Auth</small></div><label>Current password (if required)<input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" /></label><label>New password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label><label>Confirm new password<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label><button className="button button-quiet" disabled={auth.busy}>Change Password</button></form>
+          {!auth.linkedProviders.includes("google") && <div className="security-section"><div className="security-section-heading"><div><span>Recovery option</span><strong>Google</strong></div><small>Optional</small></div><GoogleButton label="Connect Google" enabled={auth.capabilities.google} busy={auth.busy} onClick={() => void auth.linkProvider("google")} /></div>}
+          <div className="security-proof"><b>Owner-only data</b><p>Supabase Row Level Security verifies the active account and vehicle ownership on every garage request.</p></div>
+          <button className="sign-out-button" disabled={auth.busy} onClick={() => void auth.signOut()}>Log Out</button>
+          <div className="account-danger-zone"><button type="button" onClick={() => setDeleteOpen((value) => !value)}>Request Account Deletion</button>{deleteOpen && <div><p>This requests deletion review for the Profile, vehicles, maintenance history, notes, and garage records. It does not delete anything immediately.</p><label>Type DELETE to confirm<input value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} /></label><button className="button button-danger" disabled={deleteConfirmation !== "DELETE" || auth.busy} onClick={() => void auth.requestAccountDeletion()}>Submit Deletion Request</button></div>}</div>
+        </section>}
+      </div>}
 
-        {auth.message && <div className="auth-notice success">{auth.message}</div>}
-        {(auth.error || localError) && <div className="auth-notice error">{auth.error ?? localError}</div>}
+      {auth.user && (auth.recoveryMode || requestedView === "legacy-password") && <form className="account-form recovery-overlay" onSubmit={submitNewPassword}><span>Secure account update</span><h3>{requestedView === "legacy-password" ? "Create a password" : "Choose a new password"}</h3><label>New password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label><label>Confirm password<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={10} autoComplete="new-password" required /></label><button className="button button-primary" disabled={auth.busy}>Save Password</button></form>}
 
-        <footer><p>Keeper uses passwordless authentication. Contact details are managed by Supabase Auth and are never exposed in the public garage tables.</p></footer>
-      </section>
-    </div>
-  );
+      {auth.message && <div className="auth-notice success">{auth.message}</div>}
+      {(auth.error || localError || profile.error) && <div className="auth-notice error">{auth.error ?? localError ?? "Keeper couldn't update the profile."}</div>}
+      {profile.message && <div className="auth-notice success">{profile.message}</div>}
+      <footer><p>Supabase handles authentication and session security. Keeper stores only the public browser key—never a service-role key or password.</p></footer>
+    </section>
+  </div>;
 }

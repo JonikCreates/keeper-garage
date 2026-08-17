@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import type { KnownIssue } from "../lib/catalog";
+import { friendlyGarageError } from "./keeperApi";
 import { supabase, type VehicleMaintenanceItemRow } from "./supabase";
 
 type TrackedState = {
+  scope: string | null;
   items: VehicleMaintenanceItemRow[];
   loading: boolean;
   saving: boolean;
@@ -22,6 +24,7 @@ export type CustomTrackedItemInput = {
 };
 
 const initialState: TrackedState = {
+  scope: null,
   items: [],
   loading: false,
   saving: false,
@@ -31,6 +34,7 @@ const initialState: TrackedState = {
 
 export function useTrackedMaintenance(user: User | null, vehicleId: string | null) {
   const [state, setState] = useState(initialState);
+  const scope = user && vehicleId ? `${user.id}:${vehicleId}` : null;
 
   useEffect(() => {
     if (!supabase || !user || !vehicleId) {
@@ -43,7 +47,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
     const selectedVehicleId = vehicleId;
     let active = true;
     async function loadItems() {
-      setState({ ...initialState, loading: true });
+      setState({ ...initialState, scope: `${ownerId}:${selectedVehicleId}`, loading: true });
       const { data, error } = await client
         .from("vehicle_maintenance_items")
         .select("*")
@@ -52,7 +56,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
         .order("created_at", { ascending: false })
         .returns<VehicleMaintenanceItemRow[]>();
       if (!active) return;
-      setState({ items: data ?? [], loading: false, saving: false, removingSlug: null, error: error?.message ?? null });
+      setState({ scope: `${ownerId}:${selectedVehicleId}`, items: data ?? [], loading: false, saving: false, removingSlug: null, error: error ? friendlyGarageError() : null });
     }
     void loadItems();
     return () => {
@@ -60,7 +64,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
     };
   }, [user, vehicleId]);
 
-  const itemSlugs = useMemo(() => new Set(state.items.map((item) => item.item_slug)), [state.items]);
+  const itemSlugs = useMemo(() => new Set((state.scope === scope ? state.items : []).map((item) => item.item_slug)), [scope, state.items, state.scope]);
 
   type NewTrackedItem = Pick<VehicleMaintenanceItemRow, "item_slug" | "item_name" | "item_type" | "category" | "severity" | "notes">
     & Partial<Pick<VehicleMaintenanceItemRow, "date_found" | "mileage_found" | "issue_status" | "plan_type" | "mileage_interval" | "time_interval_months" | "tracks_fluid">>;
@@ -78,7 +82,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
         setState((current) => ({ ...current, saving: false, error: null }));
         return true;
       }
-      setState((current) => ({ ...current, saving: false, error: error.message }));
+      setState((current) => ({ ...current, saving: false, error: friendlyGarageError() }));
       return false;
     }
     setState((current) => ({ ...current, items: [data, ...current.items], saving: false, error: null }));
@@ -130,7 +134,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
       .eq("vehicle_id", vehicleId)
       .eq("item_slug", itemSlug);
     if (error) {
-      setState((current) => ({ ...current, removingSlug: null, error: error.message }));
+      setState((current) => ({ ...current, removingSlug: null, error: friendlyGarageError() }));
       return false;
     }
     setState((current) => ({ ...current, items: current.items.filter((item) => item.item_slug !== itemSlug), removingSlug: null, error: null }));
@@ -138,7 +142,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
   }, [user, vehicleId]);
 
   return {
-    ...state,
+    ...(state.scope === scope ? state : initialState),
     itemSlugs,
     addKnownIssue,
     addCustomItem,
