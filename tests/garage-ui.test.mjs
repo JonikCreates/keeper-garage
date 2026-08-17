@@ -15,6 +15,26 @@ test("My Garage loads every owned vehicle and keeps add separate from edit", asy
   assert.match(app, /garage\.selectVehicle\(event\.target\.value\)/);
 });
 
+test("Garage prioritizes a personal vehicle dashboard using existing ownership state", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const css = await readFile(new URL("../src/mechanical.css", import.meta.url), "utf8");
+  const topbarActions = app.match(/<div className="topbar-actions">([\s\S]*?)<\/div>/)?.[1] ?? "";
+
+  assert.match(app, /personal-garage-dashboard/);
+  assert.match(app, /currentVehicleMileage\.toLocaleString\(\)/);
+  assert.match(app, /displayRecords\.length/);
+  assert.match(app, /activeTrackedIssues/);
+  assert.match(app, /formatUsdCents\(totalSpentCents\)/);
+  assert.match(app, /overdueItems\.length/);
+  assert.match(app, /dueSoonItems\.length/);
+  assert.match(app, /garageAttentionLabel\(item, currentVehicleMileage\)/);
+  assert.match(app, /Vehicle Settings/);
+  assert.doesNotMatch(topbarActions, /GitHub|github/);
+  assert.match(app, /Open source on GitHub/);
+  assert.match(css, /\.personal-garage-dashboard/);
+  assert.match(css, /@media \(max-width: 430px\)[\s\S]*\.personal-garage-specs, \.personal-garage-stats/);
+});
+
 test("vehicle removal is deliberate, record-aware, and refreshes garage selection only after success", async () => {
   const hook = await readFile(new URL("../src/useGarage.ts", import.meta.url), "utf8");
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
