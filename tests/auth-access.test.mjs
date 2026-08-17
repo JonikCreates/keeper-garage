@@ -33,7 +33,12 @@ test("Supabase password login and centralized account entitlements are explicit"
   assert.match(access, /entitlements\.has\("authenticated_account"\)/);
   assert.match(access, /kind: "account"[\s\S]*canExport: true/);
   assert.match(panel, /Forgot Password\?/);
-  assert.match(panel, /Confirm password/);
+  assert.match(panel, /Confirm Password/);
+  assert.match(panel, /Welcome back/);
+  assert.match(panel, /Sign In to Existing Account/);
+  assert.match(panel, /Continue with Google/);
+  assert.match(auth, /prepare_legacy_garage_claim/);
+  assert.match(auth, /claim_legacy_garage/);
   assert.match(panel, /Terms of Service/);
   assert.match(panel, /Privacy Policy/);
 });
@@ -47,4 +52,5 @@ test("auth changes clear account-specific state before a new garage loads", asyn
   assert.match(auth, /const dataUser = access\.kind === "account" \|\| access\.kind === "legacy" \? user : null/);
   assert.match(garage, /state\.ownerId === user\.id \? state : initialState/);
   assert.match(records, /state\.scope === scope \? state : initialState/);
+  assert.match(auth, /setDataVersion\(\(version\) => version \+ 1\)/);
 });

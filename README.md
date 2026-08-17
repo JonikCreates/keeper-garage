@@ -47,7 +47,7 @@ Copy `.env.example` to `.env.local` and add the project URL and publishable brow
 
 Google sign-in activates automatically after the provider is enabled in Supabase. The application requests the standard OpenID, profile, and email scopes, returns to the account panel after OAuth, and keeps Google disabled instead of sending customers into a broken flow when its credentials are unavailable. Provider credential and callback instructions are in [`docs/auth-setup.md`](docs/auth-setup.md).
 
-Keeper no longer creates anonymous accounts. Older anonymous garages are preserved as read-only and can be upgraded in place by linking a permanent identity, keeping the same Supabase user ID and related records.
+Keeper no longer creates anonymous accounts. Older anonymous garages are preserved as read-only. Before authentication, Keeper creates an expiring server claim; after authentication, the person explicitly chooses whether to transfer the preserved vehicles and related records into that Profile. The claim is single-use and repeat attempts cannot duplicate records.
 
 Future paid access must be decided by trusted entitlement rows and enforced by RLS or protected server functions. The frontend access resolver is only the presentation layer; it is not the authority for a paywall or export entitlement.
 

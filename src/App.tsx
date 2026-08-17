@@ -17,7 +17,7 @@ import {
   type VehicleProfile,
 } from "../lib/catalog";
 import { searchKnownIssues } from "../lib/knownIssueSearch";
-import { AuthPanel } from "./AuthPanel";
+import { AuthPanel, type AuthIntent } from "./AuthPanel";
 import { CustomIssueForm } from "./CustomIssueForm";
 import { CustomMaintenanceForm } from "./CustomMaintenanceForm";
 import { DEMO_MAINTENANCE_RECORDS, DEMO_TRACKED_ITEMS, DEMO_VEHICLE } from "./demoGarage";
@@ -247,7 +247,7 @@ export default function App() {
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [watchExpanded, setWatchExpanded] = useState(false);
   const [authOpen, setAuthOpen] = useState(() => new URLSearchParams(window.location.search).has("account"));
-  const [authIntent, setAuthIntent] = useState<"account" | "save" | "export">("account");
+  const [authIntent, setAuthIntent] = useState<AuthIntent>("account");
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   // REVIEW DECISION: hash routes keep each view directly addressable without creating GitHub Pages 404s or adding a routing dependency.
   const [page, setPage] = useState<AppPage>(getPageFromHash);
@@ -289,7 +289,7 @@ export default function App() {
     setLibraryView("mine");
     setWatchExpanded(false);
   }, []);
-  const garage = useGarage(auth.dataUser, loadVehicle);
+  const garage = useGarage(auth.dataUser, loadVehicle, auth.dataVersion);
   const serviceRecords = useMaintenanceRecords(auth.dataUser, garage.vehicleId);
   const trackedMaintenance = useTrackedMaintenance(auth.dataUser, garage.vehicleId);
 
@@ -489,13 +489,13 @@ export default function App() {
     }
   }
 
-  function openAccount(intent: "account" | "save" | "export" = "account") {
+  function openAccount(intent: AuthIntent = "account") {
     auth.clearStatus();
     setAuthIntent(intent);
     setAuthOpen(true);
   }
 
-  const accountLabel = !auth.ready ? "Checking…" : auth.access.kind === "account" ? "My Profile" : auth.access.kind === "legacy" ? "Upgrade garage" : auth.access.kind === "setup" ? "Finish setup" : "Log In";
+  const accountLabel = !auth.ready ? "Checking…" : auth.access.kind === "account" ? "My Profile" : auth.access.kind === "setup" ? "Finish setup" : "Sign In";
   const garageTitle = auth.access.kind === "account" ? "My Garage" : auth.access.kind === "legacy" ? "Existing Garage" : auth.access.kind === "setup" ? "Profile setup" : "Demo Garage";
 
   return (
@@ -721,7 +721,7 @@ export default function App() {
       </main>
 
       <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research, beginning with BMW E36, E39, E46, and F30. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a></footer>
-      <AuthPanel auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
+      <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>
   );
 }

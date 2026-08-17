@@ -52,6 +52,11 @@ const secureAccountsMigrationUrl = new URL(
   import.meta.url,
 );
 
+const legacyClaimMigrationUrl = new URL(
+  "../supabase/migrations/20260817023000_add_legacy_garage_claims.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -158,4 +163,18 @@ test("export authorization verifies account, entitlement, and vehicle ownership"
   assert.match(sql, /Export limit reached/i);
   assert.match(sql, /revoke all on function public\.get_keeper_vehicle_export\(uuid\) from public/i);
   assert.doesNotMatch(sql, /service_role/i);
+});
+
+test("legacy garage claims are explicit, expiring, owner-authenticated, and idempotent", async () => {
+  const sql = await readFile(legacyClaimMigrationUrl, "utf8");
+  assert.match(sql, /function public\.prepare_legacy_garage_claim\(\)/i);
+  assert.match(sql, /auth\.jwt\(\).*is_anonymous/is);
+  assert.match(sql, /default \(now\(\) \+ interval '24 hours'\)/i);
+  assert.match(sql, /function public\.claim_legacy_garage\(p_claim_id uuid, p_claim_secret uuid\)/i);
+  assert.match(sql, /for update/i);
+  assert.match(sql, /prepared_claim\.claimed_by = current_user_id/i);
+  assert.match(sql, /'already_imported', true/i);
+  assert.match(sql, /update public\.maintenance_records[\s\S]*update public\.vehicle_maintenance_items[\s\S]*update public\.vehicles/i);
+  assert.match(sql, /revoke all on public\.legacy_garage_claims from anon, authenticated/i);
+  assert.doesNotMatch(sql, /p_legacy_user_id|p_owner_id/i);
 });

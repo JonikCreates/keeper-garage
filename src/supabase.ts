@@ -27,7 +27,7 @@ export const supabase = hasSupabaseConfig
     })
   : null;
 
-export const authRedirectUrl = (accountView: "profile" | "verify" | "recovery" | "legacy-password" = "profile") => {
+export const authRedirectUrl = (accountView: "profile" | "verify" | "recovery" = "profile") => {
   const url = new URL(import.meta.env.BASE_URL, window.location.origin);
   url.searchParams.set("account", accountView);
   url.hash = "profile";
@@ -52,6 +52,19 @@ export async function getAuthCapabilities(): Promise<AuthCapabilities> {
 export type KeeperAccountState = {
   permanent_identity: boolean;
   entitlements: string[];
+};
+
+export type LegacyGarageClaim = {
+  claim_id: string;
+  vehicle_count: number;
+  maintenance_record_count: number;
+  maintenance_item_count: number;
+  expires_at: string;
+  already_imported?: boolean;
+};
+
+export type PreparedLegacyGarageClaim = LegacyGarageClaim & {
+  claim_secret: string;
 };
 
 export type KeeperExportPayload = {

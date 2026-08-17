@@ -57,7 +57,7 @@ export function getAccountAccess(user: User | null, entitlements: ReadonlySet<st
     return {
       kind: "legacy",
       label: "Existing garage found · read only",
-      description: "This older anonymous garage is preserved. Link email or Google to keep the same owner ID and restore saving.",
+      description: "This older anonymous garage is preserved and read-only. Sign in or create a Profile, then choose whether to import it.",
       canExploreDemo: true,
       ...noPersistentAccess,
     };
