@@ -15,6 +15,24 @@ test("My Garage loads every owned vehicle and keeps add separate from edit", asy
   assert.match(app, /garage\.selectVehicle\(event\.target\.value\)/);
 });
 
+test("vehicle removal is deliberate, record-aware, and refreshes garage selection only after success", async () => {
+  const hook = await readFile(new URL("../src/useGarage.ts", import.meta.url), "utf8");
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const dialog = await readFile(new URL("../src/VehicleRemovalDialog.tsx", import.meta.url), "utf8");
+
+  assert.match(app, /Remove from Garage/);
+  assert.match(app, /garage\.getRemovalSummary\(vehicleId\)/);
+  assert.match(app, /const removed = await garage\.removeVehicle\(vehicleRemovalTarget\.id\)/);
+  assert.match(hook, /rpc\("get_vehicle_removal_summary"/);
+  assert.match(hook, /rpc\("remove_keeper_vehicle"/);
+  assert.match(hook, /filter\(\(vehicle\) => vehicle\.id !== result\.removed_vehicle_id\)/);
+  assert.match(hook, /vehicleId: selected\?\.id \?\? null/);
+  assert.match(dialog, /Remove \{title\}\?/);
+  assert.match(dialog, /I understand this vehicle and its records will be removed/);
+  assert.match(dialog, /Remove Vehicle/);
+  assert.match(dialog, /Shared maintenance schedules and Keeper&apos;s global Known Issues research will not be changed/);
+});
+
 test("saved vehicles keep repeatable maintenance completion history", async () => {
   const hook = await readFile(new URL("../src/useMaintenanceRecords.ts", import.meta.url), "utf8");
   const panel = await readFile(new URL("../src/MaintenanceRecordPanel.tsx", import.meta.url), "utf8");
@@ -59,6 +77,8 @@ test("simplified maintenance separates statuses and stores fluid details on serv
   assert.match(app, /What does this vehicle need\?/);
   assert.match(app, /Current fluids/);
   assert.match(app, /What has been recorded\?/);
+  assert.match(app, /data-label="Plan"/);
+  assert.doesNotMatch(app, /maintenance-expanded-summary/);
   assert.match(panel, /Previously used/);
   assert.match(panel, /OEM specification/);
   assert.match(records, /fluid_product: input\.fluidProduct/);

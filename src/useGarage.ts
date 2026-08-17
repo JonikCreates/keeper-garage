@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getPlatform, type VehicleProfile } from "../lib/catalog";
 import { friendlyGarageError } from "./keeperApi";
-import { supabase, type VehicleRow } from "./supabase";
+import { supabase, type VehicleRemovalResult, type VehicleRemovalSummary, type VehicleRow } from "./supabase";
 
 type GarageState = {
   ownerId: string | null;
@@ -12,6 +12,7 @@ type GarageState = {
   mileage: string;
   loading: boolean;
   saving: boolean;
+  removing: boolean;
   savedAt: string | null;
   error: string | null;
 };
@@ -24,6 +25,7 @@ const initialState: GarageState = {
   mileage: "",
   loading: false,
   saving: false,
+  removing: false,
   savedAt: null,
   error: null,
 };
@@ -92,6 +94,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
         mileage: selected.mileage === null ? "" : String(selected.mileage),
         loading: false,
         saving: false,
+        removing: false,
         savedAt: selected.updated_at,
         error: null,
       });
@@ -175,6 +178,44 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     return true;
   }, [state.ownerId, state.vehicleId, state.vehicles, state.nickname, state.mileage, user]);
 
+  const getRemovalSummary = useCallback(async (vehicleId: string) => {
+    if (!supabase || !user || state.ownerId !== user.id || !state.vehicles.some((vehicle) => vehicle.id === vehicleId)) return null;
+    const { data, error } = await supabase.rpc("get_vehicle_removal_summary", { p_vehicle_id: vehicleId });
+    if (error || !data) {
+      setState((current) => ({ ...current, error: "Keeper couldn't verify this vehicle for removal. Please try again." }));
+      return null;
+    }
+    return data as VehicleRemovalSummary;
+  }, [state.ownerId, state.vehicles, user]);
+
+  const removeVehicle = useCallback(async (vehicleId: string) => {
+    if (!supabase || !user || state.ownerId !== user.id || !state.vehicles.some((vehicle) => vehicle.id === vehicleId)) return false;
+    setState((current) => ({ ...current, removing: true, error: null }));
+    const { data, error } = await supabase.rpc("remove_keeper_vehicle", { p_vehicle_id: vehicleId });
+    if (error || !data) {
+      setState((current) => ({ ...current, removing: false, error: "Keeper couldn't remove this vehicle. No garage records were changed." }));
+      return false;
+    }
+
+    const result = data as VehicleRemovalResult;
+    const remainingVehicles = sortVehicles(state.vehicles
+      .filter((vehicle) => vehicle.id !== result.removed_vehicle_id)
+      .map((vehicle) => ({ ...vehicle, is_primary: vehicle.id === result.next_vehicle_id })));
+    const selected = remainingVehicles.find((vehicle) => vehicle.id === result.next_vehicle_id) ?? remainingVehicles[0] ?? null;
+    if (selected) onVehicleLoaded(vehicleProfile(selected));
+    setState((current) => ({
+      ...current,
+      vehicles: remainingVehicles,
+      vehicleId: selected?.id ?? null,
+      nickname: selected?.nickname ?? "My BMW",
+      mileage: selected?.mileage === null || selected?.mileage === undefined ? "" : String(selected.mileage),
+      removing: false,
+      savedAt: selected?.updated_at ?? null,
+      error: null,
+    }));
+    return true;
+  }, [onVehicleLoaded, state.ownerId, state.vehicles, user]);
+
   const visibleState = user && state.ownerId === user.id ? state : initialState;
 
   return {
@@ -184,5 +225,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     selectVehicle,
     startNewVehicle,
     saveVehicle,
+    getRemovalSummary,
+    removeVehicle,
   };
 }

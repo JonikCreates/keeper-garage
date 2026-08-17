@@ -57,6 +57,11 @@ const legacyClaimMigrationUrl = new URL(
   import.meta.url,
 );
 
+const vehicleRemovalMigrationUrl = new URL(
+  "../supabase/migrations/20260817030000_add_secure_vehicle_removal.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -177,4 +182,19 @@ test("legacy garage claims are explicit, expiring, owner-authenticated, and idem
   assert.match(sql, /update public\.maintenance_records[\s\S]*update public\.vehicle_maintenance_items[\s\S]*update public\.vehicles/i);
   assert.match(sql, /revoke all on public\.legacy_garage_claims from anon, authenticated/i);
   assert.doesNotMatch(sql, /p_legacy_user_id|p_owner_id/i);
+});
+
+test("vehicle removal is owner-authorized, cascade-rooted, and promotes a safe next selection", async () => {
+  const sql = await readFile(vehicleRemovalMigrationUrl, "utf8");
+  const trackedSql = await readFile(trackedMaintenanceMigrationUrl, "utf8");
+
+  assert.match(sql, /function public\.get_vehicle_removal_summary\(p_vehicle_id uuid\)/i);
+  assert.match(sql, /function public\.remove_keeper_vehicle\(p_vehicle_id uuid\)/i);
+  assert.match(sql, /has_keeper_entitlement\('authenticated_account'\)/i);
+  assert.match(sql, /vehicle\.id = p_vehicle_id[\s\S]*vehicle\.owner_id = current_user_id/i);
+  assert.match(sql, /delete from public\.vehicles vehicle[\s\S]*vehicle\.owner_id = current_user_id/i);
+  assert.match(sql, /if owned_vehicle\.is_primary[\s\S]*set is_primary = true/i);
+  assert.match(sql, /revoke all on function public\.remove_keeper_vehicle\(uuid\) from public, anon/i);
+  assert.doesNotMatch(sql, /delete from public\.maintenance_records|delete from public\.vehicle_maintenance_items/i);
+  assert.match(trackedSql, /vehicle_id uuid not null references public\.vehicles\(id\) on delete cascade/i);
 });

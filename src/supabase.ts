@@ -67,6 +67,20 @@ export type PreparedLegacyGarageClaim = LegacyGarageClaim & {
   claim_secret: string;
 };
 
+export type VehicleRemovalSummary = {
+  vehicle_id: string;
+  maintenance_record_count: number;
+  maintenance_item_count: number;
+  total_record_count: number;
+};
+
+export type VehicleRemovalResult = {
+  removed_vehicle_id: string;
+  next_vehicle_id: string | null;
+  maintenance_record_count: number;
+  maintenance_item_count: number;
+};
+
 export type KeeperExportPayload = {
   vehicle: VehicleRow;
   records: MaintenanceRecordRow[];

@@ -251,6 +251,27 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .session-note.guest strong { color: var(--blue); }
 .session-note.legacy strong, .session-note.setup strong { color: var(--amber); }
 .session-note.account strong { color: var(--green); }
+.garage-danger-zone { margin: 0 20px 18px; padding: 13px 14px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid color-mix(in srgb, var(--red) 48%, var(--line)); border-left: 4px solid var(--red); background: color-mix(in srgb, var(--red) 4%, var(--panel-2)); }
+.garage-danger-zone > div { display: grid; gap: 4px; }
+.garage-danger-zone span { color: var(--red); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.garage-danger-zone p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.button-danger-outline { color: var(--red); border-color: var(--red); background: transparent; }
+.button-danger-outline:hover:not(:disabled) { color: #fff; background: var(--red); }
+.vehicle-removal-backdrop { padding: 22px; position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(3, 4, 5, .82); backdrop-filter: blur(3px); }
+.vehicle-removal-dialog { width: min(620px, 100%); max-height: calc(100vh - 44px); overflow-y: auto; border: 1px solid var(--line); border-top: 5px solid var(--red); background: var(--panel); box-shadow: 0 24px 70px rgba(0, 0, 0, .4); }
+.vehicle-removal-dialog > header { padding: 22px 24px 18px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--red) 5%, var(--panel-2)); }
+.vehicle-removal-dialog > header span { color: var(--red); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .13em; text-transform: uppercase; }
+.vehicle-removal-dialog h2 { margin: 8px 0 0; font: 900 34px/.95 "Arial Narrow", Arial, sans-serif; text-transform: uppercase; }
+.vehicle-removal-dialog > header p { margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+.vehicle-removal-warning { padding: 20px 24px; }
+.vehicle-removal-warning > p { margin: 0 0 14px; color: var(--cream); font-size: 10px; line-height: 1.55; }
+.vehicle-removal-warning ul { margin: 0 0 16px; padding-left: 20px; color: var(--muted); font-size: 9px; line-height: 1.75; }
+.vehicle-record-counts { margin-bottom: 16px; padding: 14px; display: grid; grid-template-columns: 1fr auto; gap: 7px 14px; border: 1px solid color-mix(in srgb, var(--red) 55%, var(--line)); background: color-mix(in srgb, var(--red) 7%, var(--panel-2)); }
+.vehicle-record-counts strong { grid-column: 1 / -1; color: var(--red); font-size: 11px; }
+.vehicle-record-counts span { color: var(--paper); font: 800 9px ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.vehicle-removal-acknowledgment { padding: 13px; display: flex; align-items: flex-start; gap: 10px; color: var(--paper); border: 1px solid var(--line); background: var(--field); font-size: 9px; line-height: 1.5; }
+.vehicle-removal-acknowledgment input { width: 17px; height: 17px; flex: 0 0 auto; accent-color: var(--red); }
+.vehicle-removal-dialog > footer { padding: 16px 24px 22px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); }
 .plan-launch {
   margin: 0 20px 20px;
   min-height: 60px;
@@ -419,7 +440,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .maintenance-plan-cell small.overdue { color: var(--red); }
 .maintenance-dashboard-item > summary > b { color: var(--muted); font-size: 17px; }
 .maintenance-dashboard-item[open] > summary > b { color: var(--acid); transform: rotate(45deg); }
-.maintenance-record-drawer { padding: 0 14px 18px 42px; border-top: 1px solid var(--line); }
+.maintenance-record-drawer { padding: 14px 14px 18px 42px; border-top: 1px solid var(--line); }
 .maintenance-technical-grid { padding-top: 16px; display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 9px; }
 .maintenance-technical-grid article { padding: 13px; border: 1px solid var(--line); background: var(--panel-2); }
 .maintenance-technical-grid article > span { color: var(--acid); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
@@ -652,7 +673,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .maintenance-status-section.soon .maintenance-dashboard-item { border-left: 3px solid color-mix(in srgb, var(--amber) 70%, var(--line)); }
 .maintenance-status-section.done .maintenance-dashboard-item { border-left: 3px solid color-mix(in srgb, var(--green) 70%, var(--line)); }
 .maintenance-status-empty { margin: 0; padding: 18px; color: var(--muted); background: var(--panel); font-size: 9px; }
-.maintenance-status-section .maintenance-dashboard-item > summary { grid-template-columns: minmax(190px, 1.35fr) minmax(145px, .8fr) minmax(155px, .9fr) 105px 22px; }
+.maintenance-status-section .maintenance-dashboard-item > summary { grid-template-columns: minmax(170px, 1.2fr) minmax(130px, .75fr) minmax(150px, .9fr) minmax(135px, .8fr) 105px 22px; }
 .maintenance-item-name { display: grid; gap: 5px; }
 .maintenance-item-name strong { font-size: 14px !important; }
 .maintenance-item-name small, .maintenance-dashboard-item > summary > div small { color: var(--muted); font-size: 8px; line-height: 1.35; }
@@ -660,15 +681,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .maintenance-status-pill.overdue { color: var(--red); }
 .maintenance-status-pill.soon { color: var(--amber); }
 .maintenance-status-pill.current { color: var(--green); }
-.maintenance-expanded-summary { padding-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-.maintenance-expanded-summary article { padding: 13px; border: 1px solid var(--line); background: var(--panel-2); }
-.maintenance-expanded-summary span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
-.maintenance-expanded-summary strong { margin-top: 8px; display: block; font-size: 12px; }
-.maintenance-expanded-summary p { margin: 5px 0 0; color: var(--muted); font-size: 8px; }
-.maintenance-expanded-summary p.overdue { color: var(--red); }
-.maintenance-expanded-summary p.soon, .maintenance-expanded-summary p.unrecorded { color: var(--amber); }
-.maintenance-expanded-summary p.current { color: var(--green); }
-.maintenance-technical-notes { margin: 10px 0; border: 1px solid var(--line); background: var(--field); }
+.maintenance-technical-notes { margin: 0 0 10px; border: 1px solid var(--line); background: var(--field); }
 .maintenance-technical-notes > summary { padding: 11px 13px; cursor: pointer; color: var(--muted); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
 .maintenance-technical-notes > p { padding: 0 13px 13px; color: var(--cream); font-size: 9px; }
 .maintenance-technical-notes > footer { padding: 0 13px 13px; display: flex; flex-wrap: wrap; gap: 7px; }
@@ -763,6 +776,14 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 }
 
 @media (max-width: 760px) {
+  .garage-danger-zone { align-items: stretch; flex-direction: column; }
+  .garage-danger-zone .button { width: 100%; }
+  .vehicle-removal-backdrop { padding: 10px; place-items: end center; }
+  .vehicle-removal-dialog { width: 100%; max-height: calc(100vh - 20px); }
+  .vehicle-removal-dialog > header, .vehicle-removal-warning, .vehicle-removal-dialog > footer { padding-right: 18px; padding-left: 18px; }
+  .vehicle-removal-dialog h2 { font-size: 29px; }
+  .vehicle-record-counts { grid-template-columns: 1fr; }
+  .vehicle-removal-dialog > footer { display: grid; grid-template-columns: 1fr 1fr; }
   .forum-banner { min-height: 58px; padding: 12px 16px; }
   .forum-banner > div span { font-size: 7px; }
   .forum-banner > div strong { font-size: 17px; }
@@ -834,7 +855,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .maintenance-status-section .maintenance-dashboard-item > summary > .maintenance-item-name { grid-column: 1; display: grid; grid-template-columns: 1fr; gap: 5px; }
   .maintenance-status-section .maintenance-dashboard-item > summary > .maintenance-item-name::before { display: none; }
   .maintenance-status-section .maintenance-dashboard-item > summary > b { grid-column: 2; grid-row: 1; }
-  .maintenance-expanded-summary, .fluid-entry-fields, .fluid-summary-section > div { grid-template-columns: 1fr; }
+  .fluid-entry-fields, .fluid-summary-section > div { grid-template-columns: 1fr; }
   .maintenance-record-form.simplified { grid-template-columns: 1fr; }
   .maintenance-notes-field, .fluid-entry-fields { grid-column: 1; }
   .custom-plan-options { grid-column: 1; display: grid; grid-template-columns: 1fr 1fr; }

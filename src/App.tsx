@@ -26,11 +26,12 @@ import { MaintenanceExportMenu } from "./MaintenanceExportMenu";
 import { MaintenanceRecordPanel } from "./MaintenanceRecordPanel";
 import { ProfilePage } from "./ProfilePage";
 import { RemoveTrackedItemButton, TrackedIssueAction } from "./TrackedIssueAction";
+import { VehicleRemovalDialog } from "./VehicleRemovalDialog";
 import { useGarage } from "./useGarage";
 import { useKeeperAuth } from "./useKeeperAuth";
 import { useMaintenanceRecords } from "./useMaintenanceRecords";
 import { useTrackedMaintenance } from "./useTrackedMaintenance";
-import type { MaintenanceRecordRow, VehicleMaintenanceItemRow } from "./supabase";
+import type { MaintenanceRecordRow, VehicleMaintenanceItemRow, VehicleRemovalSummary } from "./supabase";
 import type { LegalPageKind } from "./legal";
 
 type LibraryView = "mine" | "all" | string;
@@ -249,6 +250,9 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(() => new URLSearchParams(window.location.search).has("account"));
   const [authIntent, setAuthIntent] = useState<AuthIntent>("account");
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [vehicleRemovalTargetId, setVehicleRemovalTargetId] = useState<string | null>(null);
+  const [vehicleRemovalSummary, setVehicleRemovalSummary] = useState<VehicleRemovalSummary | null>(null);
+  const [vehicleRemovalLoading, setVehicleRemovalLoading] = useState(false);
   // REVIEW DECISION: hash routes keep each view directly addressable without creating GitHub Pages 404s or adding a routing dependency.
   const [page, setPage] = useState<AppPage>(getPageFromHash);
   // REVIEW DECISION: new visitors start in light mode, while a deliberate theme choice remains local to that browser.
@@ -317,6 +321,7 @@ export default function App() {
   const projects = PROJECT_IDEAS.filter((project) => matchesApplicability(profile, project.appliesTo));
   const demoMode = auth.access.kind === "guest";
   const selectedSavedVehicle = demoMode ? DEMO_VEHICLE : garage.vehicles.find((vehicle) => vehicle.id === garage.vehicleId) ?? null;
+  const vehicleRemovalTarget = garage.vehicles.find((vehicle) => vehicle.id === vehicleRemovalTargetId) ?? null;
   const currentVehicleMileage = demoMode ? DEMO_VEHICLE.mileage : garage.mileage.trim() ? Number(garage.mileage) : null;
   const displayRecords = demoMode ? DEMO_MAINTENANCE_RECORDS : serviceRecords.records;
   const displayTrackedItems = demoMode ? DEMO_TRACKED_ITEMS : trackedMaintenance.items;
@@ -456,6 +461,35 @@ export default function App() {
     setSaveNotice(saved ? editing ? "Vehicle changes saved." : "Vehicle added to My Garage." : null);
   }
 
+  async function openVehicleRemoval() {
+    const vehicleId = garage.vehicleId;
+    if (!vehicleId || auth.access.kind !== "account") return;
+    setSaveNotice(null);
+    setVehicleRemovalTargetId(vehicleId);
+    setVehicleRemovalSummary(null);
+    setVehicleRemovalLoading(true);
+    const summary = await garage.getRemovalSummary(vehicleId);
+    setVehicleRemovalSummary(summary);
+    setVehicleRemovalLoading(false);
+  }
+
+  function closeVehicleRemoval() {
+    if (garage.removing) return;
+    setVehicleRemovalTargetId(null);
+    setVehicleRemovalSummary(null);
+    setVehicleRemovalLoading(false);
+  }
+
+  async function confirmVehicleRemoval() {
+    if (!vehicleRemovalTarget) return;
+    const label = `${vehicleRemovalTarget.model_year} BMW ${vehicleRemovalTarget.trim}`;
+    const hadOtherVehicles = garage.vehicles.length > 1;
+    const removed = await garage.removeVehicle(vehicleRemovalTarget.id);
+    if (!removed) return;
+    closeVehicleRemoval();
+    setSaveNotice(hadOtherVehicles ? `${label} was removed. Keeper selected another vehicle in your garage.` : `${label} was removed. Your Garage is empty.`);
+  }
+
   async function addIssueToMaintenance(issue: KnownIssue) {
     if (!auth.access.canCustomize) {
       openAccount("save");
@@ -547,6 +581,7 @@ export default function App() {
               <label>Mileage<input value={demoMode ? String(DEMO_VEHICLE.mileage) : garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" disabled={!auth.access.canSaveMileage} /></label>
               <button className="button button-primary" disabled={garage.loading || garage.saving} onClick={() => void saveGarage()}>{garage.saving ? "Saving…" : !auth.access.canSaveGarage ? auth.access.kind === "legacy" ? "Upgrade to save" : "Create Profile to save" : garage.vehicleId ? "Save changes" : "Add to garage"}</button>
             </div>
+            {auth.access.kind === "account" && garage.vehicleId && <div className="garage-danger-zone"><div><span>Vehicle settings</span><p>Only remove a vehicle when you intend to permanently delete its Keeper records.</p></div><button className="button button-danger-outline" type="button" disabled={garage.loading || garage.saving || garage.removing} onClick={() => void openVehicleRemoval()}>Remove from Garage</button></div>}
             {(saveNotice || garage.error) && <p className={`save-status ${garage.error ? "error" : ""}`}>{garage.error ?? saveNotice}</p>}
             <div className={`session-note ${auth.access.kind}`}>
               <strong>{auth.access.label}</strong>
@@ -644,9 +679,8 @@ export default function App() {
                 {groupedItems.map((item) => {
                   const latest = item.records[0];
                   return <details className={`maintenance-dashboard-item ${item.records.length ? "completed" : ""} ${item.kind}`} key={`${selectedSavedVehicle?.id ?? "configured"}:${item.slug}`}>
-                    <summary><div className="maintenance-item-name"><strong>{item.name}</strong><small>{item.category}{item.tracksFluid ? " · Fluid tracking" : ""}</small></div><div data-label="Last completed"><strong>{latest ? `${latest.mileage.toLocaleString()} mi` : "Not recorded"}</strong><small>{latest ? shortServiceDate(latest.completed_at) : "No service history"}</small></div><div data-label="Next due"><strong>{nextDueLabel(item, latest)}</strong></div><div className={`maintenance-status-pill ${item.status.tone}`} data-label="Status"><span aria-hidden="true">●</span>{item.status.label}</div><b aria-hidden="true">＋</b></summary>
+                    <summary><div className="maintenance-item-name"><strong>{item.name}</strong><small>{item.category}{item.tracksFluid ? " · Fluid tracking" : ""}</small></div><div data-label="Last completed"><strong>{latest ? `${latest.mileage.toLocaleString()} mi` : "Not recorded"}</strong><small>{latest ? shortServiceDate(latest.completed_at) : "No service history"}</small></div><div data-label="Plan"><strong>{maintenancePlanLabel(item.mileageInterval, item.timeIntervalMonths)}</strong><small>{item.planLabel}</small></div><div data-label="Next due"><strong>{nextDueLabel(item, latest)}</strong></div><div className={`maintenance-status-pill ${item.status.tone}`} data-label="Status"><span aria-hidden="true">●</span>{item.status.label}</div><b aria-hidden="true">＋</b></summary>
                     <div className="maintenance-record-drawer">
-                      <div className="maintenance-expanded-summary"><article><span>Last completed</span><strong>{latest ? `${latest.mileage.toLocaleString()} mi` : "Not recorded"}</strong><p>{latest ? shortServiceDate(latest.completed_at) : "Log the first completed service below."}</p></article><article><span>Plan</span><strong>{maintenancePlanLabel(item.mileageInterval, item.timeIntervalMonths)}</strong><p>{item.planLabel}</p></article><article><span>Next due</span><strong>{nextDueLabel(item, latest)}</strong><p className={item.status.tone}>{item.status.label}</p></article></div>
                       {(item.catalog || item.notes || item.issue) && <details className="maintenance-technical-notes"><summary>Technical notes and sources</summary>{item.catalog && <div className="maintenance-technical-grid"><article><span>Factory position</span><p>{item.catalog.oem.summary}</p></article><article><span>Planning baseline</span><p>{item.catalog.community.summary}</p></article><article><span>Before service</span><ul>{item.catalog.diy.map((note) => <li key={note}>{note}</li>)}</ul></article></div>}{!item.catalog && <p>{item.notes ?? "Owner-added maintenance or repair."}</p>}<footer>{(item.catalog?.sources ?? item.issue?.sources ?? []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><b>{source.type}</b>{source.title} ↗</a>)}</footer></details>}
                       <MaintenanceRecordPanel item={item} records={item.records} tracksFluid={item.tracksFluid} signedIn={auth.access.canSaveMaintenance} isGuest={!auth.access.canSaveMaintenance} hasSavedVehicle={Boolean(garage.vehicleId && auth.access.canSaveMaintenance)} defaultMileage={demoMode ? String(DEMO_VEHICLE.mileage) : garage.mileage} saving={serviceRecords.savingSlug === item.slug} onOpenAuth={() => openAccount("save")} onAdd={(input) => serviceRecords.addRecord(item.slug, item.name, input)} />
                       {item.kind !== "baseline" && <div className="tracked-item-removal"><div><strong>Active-plan controls</strong><p>Removal hides this tracked item from the plan. Any completed service records remain in your account.</p></div><RemoveTrackedItemButton removing={trackedMaintenance.removingSlug === item.slug} onRemove={() => auth.access.canCustomize ? trackedMaintenance.removeItem(item.slug) : (openAccount("save"), Promise.resolve(false))} /></div>}
@@ -721,6 +755,7 @@ export default function App() {
       </main>
 
       <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research, beginning with BMW E36, E39, E46, and F30. Not affiliated with or endorsed by BMW.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">GitHub ↗</a></footer>
+      {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>
   );
