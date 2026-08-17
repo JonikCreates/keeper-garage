@@ -24,11 +24,11 @@ The platform library covers the U.S. E36, E39, and E46 gasoline ranges plus the 
 - Vehicle-specific Known Issues search with aliases, symptoms, partial-word and typo matching, ranked explanations, and a custom-observation fallback
 - Reversible owner-tracked issues with date found, mileage found, and Watching, Needs Repair, or Repaired status; removing an active item never deletes completed service records
 - Member exports of every completed record for the selected vehicle as a paginated PDF or high-resolution PNG
-- Passwordless email, temporary guest access, and Supabase OAuth sign-in with Google
-- Profile and security controls for display name, email, phone, and linked identities
-- Explicit visitor, guest, and recoverable-member access states ready for future server-verified subscriptions and PDF exports
+- Email/password accounts, verification and recovery flows, plus optional Supabase OAuth sign-in with Google
+- Profile and security controls for display name, email, password, and linked identities
+- Demo-only Guest Mode, read-only legacy garage upgrades, and server-issued account entitlements ready for future subscriptions
 
-Keeper is a React + Vite site hosted by GitHub Pages. Supabase provides optional guest and email authentication plus an owner-isolated saved garage. The complete issue library remains available without an account.
+Keeper is a React + Vite site hosted by GitHub Pages. Supabase Auth and owner-isolated database policies provide persistent Keeper Profiles. Signed-out visitors explore a static Demo Garage; they do not receive a Supabase user or permanent storage. The complete issue library remains public.
 
 ## Local development
 
@@ -47,11 +47,11 @@ Copy `.env.example` to `.env.local` and add the project URL and publishable brow
 
 Google sign-in activates automatically after the provider is enabled in Supabase. The application requests the standard OpenID, profile, and email scopes, returns to the account panel after OAuth, and keeps Google disabled instead of sending customers into a broken flow when its credentials are unavailable. Provider credential and callback instructions are in [`docs/auth-setup.md`](docs/auth-setup.md).
 
-Verified phone updates activate after phone auth and an SMS provider are configured. Anonymous guests receive an owner-isolated Supabase account, but it cannot be recovered after sign-out or cleared browser storage until an identity is linked.
+Keeper no longer creates anonymous accounts. Older anonymous garages are preserved as read-only and can be upgraded in place by linking a permanent identity, keeping the same Supabase user ID and related records.
 
-Future paid access must be decided by server-controlled subscription data and enforced by RLS or a protected server function. The frontend access resolver is only the presentation layer; it must never become the authority for a paywall or PDF entitlement.
+Future paid access must be decided by trusted entitlement rows and enforced by RLS or protected server functions. The frontend access resolver is only the presentation layer; it is not the authority for a paywall or export entitlement.
 
-Database changes live in `supabase/migrations`. Vehicles, tracked maintenance items, and maintenance records use Row Level Security so authenticated users—including anonymous guests—can access only rows owned by their `auth.uid()`. Maintenance records are append-only events, allowing recurring work to retain each completed mileage instead of replacing the previous service. Export reads that complete selected-vehicle history and excludes plans, empty categories, and legacy records without recorded work details.
+Database changes live in `supabase/migrations`. Vehicles, tracked maintenance items, and maintenance records use Row Level Security so each signed-in identity can read only rows owned by its `auth.uid()`. Existing anonymous identities are read-only; permanent writes additionally require a current server-controlled account entitlement. Maintenance records are append-only events, and protected export requests verify both entitlement and selected-vehicle ownership.
 
 ## Data policy
 

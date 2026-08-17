@@ -6,16 +6,12 @@ const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export type AuthProvider = "google";
 
 export type AuthCapabilities = {
-  anonymous: boolean;
   email: boolean;
-  phone: boolean;
   google: boolean;
 };
 
 const unavailableCapabilities: AuthCapabilities = {
-  anonymous: false,
   email: false,
-  phone: false,
   google: false,
 };
 
@@ -31,9 +27,10 @@ export const supabase = hasSupabaseConfig
     })
   : null;
 
-export const authRedirectUrl = (accountTab: "profile" | "security" = "profile") => {
+export const authRedirectUrl = (accountView: "profile" | "verify" | "recovery" | "legacy-password" = "profile") => {
   const url = new URL(import.meta.env.BASE_URL, window.location.origin);
-  url.searchParams.set("account", accountTab);
+  url.searchParams.set("account", accountView);
+  url.hash = "profile";
   return url.toString();
 };
 
@@ -47,12 +44,20 @@ export async function getAuthCapabilities(): Promise<AuthCapabilities> {
 
   const settings = await response.json() as { external?: Record<string, boolean> };
   return {
-    anonymous: Boolean(settings.external?.anonymous_users),
     email: Boolean(settings.external?.email),
-    phone: Boolean(settings.external?.phone),
     google: Boolean(settings.external?.google),
   };
 }
+
+export type KeeperAccountState = {
+  permanent_identity: boolean;
+  entitlements: string[];
+};
+
+export type KeeperExportPayload = {
+  vehicle: VehicleRow;
+  records: MaintenanceRecordRow[];
+};
 
 export type VehicleRow = {
   id: string;

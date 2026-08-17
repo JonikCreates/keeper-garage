@@ -140,8 +140,9 @@ body::before {
 }
 .account-button { min-height: 34px; color: var(--header-text); border-color: rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .06); }
 .account-button:hover, .account-button.active { color: var(--button-ink); border-color: var(--acid); background: var(--acid); }
-.account-button.guest.active { color: #17110d; border-color: var(--amber); background: var(--amber); }
-.account-button.member.active { color: #101610; border-color: var(--green); background: var(--green); }
+.account-button.legacy { color: #17110d; border-color: var(--amber); background: var(--amber); }
+.account-button.setup { color: #17110d; border-color: var(--amber); background: var(--amber); }
+.account-button.account.active { color: #101610; border-color: var(--green); background: var(--green); }
 .button { min-height: 40px; padding: 11px 15px; }
 .button-primary { color: var(--button-ink); border-color: var(--acid); background: var(--acid); box-shadow: 0 1px 2px var(--shadow); }
 .button-primary:hover { filter: brightness(1.06); }
@@ -247,9 +248,9 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .session-note { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 12px; align-items: start; color: var(--muted); background: var(--panel-2); }
 .session-note strong { color: var(--paper); font-size: 8px; letter-spacing: .09em; text-transform: uppercase; }
 .session-note span { line-height: 1.55; }
-.session-note.visitor strong { color: var(--blue); }
-.session-note.guest strong { color: var(--amber); }
-.session-note.member strong { color: var(--green); }
+.session-note.guest strong { color: var(--blue); }
+.session-note.legacy strong, .session-note.setup strong { color: var(--amber); }
+.session-note.account strong { color: var(--green); }
 .plan-launch {
   margin: 0 20px 20px;
   min-height: 60px;
@@ -502,7 +503,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .evidence-grid article { min-height: 190px; background: var(--panel-2); }
 .evidence-grid article:nth-child(2) { background: var(--panel); }
 .evidence-grid h3 { margin-top: 50px; font-family: "Arial Narrow", Arial, sans-serif; font-weight: 900; text-transform: uppercase; }
-.site-footer { max-width: 1260px; margin: 0 auto 24px; padding: 28px 30px; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; background: var(--panel); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; box-shadow: 0 1px 3px var(--shadow); }
+.site-footer { max-width: 1260px; margin: 0 auto 24px; padding: 28px 30px; grid-template-columns: 130px 1fr 1.3fr auto auto; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; background: var(--panel); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; box-shadow: 0 1px 3px var(--shadow); }
 
 .auth-backdrop { background: rgba(3, 4, 5, .78); backdrop-filter: blur(3px); }
 .auth-panel { color: var(--paper); border-left: 1px solid var(--line); background: var(--panel); box-shadow: -12px 0 32px rgba(0, 0, 0, .34); }
@@ -514,11 +515,70 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .account-access-note.member { border-left-color: var(--green); }
 .account-access-note strong { font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .account-access-note p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.auth-panel > header > div > p:last-child { max-width: 470px; margin: 12px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.auth-primary-form { border-top: 4px solid var(--blue); }
+.auth-switch, .guest-mode-note { padding: 15px 17px; border: 1px solid var(--line); background: var(--panel-2); }
+.auth-switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; color: var(--muted); font-size: 10px; }
+.auth-switch button, .text-button, .account-legal-links a, .profile-legal-nav a { padding: 0; color: var(--blue); border: 0; background: transparent; cursor: pointer; font: 800 9px ui-monospace, "Cascadia Mono", Consolas, monospace; text-decoration: underline; text-underline-offset: 3px; }
+.guest-mode-note strong, .legacy-found-banner > span { color: var(--amber); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.guest-mode-note p { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.legal-consent { padding: 14px; display: grid !important; grid-template-columns: 18px 1fr; align-items: start; gap: 10px !important; color: var(--paper) !important; border: 1px solid var(--line); background: var(--field); font-size: 9px !important; font-weight: 600 !important; letter-spacing: 0 !important; line-height: 1.55; text-transform: none !important; }
+.legal-consent input { width: 16px !important; min-height: 16px !important; margin-top: 1px; padding: 0 !important; accent-color: var(--blue); }
+.legal-consent a { color: var(--blue); font-weight: 900; }
+.legal-activation > small { color: var(--muted); font: 700 8px ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.legacy-found-banner { padding: 20px; border: 1px solid color-mix(in srgb, var(--amber), var(--line) 45%); border-top: 4px solid var(--amber); background: color-mix(in srgb, var(--amber) 8%, var(--panel)); }
+.legacy-found-banner h3 { margin: 12px 0 8px; font-size: 23px; }
+.legacy-found-banner p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.65; }
+.account-legal-links { display: flex; flex-wrap: wrap; gap: 18px; padding-top: 15px; border-top: 1px solid var(--line); }
+.account-danger-zone { margin-top: 8px; padding: 16px; border: 1px solid color-mix(in srgb, var(--red), var(--line) 55%); background: color-mix(in srgb, var(--red) 5%, var(--panel)); }
+.account-danger-zone > button { padding: 0; color: var(--red); border: 0; background: transparent; cursor: pointer; font: 900 9px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.account-danger-zone > div { margin-top: 14px; display: grid; gap: 12px; }
+.account-danger-zone p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.account-danger-zone label { display: grid; gap: 7px; color: var(--muted); font: 800 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.account-danger-zone input { min-height: 40px; padding: 10px; color: var(--paper); border: 1px solid var(--line); background: var(--field); }
+.button-danger { color: #fff; border-color: var(--red); background: var(--red); }
+.recovery-overlay { margin-top: 14px; border-top: 4px solid var(--amber); }
 .provider-button { color: var(--paper); border-color: var(--line); background: var(--panel-2); }
 .provider-button:hover:not(:disabled) { color: var(--button-ink); border-color: var(--acid); background: var(--acid); }
 .account-tabs button { color: var(--muted); background: var(--field); }
 .account-tabs button.active { color: var(--button-ink); background: var(--acid); }
 .account-avatar { color: var(--button-ink); background: var(--acid); }
+
+.profile-page, .legal-page { max-width: 1260px; margin: 22px auto; padding: 0 18px; }
+.profile-hero, .legal-hero { padding: clamp(34px, 6vw, 76px); color: var(--paper); border: 1px solid var(--line); border-top: 5px solid var(--blue); background: var(--panel); box-shadow: 0 2px 8px var(--shadow); }
+.profile-hero h1, .legal-hero h1 { margin: 14px 0; font-size: clamp(42px, 7vw, 84px); line-height: .9; letter-spacing: -.055em; text-transform: uppercase; }
+.profile-hero > p:last-child, .legal-hero > p:last-child { max-width: 780px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.profile-guest-card, .profile-legacy-card { margin-top: 16px; padding: clamp(24px, 4vw, 44px); display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(220px, .8fr); gap: 32px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 1px 4px var(--shadow); }
+.profile-guest-card > div:first-child > span, .profile-legacy-card > span, .profile-dashboard section > span { color: var(--blue); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .13em; text-transform: uppercase; }
+.profile-guest-card h2, .profile-legacy-card h2, .profile-dashboard h2 { margin: 14px 0 10px; font-size: 28px; }
+.profile-guest-card p, .profile-legacy-card p, .profile-dashboard p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.7; }
+.profile-guest-card ul { margin: 0; padding: 0; display: grid; align-content: start; gap: 9px; list-style: none; }
+.profile-guest-card li::before { margin-right: 8px; color: var(--blue); content: "■"; }
+.profile-actions { grid-column: 1 / -1; display: flex; gap: 10px; }
+.profile-dashboard { margin-top: 16px; display: grid; grid-template-columns: 1.2fr .8fr 1fr; gap: 12px; }
+.profile-dashboard section { padding: 25px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; border: 1px solid var(--line); background: var(--panel); }
+.profile-dashboard section > strong { color: var(--green); font: 900 9px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.profile-dashboard section > small { color: var(--muted); font-size: 9px; line-height: 1.5; }
+.profile-dashboard section > button { padding: 9px 0; color: var(--blue); border: 0; border-bottom: 1px dashed var(--line); background: transparent; cursor: pointer; font: 800 9px ui-monospace, "Cascadia Mono", Consolas, monospace; text-align: left; }
+.profile-dashboard section > button:disabled { color: var(--muted); cursor: not-allowed; }
+.profile-legal-nav { margin-top: 14px; padding: 18px 22px; display: flex; flex-wrap: wrap; gap: 24px; border: 1px solid var(--line); background: var(--panel); }
+.legal-document { padding: clamp(24px, 5vw, 58px); border: 1px solid var(--line); border-top: 0; background: var(--panel); }
+.legal-version { margin: 0 0 30px; color: var(--blue); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.legal-document section { max-width: 850px; padding: 24px 0; border-top: 1px solid var(--line); }
+.legal-document section:first-of-type { border-top: 0; }
+.legal-document h2 { margin: 0 0 10px; font-size: 23px; }
+.legal-document p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.8; }
+.contact-placeholder-list { max-width: 850px; margin: 22px 0 0; }
+.contact-placeholder-list > div { padding: 14px 0; display: grid; grid-template-columns: 210px 1fr; gap: 20px; border-top: 1px solid var(--line); }
+.contact-placeholder-list dt { color: var(--muted); font: 800 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.contact-placeholder-list dd { margin: 0; font-size: 11px; }
+.legal-account-cta { margin-top: 14px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid var(--line); background: var(--panel); }
+.legal-account-cta div { display: grid; gap: 5px; }
+.legal-account-cta span { color: var(--blue); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.demo-history-note { padding: 12px 14px; color: var(--muted); border: 1px dashed var(--amber); background: color-mix(in srgb, var(--amber) 6%, var(--panel)); font-size: 9px; line-height: 1.55; }
+.demo-history-note strong { margin-right: 8px; color: var(--amber); text-transform: uppercase; }
+.site-footer > nav { display: flex; gap: 13px; }
+.site-footer > nav a { color: var(--blue); font-weight: 800; }
 .security-section-heading small { color: var(--acid); border-color: color-mix(in srgb, var(--acid), var(--line) 55%); }
 
 .maintenance-overview { margin-bottom: 28px; padding: 22px 24px; display: flex; align-items: end; justify-content: space-between; gap: 30px; border-bottom: 1px solid var(--line); background: var(--panel); }
@@ -658,7 +718,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
     left: 0;
     z-index: 55;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0;
     color: var(--header-muted);
     border-top: 1px solid rgba(255, 255, 255, .18);
@@ -759,9 +819,18 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .maintenance-history-list summary > small { grid-column: 1; }
   .maintenance-history-list summary > b { grid-column: 2; grid-row: 1; }
   .page-masthead-actions .button { min-width: 0; padding-inline: 8px; font-size: 8px; text-align: center; white-space: normal; }
-  .site-footer { margin: 0; border-right: 0; border-left: 0; border-radius: 0; }
+  .site-footer { margin: 0; grid-template-columns: 1fr; border-right: 0; border-left: 0; border-radius: 0; }
   .auth-panel { padding: 26px 20px; border-left: 0; }
   .auth-panel h2 { font-size: 40px; }
+  .profile-page, .legal-page { margin: 0; padding: 0; }
+  .profile-hero, .legal-hero, .legal-document { border-right: 0; border-left: 0; }
+  .profile-guest-card, .profile-legacy-card { margin-top: 10px; grid-template-columns: 1fr; border-right: 0; border-left: 0; }
+  .profile-actions { grid-column: 1; display: grid; grid-template-columns: 1fr; }
+  .profile-dashboard { margin-top: 10px; grid-template-columns: 1fr; gap: 10px; }
+  .profile-dashboard section, .profile-legal-nav, .legal-account-cta { border-right: 0; border-left: 0; }
+  .contact-placeholder-list > div { grid-template-columns: 1fr; gap: 7px; }
+  .legal-account-cta { align-items: flex-start; flex-direction: column; }
+  .legal-account-cta .button { width: 100%; }
 }
 
 @media (max-width: 430px) {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { friendlyGarageError } from "./keeperApi";
 import { supabase } from "./supabase";
 
 function metadataName(user: User | null) {
@@ -10,15 +11,18 @@ function metadataName(user: User | null) {
 
 export function useKeeperProfile(user: User | null) {
   const [displayName, setDisplayName] = useState(() => metadataName(user));
+  const [ownerId, setOwnerId] = useState<string | null>(user?.id ?? null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const visibleDisplayName = user && ownerId === user.id ? displayName : metadataName(user);
 
   useEffect(() => {
     if (!supabase || !user) {
       queueMicrotask(() => {
         setDisplayName("");
+        setOwnerId(null);
         setMessage(null);
         setError(null);
       });
@@ -29,7 +33,10 @@ export function useKeeperProfile(user: User | null) {
     const currentUser = user;
     let active = true;
     queueMicrotask(() => {
-      if (active) setLoading(true);
+      if (active) {
+        setOwnerId(currentUser.id);
+        setLoading(true);
+      }
     });
     void client
       .from("profiles")
@@ -39,7 +46,7 @@ export function useKeeperProfile(user: User | null) {
       .then(({ data, error: profileError }) => {
         if (!active) return;
         setDisplayName(data?.display_name ?? metadataName(currentUser));
-        setError(profileError?.message ?? null);
+        setError(profileError ? friendlyGarageError() : null);
         setLoading(false);
       });
 
@@ -50,7 +57,7 @@ export function useKeeperProfile(user: User | null) {
 
   const save = useCallback(async () => {
     if (!supabase || !user) return false;
-    const normalizedName = displayName.trim();
+    const normalizedName = visibleDisplayName.trim();
     if (!normalizedName) {
       setError("Enter a display name.");
       return false;
@@ -63,18 +70,20 @@ export function useKeeperProfile(user: User | null) {
       .upsert({ user_id: user.id, display_name: normalizedName }, { onConflict: "user_id" });
     setSaving(false);
     if (profileError) {
-      setError(profileError.message);
+      setError(friendlyGarageError());
       return false;
     }
     setDisplayName(normalizedName);
+    setOwnerId(user.id);
     setMessage("Profile saved.");
     return true;
-  }, [displayName, user]);
+  }, [user, visibleDisplayName]);
 
   return {
-    displayName,
+    displayName: visibleDisplayName,
     setDisplayName: (value: string) => {
       setDisplayName(value);
+      setOwnerId(user?.id ?? null);
       setMessage(null);
       setError(null);
     },

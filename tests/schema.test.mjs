@@ -47,6 +47,11 @@ const simplifiedMaintenanceMigrationUrl = new URL(
   import.meta.url,
 );
 
+const secureAccountsMigrationUrl = new URL(
+  "../supabase/migrations/20260817010000_secure_keeper_accounts.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -131,4 +136,26 @@ test("maintenance redesign adds optional fluid and plan fields without rewriting
   assert.match(sql, /add column if not exists fluid_specification text/i);
   assert.match(sql, /maintenance_records_fluid_quantity_check/i);
   assert.doesNotMatch(sql, /delete from|truncate|drop table|update public\.maintenance_records/i);
+});
+
+test("account architecture blocks guest writes and centralizes trusted entitlements", async () => {
+  const sql = await readFile(secureAccountsMigrationUrl, "utf8");
+  assert.match(sql, /create table if not exists public\.legal_acceptances/i);
+  assert.match(sql, /create table if not exists public\.account_entitlements/i);
+  assert.match(sql, /create table if not exists public\.account_deletion_requests/i);
+  assert.match(sql, /auth\.jwt\(\).*is_anonymous/is);
+  assert.match(sql, /has_keeper_entitlement\('authenticated_account'\)/i);
+  assert.match(sql, /revoke all on public\.profiles, public\.vehicles, public\.maintenance_records, public\.vehicle_maintenance_items from anon/i);
+  assert.match(sql, /legacy anonymous owners retain read-only access/i);
+  assert.doesNotMatch(sql, /delete from public\.vehicles|delete from public\.maintenance_records|truncate/i);
+});
+
+test("export authorization verifies account, entitlement, and vehicle ownership", async () => {
+  const sql = await readFile(secureAccountsMigrationUrl, "utf8");
+  assert.match(sql, /function public\.get_keeper_vehicle_export\(p_vehicle_id uuid\)/i);
+  assert.match(sql, /vehicle\.owner_id = \(select auth\.uid\(\)\)/i);
+  assert.match(sql, /record\.owner_id = \(select auth\.uid\(\)\)/i);
+  assert.match(sql, /Export limit reached/i);
+  assert.match(sql, /revoke all on function public\.get_keeper_vehicle_export\(uuid\) from public/i);
+  assert.doesNotMatch(sql, /service_role/i);
 });
