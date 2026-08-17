@@ -22,13 +22,13 @@ Keeper uses Supabase Auth project `bxryksfjsicgiaqfuzlm`. The frontend contains 
 1. Open Supabase → Authentication → Sign In / Providers → Email.
 2. Keep Email enabled and keep Confirm email enabled so a newly entered address is not trusted before verification.
 3. Keep secure password storage and email delivery inside Supabase Auth; Keeper never stores passwords.
-4. Add the production and local URLs above to Authentication → URL Configuration. Account flows use the same allowed path with `account=verify`, `account=recovery`, or `account=legacy-password` query values.
+4. Add the production and local URLs above to Authentication → URL Configuration. Account flows use the same allowed path with `account=verify` or `account=recovery` query values.
 5. Before commercial launch, configure a custom SMTP provider under Authentication → SMTP Settings. Supabase's trial sender is rate-limited and not a production email service.
 6. Test signup verification, resend, login, password recovery, expired links, and a password update on both desktop and mobile.
 
 ## Existing anonymous garages
 
-Do not disable or delete existing anonymous users until their garages have been upgraded. Keeper no longer creates anonymous users, and database policies make existing anonymous garages read-only. Linking Google or verifying an email keeps the same Supabase user ID, preserving owned vehicles and related records. Supabase manual identity linking must remain enabled for Google upgrades.
+Do not disable or delete existing anonymous users until their garages have been claimed. Keeper no longer creates anonymous users, and database policies make existing anonymous garages read-only. Before email/password or Google authentication, Keeper asks the authenticated anonymous owner for an expiring, single-use claim ticket. After the permanent account is authenticated and entitled, the person must explicitly approve the transactional ownership transfer. The browser never supplies an owner ID, and a consumed ticket returns the same result without duplicating records.
 
 ## Required release checks
 

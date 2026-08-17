@@ -10,12 +10,18 @@ import {
   type AuthCapabilities,
   type AuthProvider,
   type KeeperAccountState,
+  type LegacyGarageClaim,
+  type PreparedLegacyGarageClaim,
 } from "./supabase";
 
 const initialCapabilities: AuthCapabilities = { email: false, google: false };
 const pendingLegalKey = "keeper-pending-legal";
+const pendingLegacyClaimKey = "keeper-pending-legacy-claim";
 
 type LegalSource = "web" | "legacy_upgrade";
+export type SignUpResult = "created" | "existing" | false;
+
+type StoredLegacyClaim = PreparedLegacyGarageClaim;
 
 function oauthErrorFromUrl() {
   const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -43,6 +49,18 @@ function pendingLegalAcceptance(): { termsVersion: string; privacyVersion: strin
   }
 }
 
+function storedLegacyClaim(): StoredLegacyClaim | null {
+  try {
+    const value = sessionStorage.getItem(pendingLegacyClaimKey);
+    if (!value) return null;
+    const parsed = JSON.parse(value) as Partial<StoredLegacyClaim>;
+    if (!parsed.claim_id || !parsed.claim_secret || !parsed.expires_at) return null;
+    return parsed as StoredLegacyClaim;
+  } catch {
+    return null;
+  }
+}
+
 function authMessage(kind: "login" | "signup" | "recovery" | "update") {
   if (kind === "login") return "We couldn't sign you in. Check your email and password and try again.";
   if (kind === "signup") return "We couldn't create that Keeper Profile. Check the form and try again.";
@@ -60,11 +78,14 @@ export function useKeeperAuth() {
   const [capabilitiesReady, setCapabilitiesReady] = useState(!hasSupabaseConfig);
   const [entitlements, setEntitlements] = useState<Set<string>>(new Set());
   const [accountStateReady, setAccountStateReady] = useState(!hasSupabaseConfig);
+  const [legacyClaim, setLegacyClaim] = useState<LegacyGarageClaim | null>(null);
+  const [dataVersion, setDataVersion] = useState(0);
   const [recoveryMode, setRecoveryMode] = useState(new URLSearchParams(window.location.search).get("account") === "recovery");
 
   const loadAccountState = useCallback(async (nextSession: Session | null) => {
     const client = supabase;
     setEntitlements(new Set());
+    setLegacyClaim(null);
     if (!client || !nextSession?.user) {
       setAccountStateReady(true);
       return;
@@ -93,6 +114,22 @@ export function useKeeperAuth() {
     }
     const accountState = data as KeeperAccountState | null;
     setEntitlements(new Set(accountState?.entitlements ?? []));
+
+    const pendingClaim = storedLegacyClaim();
+    if (pendingClaim) {
+      const { data: claimData, error: claimError } = await client.rpc("get_legacy_garage_claim_summary", {
+        p_claim_id: pendingClaim.claim_id,
+        p_claim_secret: pendingClaim.claim_secret,
+      });
+      if (claimError) {
+        sessionStorage.removeItem(pendingLegacyClaimKey);
+        setMessage("The existing-garage import request expired. No records were changed.");
+      } else {
+        const claim = claimData as LegacyGarageClaim;
+        if (claim.already_imported) sessionStorage.removeItem(pendingLegacyClaimKey);
+        else setLegacyClaim(claim);
+      }
+    }
     setAccountStateReady(true);
   }, []);
 
@@ -159,9 +196,24 @@ export function useKeeperAuth() {
     setMessage(null);
   }, []);
 
+  const prepareLegacyGarageClaim = useCallback(async () => {
+    if (!supabase || !isTemporaryGuest(session?.user ?? null)) return true;
+    const { data, error: claimError } = await supabase.rpc("prepare_legacy_garage_claim");
+    if (claimError || !data) {
+      setError("Keeper couldn't prepare the existing garage for a secure import. Please try again.");
+      return false;
+    }
+    sessionStorage.setItem(pendingLegacyClaimKey, JSON.stringify(data as PreparedLegacyGarageClaim));
+    return true;
+  }, [session?.user]);
+
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return false;
     begin();
+    if (!await prepareLegacyGarageClaim()) {
+      setBusy(false);
+      return false;
+    }
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (signInError) {
@@ -170,11 +222,15 @@ export function useKeeperAuth() {
     }
     setMessage("Welcome back. Your garage is loading.");
     return true;
-  }, [begin]);
+  }, [begin, prepareLegacyGarageClaim]);
 
-  const signUp = useCallback(async (displayName: string, email: string, password: string) => {
+  const signUp = useCallback(async (displayName: string, email: string, password: string): Promise<SignUpResult> => {
     if (!supabase) return false;
     begin();
+    if (!await prepareLegacyGarageClaim()) {
+      setBusy(false);
+      return false;
+    }
     rememberLegalAcceptance("web");
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -187,13 +243,21 @@ export function useKeeperAuth() {
     setBusy(false);
     if (signUpError) {
       sessionStorage.removeItem(pendingLegalKey);
+      if (/already|registered|exists/i.test(signUpError.message)) {
+        setError(null);
+        return "existing";
+      }
       setError(authMessage("signup"));
       return false;
     }
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      sessionStorage.removeItem(pendingLegalKey);
+      return "existing";
+    }
     if (!data.session) setMessage("Check your email to verify your Keeper Profile, then return here to sign in.");
     else setMessage("Keeper Profile created. Your garage is ready.");
-    return true;
-  }, [begin]);
+    return "created";
+  }, [begin, prepareLegacyGarageClaim]);
 
   const signInWithProvider = useCallback(async (provider: AuthProvider, acceptedLegal = false) => {
     if (!supabase) return false;
@@ -202,6 +266,10 @@ export function useKeeperAuth() {
       return false;
     }
     begin();
+    if (!await prepareLegacyGarageClaim()) {
+      setBusy(false);
+      return false;
+    }
     if (acceptedLegal) rememberLegalAcceptance("web");
     const { error: providerError } = await supabase.auth.signInWithOAuth({
       provider,
@@ -218,7 +286,7 @@ export function useKeeperAuth() {
       return false;
     }
     return true;
-  }, [begin, capabilities]);
+  }, [begin, capabilities, prepareLegacyGarageClaim]);
 
   const linkProvider = useCallback(async (provider: AuthProvider) => {
     if (!supabase) return false;
@@ -244,24 +312,6 @@ export function useKeeperAuth() {
     }
     return true;
   }, [begin, capabilities, session?.user]);
-
-  const beginLegacyEmailUpgrade = useCallback(async (displayName: string, email: string) => {
-    if (!supabase || !isTemporaryGuest(session?.user ?? null)) return false;
-    begin();
-    rememberLegalAcceptance("legacy_upgrade");
-    const { error: updateError } = await supabase.auth.updateUser(
-      { email, data: { display_name: displayName.trim() } },
-      { emailRedirectTo: authRedirectUrl("legacy-password") },
-    );
-    setBusy(false);
-    if (updateError) {
-      sessionStorage.removeItem(pendingLegalKey);
-      setError("We couldn't start that garage upgrade. If this email already has a Keeper Profile, sign in to that account instead.");
-      return false;
-    }
-    setMessage("Check your email to verify the address. Your existing garage will remain attached to the same owner ID.");
-    return true;
-  }, [begin, session?.user]);
 
   const acceptLegal = useCallback(async () => {
     if (!supabase || !session?.user || isTemporaryGuest(session.user)) return false;
@@ -348,11 +398,41 @@ export function useKeeperAuth() {
     return true;
   }, [begin, session?.user]);
 
+  const claimLegacyGarage = useCallback(async () => {
+    if (!supabase || !session?.user || !legacyClaim) return false;
+    const pendingClaim = storedLegacyClaim();
+    if (!pendingClaim || pendingClaim.claim_id !== legacyClaim.claim_id) {
+      setError("The existing-garage import request is no longer available.");
+      return false;
+    }
+    begin();
+    const { data, error: claimError } = await supabase.rpc("claim_legacy_garage", {
+      p_claim_id: pendingClaim.claim_id,
+      p_claim_secret: pendingClaim.claim_secret,
+    });
+    setBusy(false);
+    if (claimError || !data) {
+      setError("Keeper couldn't import that existing garage. No records were changed.");
+      return false;
+    }
+    sessionStorage.removeItem(pendingLegacyClaimKey);
+    setLegacyClaim(null);
+    setDataVersion((version) => version + 1);
+    setMessage("Existing garage imported into your Keeper Profile.");
+    return true;
+  }, [begin, legacyClaim, session?.user]);
+
+  const dismissLegacyClaim = useCallback(() => {
+    setLegacyClaim(null);
+    setMessage("The existing garage was left unchanged. You can return to this import on a later visit from this browser.");
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!supabase) return false;
     begin();
     const { error: signOutError } = await supabase.auth.signOut();
     setEntitlements(new Set());
+    setLegacyClaim(null);
     setSession(null);
     setBusy(false);
     if (signOutError) {
@@ -377,6 +457,8 @@ export function useKeeperAuth() {
     isLegacyGuest,
     access,
     entitlements,
+    legacyClaim,
+    dataVersion,
     linkedProviders: user?.identities?.map((identity) => identity.provider) ?? [],
     ready: ready && accountStateReady,
     busy,
@@ -389,17 +471,18 @@ export function useKeeperAuth() {
     signUp,
     signInWithProvider,
     linkProvider,
-    beginLegacyEmailUpgrade,
     acceptLegal,
     requestPasswordReset,
     resendVerification,
     updatePassword,
     changeEmail,
     requestAccountDeletion,
+    claimLegacyGarage,
+    dismissLegacyClaim,
     signOut,
     clearStatus: () => {
       setMessage(null);
       setError(null);
     },
-  }), [session, user, dataUser, isLegacyGuest, access, entitlements, ready, accountStateReady, busy, message, error, capabilities, capabilitiesReady, recoveryMode, signIn, signUp, signInWithProvider, linkProvider, beginLegacyEmailUpgrade, acceptLegal, requestPasswordReset, resendVerification, updatePassword, changeEmail, requestAccountDeletion, signOut]);
+  }), [session, user, dataUser, isLegacyGuest, access, entitlements, legacyClaim, dataVersion, ready, accountStateReady, busy, message, error, capabilities, capabilitiesReady, recoveryMode, signIn, signUp, signInWithProvider, linkProvider, acceptLegal, requestPasswordReset, resendVerification, updatePassword, changeEmail, requestAccountDeletion, claimLegacyGarage, dismissLegacyClaim, signOut]);
 }

@@ -113,6 +113,8 @@ test("guest mode is a demo and persistent actions require an account", async () 
   assert.match(app, /demoMode \? DEMO_MAINTENANCE_RECORDS/);
   assert.match(app, /openAccount\("export"\)/);
   assert.match(app, /auth\.access\.canCustomize/);
-  assert.match(panel, /Guest Mode cannot permanently save, sync, or export records/);
+  assert.match(panel, /Your garage\. Your profile\./);
+  assert.match(panel, /Sign In/);
+  assert.match(panel, /Create Account/);
   assert.doesNotMatch(panel, /Continue as guest/);
 });

@@ -508,6 +508,30 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .auth-backdrop { background: rgba(3, 4, 5, .78); backdrop-filter: blur(3px); }
 .auth-panel { color: var(--paper); border-left: 1px solid var(--line); background: var(--panel); box-shadow: -12px 0 32px rgba(0, 0, 0, .34); }
 .auth-panel > header { padding-bottom: 18px; border-bottom: 3px solid var(--acid); }
+.auth-loading, .profile-loading { min-height: 180px; display: grid; place-items: center; color: var(--muted); font: 900 9px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.auth-loading { grid-template-columns: auto auto; justify-content: center; gap: 12px; border: 1px solid var(--line); background: var(--panel-2); }
+.auth-loading-mark { width: 16px; height: 16px; display: inline-block; border: 2px solid var(--line); border-top-color: var(--blue); border-radius: 50%; animation: keeper-spin .8s linear infinite; }
+.auth-choice-shell, .auth-mode-content { display: grid; gap: 14px; }
+.auth-mode-tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); background: var(--field); }
+.auth-mode-tabs button { min-height: 52px; color: var(--muted); border: 0; background: transparent; cursor: pointer; font: 900 10px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.auth-mode-tabs button + button { border-left: 1px solid var(--line); }
+.auth-mode-tabs button.active { color: #fff; background: var(--blue); box-shadow: inset 0 -4px 0 var(--acid); }
+.forgot-password-link { width: fit-content; padding: 0; color: var(--blue); border: 0; background: transparent; cursor: pointer; font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-decoration: underline; text-transform: uppercase; text-underline-offset: 3px; }
+.auth-mode-switch { margin: 0; color: var(--muted); font-size: 9px; text-align: center; }
+.auth-mode-switch button { padding: 0; color: var(--blue); border: 0; background: transparent; cursor: pointer; font: inherit; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
+.button-conflict { width: 100%; color: #fff; border-color: var(--red); background: var(--red); }
+.legacy-import-confirmation { padding: 24px; display: grid; gap: 17px; border: 1px solid var(--line); border-top: 5px solid var(--amber); background: var(--panel-2); }
+.legacy-import-confirmation > span { color: var(--amber); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
+.legacy-import-confirmation h3 { margin: 0; font-size: 28px; }
+.legacy-import-confirmation > p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.65; }
+.legacy-import-confirmation dl { margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); }
+.legacy-import-confirmation dl div { padding: 13px; display: grid; gap: 5px; border-left: 3px solid var(--blue); }
+.legacy-import-confirmation dt { color: var(--muted); font: 800 7px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.legacy-import-confirmation dd { margin: 0; font-size: 22px; font-weight: 900; }
+.legacy-import-confirmation > div { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.profile-auth-priority { margin-top: 28px; display: flex; gap: 10px; }
+.profile-auth-priority .button { min-width: 180px; }
+@keyframes keeper-spin { to { transform: rotate(360deg); } }
 .provider-list { grid-template-columns: 1fr; }
 .social-auth-block .provider-footnote { margin: 14px 0 0; padding-top: 12px; border-top: 1px dashed var(--line); }
 .account-access-note { padding: 14px 16px; display: grid; gap: 6px; border: 1px solid var(--line); border-left: 4px solid var(--blue); background: var(--panel-2); }
@@ -822,6 +846,10 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .site-footer { margin: 0; grid-template-columns: 1fr; border-right: 0; border-left: 0; border-radius: 0; }
   .auth-panel { padding: 26px 20px; border-left: 0; }
   .auth-panel h2 { font-size: 40px; }
+  .auth-mode-tabs button { min-height: 48px; font-size: 9px; }
+  .legacy-import-confirmation dl, .legacy-import-confirmation > div { grid-template-columns: 1fr; }
+  .profile-auth-priority { display: grid; grid-template-columns: 1fr 1fr; }
+  .profile-auth-priority .button { min-width: 0; }
   .profile-page, .legal-page { margin: 0; padding: 0; }
   .profile-hero, .legal-hero, .legal-document { border-right: 0; border-left: 0; }
   .profile-guest-card, .profile-legacy-card { margin-top: 10px; grid-template-columns: 1fr; border-right: 0; border-left: 0; }
@@ -843,4 +871,5 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .theme-wheel { transition: none; }
+  .auth-loading-mark { animation: none; }
 }

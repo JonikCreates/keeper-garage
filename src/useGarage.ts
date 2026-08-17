@@ -51,7 +51,7 @@ function sortVehicles(vehicles: VehicleRow[]) {
     || Date.parse(right.updated_at) - Date.parse(left.updated_at));
 }
 
-export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleProfile) => void) {
+export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleProfile) => void, dataVersion = 0) {
   const [state, setState] = useState<GarageState>(initialState);
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     return () => {
       active = false;
     };
-  }, [user, onVehicleLoaded]);
+  }, [user, onVehicleLoaded, dataVersion]);
 
   const selectVehicle = useCallback((vehicleId: string) => {
     const selected = state.vehicles.find((vehicle) => vehicle.id === vehicleId);

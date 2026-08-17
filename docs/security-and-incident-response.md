@@ -23,7 +23,7 @@ Frontend permission checks improve the interface but are not the authority. RLS 
 
 - Supabase Authentication logs for signup, verification, login, refresh, recovery, and provider failures.
 - Supabase Postgres/API logs for RLS, RPC, and database failures.
-- `public.security_events` for bounded Keeper account activation, legacy upgrade, export, and deletion-request events. It must not contain passwords, tokens, keys, or full garage records.
+- `public.security_events` for bounded Keeper account activation, legacy import, export, and deletion-request events. It must not contain passwords, claim secrets, tokens, keys, or full garage records.
 - GitHub Actions deployment logs for build and release failures.
 
 ## First response to suspected exposure
