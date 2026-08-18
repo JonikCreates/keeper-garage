@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { authCallbackUrl } from "./routing";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -22,16 +23,14 @@ export const supabase = hasSupabaseConfig
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: false,
+        flowType: "pkce",
       },
     })
   : null;
 
 export const authRedirectUrl = (accountView: "profile" | "verify" | "recovery" = "profile") => {
-  const url = new URL(import.meta.env.BASE_URL, window.location.origin);
-  url.searchParams.set("account", accountView);
-  url.hash = "profile";
-  return url.toString();
+  return authCallbackUrl(accountView);
 };
 
 export async function getAuthCapabilities(): Promise<AuthCapabilities> {

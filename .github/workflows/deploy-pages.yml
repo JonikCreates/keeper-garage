@@ -28,10 +28,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
-      - run: pnpm build
+      - run: pnpm build:github-pages
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SITE_URL: https://jonikcreates.github.io/keeper-garage/
       - run: pnpm test
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
