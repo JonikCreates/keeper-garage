@@ -18,7 +18,7 @@ The platform library covers 16 vehicle families. Maintenance and issue records c
 - Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
-- A light-first forum theme: white and blue by default, charcoal and workshop red when dark mode is selected, controlled by a moving M Parallel-inspired wheel
+- A light-first forum theme: white and blue by default, charcoal and safety orange when dark mode is selected, controlled by a moving M Parallel-inspired wheel
 - Clean Cloudflare page routes with a GitHub Pages-safe fallback build
 - Account-owned multi-vehicle picker with separate add and edit states
 - A simplified vehicle-specific maintenance view with compact last-completed, next-due, and status rows that expand only when more detail is wanted
@@ -55,8 +55,6 @@ Google sign-in activates automatically after the provider is enabled in Supabase
 Keeper no longer creates anonymous accounts. Older anonymous garages are preserved as read-only. Before authentication, Keeper creates an expiring server claim; after authentication, the person explicitly chooses whether to transfer the preserved vehicles and related records into that Profile. The claim is single-use and repeat attempts cannot duplicate records.
 
 Future paid access must be decided by trusted entitlement rows and enforced by RLS or protected server functions. The frontend access resolver is only the presentation layer; it is not the authority for a paywall or export entitlement.
-
-Account and security support: [support@keeperauto.com](mailto:support@keeperauto.com).
 
 Database changes live in `supabase/migrations`. Vehicles, tracked maintenance items, and maintenance records use Row Level Security so each signed-in identity can read only rows owned by its `auth.uid()`. Existing anonymous identities are read-only; permanent writes additionally require a current server-controlled account entitlement. Maintenance records are append-only events, and protected export requests verify both entitlement and selected-vehicle ownership.
 

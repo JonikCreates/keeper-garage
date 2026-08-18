@@ -1,6 +1,6 @@
 # Security policy
 
-Report a suspected Keeper vulnerability privately to [support@keeperauto.com](mailto:support@keeperauto.com).
+Keeper's private security-reporting address is not configured yet. Add the verified address here before public launch; do not invent one from an unconfirmed domain.
 
 Include the affected page, a concise reproduction, and the impact you observed. Do not send passwords, authentication links, access or refresh tokens, private keys, provider secrets, or another person's garage records. If a screenshot or URL contains sensitive values, redact them before sending.
 

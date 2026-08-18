@@ -41,4 +41,4 @@ This is an operational reference, not a substitute for a formal security program
 5. Confirm PKCE, callback sanitization, RLS, logout, and cross-account export isolation before restoring a release.
 6. Record the timeline and obtain qualified legal/security advice if customer information may have been exposed.
 
-Security reports can be sent to [support@keeperauto.com](mailto:support@keeperauto.com). Do not include passwords, session tokens, private keys, or unredacted customer records in email.
+Configure and verify a private security-reporting address before public launch. Do not include passwords, session tokens, private keys, or unredacted customer records in email.

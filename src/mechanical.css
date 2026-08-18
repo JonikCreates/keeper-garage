@@ -8,9 +8,9 @@
   --muted: #a3a9ae;
   --paper: #f3f3f0;
   --cream: #d2d5d7;
-  --acid: #e32828;
-  --red: #ff4b45;
-  --amber: #e9673b;
+  --acid: #f47b20;
+  --red: #ff6258;
+  --amber: #ffac45;
   --blue: #7ca9cd;
   --green: #77af79;
   --field: #101214;
@@ -18,10 +18,10 @@
   --bar: #0e1012;
   --header-text: #f7f7f5;
   --header-muted: #aeb3b7;
-  --header-active: #2d1515;
+  --header-active: #282019;
   --row-hover: #292e32;
   --shadow: rgba(0, 0, 0, .34);
-  --button-ink: #ffffff;
+  --button-ink: #17110d;
   color: var(--paper);
   background: var(--canvas);
   font-family: Arial, Helvetica, sans-serif;

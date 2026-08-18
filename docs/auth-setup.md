@@ -14,10 +14,11 @@ Add only the environments being actively tested:
 
 - Local: `http://localhost:5173/auth/callback/`
 - GitHub Pages fallback: `https://jonikcreates.github.io/keeper-garage/auth/callback/`
-- Temporary Cloudflare Pages: `https://<assigned-project>.pages.dev/auth/callback/`
-- Production after the release gate: `https://keeperauto.com/auth/callback/`
+- Cloudflare Pages production hostname: `https://<PROJECT>.pages.dev/auth/callback/`
+- Stable debug preview alias: `https://debug.<PROJECT>.pages.dev/auth/callback/`
+- Production after the release gate: `https://<ACTUAL_DOMAIN>/auth/callback/`
 
-Keep the Supabase Site URL on the currently trusted production origin until the custom-domain release gate passes. Avoid broad production wildcard redirects. If Cloudflare preview authentication is needed, allow only the exact preview being tested and remove it afterward.
+Keep the Supabase Site URL on the currently trusted production origin until the custom-domain release gate passes. Avoid broad production wildcard redirects. Use the stable `debug` branch alias for routine preview authentication; if an immutable preview URL must be tested, allow only that exact callback temporarily and remove it afterward.
 
 The Google OAuth client uses each website origin as an authorized JavaScript origin. Its authorized redirect URI remains Supabase's provider endpoint:
 
@@ -26,7 +27,7 @@ The Google OAuth client uses each website origin as an authorized JavaScript ori
 ## Google
 
 1. In Google Auth Platform, use a Web application OAuth client.
-2. Add the current site origin; add `https://keeperauto.com` only for the custom-domain release.
+2. Add only the origins being actively tested; add `https://<ACTUAL_DOMAIN>` only after replacing the placeholder with the verified custom domain.
 3. Register the Supabase provider endpoint above as the authorized redirect URI.
 4. Keep scopes to `openid`, email, and profile.
 5. Store the client ID and client secret only in Supabase Authentication provider settings.
