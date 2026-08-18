@@ -127,8 +127,7 @@ body::before {
 .brand-lockup { color: var(--header-text); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
 .brand-lockup > span { padding: 4px 7px; border: 1px solid var(--header-text); font-size: 12px; }
 .brand-lockup small { color: var(--header-muted); border-color: rgba(255, 255, 255, .22); }
-.keeper-mark { transform: skew(-8deg); }
-.keeper-mark i { background: var(--acid); box-shadow: inset -1px 0 rgba(0, 0, 0, .28); }
+.keeper-mark { box-shadow: 0 1px 4px rgba(0, 0, 0, .28); }
 .topbar nav { gap: 8px; color: var(--header-muted); font: 800 10px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; letter-spacing: .045em; }
 .topbar nav a { padding: 9px 12px; border: 1px solid transparent; border-radius: 2px; }
 .topbar nav a:hover { color: var(--header-text); border-color: rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .04); }
@@ -960,7 +959,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 }
 
 @media (max-width: 430px) {
-  .keeper-mark { width: 22px; }
+  .keeper-mark { width: 22px; height: 22px; }
   .brand-lockup { gap: 7px; font-size: 11px; }
   .theme-toggle { width: 80px; }
   .theme-wheel { width: 27px; height: 27px; top: 1px; }

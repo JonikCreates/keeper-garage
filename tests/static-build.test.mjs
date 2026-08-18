@@ -4,10 +4,23 @@ import test from "node:test";
 
 test("production build contains the Keeper application", async () => {
   const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
+  const rootAssets = await readdir(new URL("../dist/", import.meta.url));
   const assets = await readdir(new URL("../dist/assets/", import.meta.url));
   const scripts = assets.filter((file) => file.endsWith(".js"));
 
-  assert.match(html, /Keeper — Owner's Workshop Log/);
+  assert.match(html, /<title>Keeper Auto<\/title>/);
+  assert.match(html, /property="og:title" content="Keeper Auto"/);
+  assert.match(html, /property="og:description" content="Your digital garage for keeping track of the cars you own, maintain, modify, and love\."/);
+  assert.match(html, /property="og:image" content="https:\/\/keeperauto\.com\/keeper-auto-social\.png"/);
+  assert.match(html, /property="og:url" content="https:\/\/keeperauto\.com\/"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /name="twitter:title" content="Keeper Auto"/);
+  assert.match(html, /name="twitter:image" content="https:\/\/keeperauto\.com\/keeper-auto-social\.png"/);
+  assert.match(html, /rel="canonical" href="https:\/\/keeperauto\.com\/"/);
+  assert.match(html, /rel="manifest" href="\/site\.webmanifest"/);
+  for (const asset of ["keeper-auto-social.png", "keeper-logo.png", "favicon-32x32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "site.webmanifest"]) {
+    assert.ok(rootAssets.includes(asset), `expected ${asset} in the production build`);
+  }
   assert.match(html, /\/(?:keeper-garage\/)?assets\//);
   assert.ok(scripts.length, "expected compiled JavaScript assets");
 
@@ -31,7 +44,7 @@ test("production build contains the Keeper application", async () => {
   assert.match(bundle, /Touring rear self-leveling air suspension/);
   assert.match(bundle, /Rear axle carrier panel/);
   assert.match(bundle, /keeper-theme/);
-  assert.match(bundle, /Keeper — /);
+  assert.match(bundle, /Keeper Auto — /);
   assert.match(bundle, /My Garage/);
   assert.match(bundle, /What needs attention/);
   assert.match(bundle, /Recorded spending/);

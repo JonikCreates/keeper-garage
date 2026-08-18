@@ -28,7 +28,7 @@ Configure the following separately for both Preview and Production in **Settings
 | --- | --- | --- |
 | `VITE_SUPABASE_URL` | Existing public Supabase project URL | Same value |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Existing browser-safe publishable key | Same value |
-| `VITE_SITE_URL` | Current canonical production URL during rollout | Actual canonical custom-domain URL after cutover |
+| `VITE_SITE_URL` | `https://keeperauto.com/` | `https://keeperauto.com/` |
 | `NODE_VERSION` | `22.16.0` | `22.16.0` |
 | `PNPM_VERSION` | `10.11.1` | `10.11.1` |
 

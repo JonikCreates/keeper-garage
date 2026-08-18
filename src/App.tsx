@@ -112,7 +112,7 @@ const engineLabels: Record<string, string> = {
 };
 
 function KeeperMark() {
-  return <span className="keeper-mark" aria-hidden="true"><i /><i /><i /></span>;
+  return <span className="keeper-mark" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}keeper-logo.png`} alt="" /></span>;
 }
 
 function MParallelWheel() {
@@ -296,14 +296,14 @@ export default function App() {
 
   useEffect(() => {
     document.title = page === "garage"
-      ? "Keeper — Garage"
+      ? "Keeper Auto"
       : page === "maintenance"
-        ? `Keeper — ${profile.year} ${profile.trim} Maintenance`
+        ? `Keeper Auto — ${profile.year} ${profile.trim} Maintenance`
         : page === "issues"
-          ? `Keeper — ${profile.year} ${profile.trim} Known Issues`
+          ? `Keeper Auto — ${profile.year} ${profile.trim} Known Issues`
           : page === "profile"
-            ? "Keeper — Profile"
-            : `Keeper — ${page === "terms" ? "Terms" : page === "privacy" ? "Privacy" : "Contact"}`;
+            ? "Keeper Auto — Profile"
+            : `Keeper Auto — ${page === "terms" ? "Terms" : page === "privacy" ? "Privacy" : "Contact"}`;
   }, [page, profile.trim, profile.year]);
 
   useEffect(() => {

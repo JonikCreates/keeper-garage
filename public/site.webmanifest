@@ -1,0 +1,24 @@
+{
+  "name": "Keeper Auto",
+  "short_name": "Keeper",
+  "description": "Your digital garage for keeping track of the cars you own, maintain, modify, and love.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#faf9f7",
+  "theme_color": "#0d2b46",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

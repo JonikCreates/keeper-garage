@@ -29,9 +29,7 @@ export default defineConfig(({ mode }) => {
     throw new Error("Cloudflare Pages requires VITE_SITE_URL for canonical and social URLs.");
   }
 
-  const siteUrl = normalizeSiteUrl(configuredSiteUrl || (githubPages
-    ? "https://jonikcreates.github.io/keeper-garage/"
-    : "http://localhost:5173/"));
+  const siteUrl = normalizeSiteUrl(configuredSiteUrl || "https://keeperauto.com/");
 
   return {
     base: githubPages ? "/keeper-garage/" : "/",
