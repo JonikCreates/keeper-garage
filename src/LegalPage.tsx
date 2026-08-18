@@ -36,7 +36,7 @@ export function LegalPage({ page, onOpenAccount }: LegalPageProps) {
       <section><h2>Contact configuration pending</h2><p>Keeper has not yet been given a legal business name, support email, privacy contact, business mailing address, or governing jurisdiction. These values have not been invented.</p></section>
       <dl className="contact-placeholder-list">
         <div><dt>Legal/business name</dt><dd>{keeperLegalConfig.legalName ?? "To be provided"}</dd></div>
-        <div><dt>Support email</dt><dd>{keeperLegalConfig.supportEmail ?? "To be provided"}</dd></div>
+        <div><dt>Support email</dt><dd>{keeperLegalConfig.supportEmail ? <a href={`mailto:${keeperLegalConfig.supportEmail}`}>{keeperLegalConfig.supportEmail}</a> : "To be provided"}</dd></div>
         <div><dt>Privacy contact</dt><dd>{keeperLegalConfig.privacyEmail ?? "To be provided"}</dd></div>
         <div><dt>Mailing information</dt><dd>{keeperLegalConfig.mailingAddress ?? "To be reviewed"}</dd></div>
         <div><dt>Jurisdiction</dt><dd>{keeperLegalConfig.governingJurisdiction ?? "Attorney review required"}</dd></div>

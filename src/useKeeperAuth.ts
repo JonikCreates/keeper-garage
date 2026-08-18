@@ -13,19 +13,20 @@ import {
   type LegacyGarageClaim,
   type PreparedLegacyGarageClaim,
 } from "./supabase";
+import { takeAuthCallbackResult } from "./authCallback";
 
 const initialCapabilities: AuthCapabilities = { email: false, google: false };
 const pendingLegalKey = "keeper-pending-legal";
 const pendingLegacyClaimKey = "keeper-pending-legacy-claim";
+const initialAuthCallbackResult = takeAuthCallbackResult();
 
 type LegalSource = "web" | "legacy_upgrade";
 export type SignUpResult = "created" | "existing" | false;
 
 type StoredLegacyClaim = PreparedLegacyGarageClaim;
 
-function oauthErrorFromUrl() {
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  return params.get("error_description") ? "We couldn't complete that sign-in. Please try again." : null;
+function initialAuthError() {
+  return initialAuthCallbackResult === "error" ? "We couldn't complete that sign-in. Please try again." : null;
 }
 
 function rememberLegalAcceptance(source: LegalSource) {
@@ -73,7 +74,7 @@ export function useKeeperAuth() {
   const [ready, setReady] = useState(!hasSupabaseConfig);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(oauthErrorFromUrl);
+  const [error, setError] = useState<string | null>(initialAuthError);
   const [capabilities, setCapabilities] = useState(initialCapabilities);
   const [capabilitiesReady, setCapabilitiesReady] = useState(!hasSupabaseConfig);
   const [entitlements, setEntitlements] = useState<Set<string>>(new Set());
@@ -157,6 +158,7 @@ export function useKeeperAuth() {
       setAccountStateReady(false);
       setSession(nextSession);
       setReady(true);
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") setDataVersion((version) => version + 1);
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryMode(true);
         setMessage("Choose a new password for your Keeper Profile.");
@@ -430,16 +432,21 @@ export function useKeeperAuth() {
   const signOut = useCallback(async () => {
     if (!supabase) return false;
     begin();
-    const { error: signOutError } = await supabase.auth.signOut();
+    const { error: globalSignOutError } = await supabase.auth.signOut({ scope: "global" });
+    const { error: localSignOutError } = globalSignOutError
+      ? await supabase.auth.signOut({ scope: "local" })
+      : { error: null };
     setEntitlements(new Set());
     setLegacyClaim(null);
     setSession(null);
+    setDataVersion((version) => version + 1);
     setBusy(false);
-    if (signOutError) {
-      setError("We couldn't finish signing out. Please try again.");
+    if (localSignOutError) {
+      setError("We couldn't clear this browser session. Close this tab before another person uses this device.");
       return false;
     }
-    setMessage(null);
+    if (globalSignOutError) setError("You are signed out on this device, but Keeper could not revoke every other session. Change your password if the account may be at risk.");
+    else setMessage(null);
     return true;
   }, [begin]);
 

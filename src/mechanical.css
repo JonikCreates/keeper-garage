@@ -77,6 +77,9 @@ body::before {
 }
 ::selection { color: var(--button-ink); background: var(--acid); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.auth-callback-shell { min-height: 100vh; padding: 32px; display: grid; place-content: center; gap: 8px; text-align: center; background: var(--canvas); }
+.auth-callback-shell strong { color: var(--paper); font: 900 18px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.auth-callback-shell span { color: var(--muted); font-size: 13px; }
 
 .forum-banner {
   min-height: 94px;

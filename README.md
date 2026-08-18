@@ -1,6 +1,6 @@
 # Keeper
 
-Configuration-aware maintenance research for U.S.-spec BMW, Mazda, Porsche, and Subaru enthusiast platforms, published as a standalone static site at [jonikcreates.github.io/keeper-garage](https://jonikcreates.github.io/keeper-garage/).
+Configuration-aware maintenance research for U.S.-spec BMW, Mazda, Porsche, and Subaru enthusiast platforms. Cloudflare Pages is the production target, with [GitHub Pages](https://jonikcreates.github.io/keeper-garage/) retained as the rollout fallback.
 
 The platform library covers 16 vehicle families. Maintenance and issue records carry applicability rules for brand, generation, year, model type, engine, drivetrain, and transmission, so a saved vehicle only receives relevant recommendations.
 
@@ -19,7 +19,7 @@ The platform library covers 16 vehicle families. Maintenance and issue records c
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
 - A light-first forum theme: white and blue by default, charcoal and safety orange when dark mode is selected, controlled by a moving M Parallel-inspired wheel
-- GitHub Pages-safe My Garage, Maintenance, and Known Issues routes with responsive navigation
+- Clean Cloudflare page routes with a GitHub Pages-safe fallback build
 - Account-owned multi-vehicle picker with separate add and edit states
 - A simplified vehicle-specific maintenance view with compact last-completed, next-due, and status rows that expand only when more detail is wanted
 - Clearly separated Overdue, Do Soon, and Done sections plus lightweight status, category, fluid, and no-schedule filters
@@ -33,7 +33,7 @@ The platform library covers 16 vehicle families. Maintenance and issue records c
 - Profile and security controls for display name, email, password, and linked identities
 - Demo-only Guest Mode, read-only legacy garage upgrades, and server-issued account entitlements ready for future subscriptions
 
-Keeper is a React + Vite site hosted by GitHub Pages. Supabase Auth and owner-isolated database policies provide persistent Keeper Profiles. Signed-out visitors explore a static Demo Garage; they do not receive a Supabase user or permanent storage. The complete issue library remains public.
+Keeper is a React + Vite static site. Supabase Auth uses a dedicated PKCE callback and owner-isolated database policies to provide persistent Keeper Profiles. Signed-out visitors explore a static Demo Garage; they do not receive a Supabase user or permanent storage. The complete issue library remains public.
 
 ## Local development
 
@@ -50,7 +50,7 @@ pnpm test
 
 Copy `.env.example` to `.env.local` and add the project URL and publishable browser key when testing authentication locally. Never place a Supabase secret or service-role key in the frontend.
 
-Google sign-in activates automatically after the provider is enabled in Supabase. The application requests the standard OpenID, profile, and email scopes, returns to the account panel after OAuth, and keeps Google disabled instead of sending customers into a broken flow when its credentials are unavailable. Provider credential and callback instructions are in [`docs/auth-setup.md`](docs/auth-setup.md).
+Google sign-in activates automatically after the provider is enabled in Supabase. The application requests the standard OpenID, profile, and email scopes, returns through `/auth/callback/`, and keeps Google disabled instead of sending customers into a broken flow when its credentials are unavailable. Provider configuration is in [`docs/auth-setup.md`](docs/auth-setup.md); Cloudflare rollout and rollback are in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 Keeper no longer creates anonymous accounts. Older anonymous garages are preserved as read-only. Before authentication, Keeper creates an expiring server claim; after authentication, the person explicitly chooses whether to transfer the preserved vehicles and related records into that Profile. The claim is single-use and repeat attempts cannot duplicate records.
 

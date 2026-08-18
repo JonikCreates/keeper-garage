@@ -22,6 +22,8 @@ test("Supabase password login and centralized account entitlements are explicit"
   assert.match(auth, /PASSWORD_RECOVERY/);
   assert.match(auth, /resend\(\{ type: "signup"/);
   assert.match(auth, /signInWithOAuth/);
+  assert.match(auth, /signOut\(\{ scope: "global" \}\)/);
+  assert.match(auth, /signOut\(\{ scope: "local" \}\)/);
   assert.match(auth, /scopes: "openid email profile"/);
   assert.doesNotMatch(auth, /apple/i);
   assert.match(auth, /linkIdentity/);
@@ -41,6 +43,34 @@ test("Supabase password login and centralized account entitlements are explicit"
   assert.match(auth, /claim_legacy_garage/);
   assert.match(panel, /Terms of Service/);
   assert.match(panel, /Privacy Policy/);
+});
+
+test("authentication uses an isolated PKCE callback instead of URL token detection", async () => {
+  const client = await readFile(new URL("../src/supabase.ts", import.meta.url), "utf8");
+  const callback = await readFile(new URL("../src/authCallback.ts", import.meta.url), "utf8");
+  const callbackHtml = await readFile(new URL("../auth/callback/index.html", import.meta.url), "utf8");
+
+  assert.match(client, /flowType: "pkce"/);
+  assert.match(client, /detectSessionInUrl: false/);
+  assert.match(callback, /exchangeCodeForSession\(code\)/);
+  assert.ok(callback.indexOf("history.replaceState") < callback.indexOf("exchangeCodeForSession"), "callback URL must be cleaned before exchange");
+  assert.match(callbackHtml, /noindex, nofollow/);
+  assert.doesNotMatch(client, /access_token|refresh_token|provider_token/);
+});
+
+test("Cloudflare headers and public share URLs exclude session material", async () => {
+  const headers = await readFile(new URL("../public/_headers", import.meta.url), "utf8");
+  const routing = await readFile(new URL("../src/routing.ts", import.meta.url), "utf8");
+  const vite = await readFile(new URL("../vite.config.ts", import.meta.url), "utf8");
+
+  assert.match(headers, /Content-Security-Policy:/);
+  assert.match(headers, /frame-ancestors 'none'/);
+  assert.match(headers, /Referrer-Policy: no-referrer/);
+  assert.match(headers, /\/auth\/callback\/\*/);
+  assert.match(headers, /Cache-Control: no-store/);
+  assert.match(routing, /safeShareUrl/);
+  assert.doesNotMatch(routing, /access_token|refresh_token|provider_token/);
+  assert.match(vite, /sourcemap: false/);
 });
 
 test("auth changes clear account-specific state before a new garage loads", async () => {

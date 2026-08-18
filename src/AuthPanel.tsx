@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { ReturnTypeKeeperAuth } from "./authTypes";
 import { PRIVACY_VERSION, TERMS_VERSION } from "./legal";
 import { useKeeperProfile } from "./useKeeperProfile";
+import { pageHref } from "./routing";
 
 type SignedOutView = "login" | "signup" | "forgot" | "verify";
 type AccountTab = "profile" | "security";
@@ -23,7 +24,7 @@ function GoogleButton({ configured, disabled = false, busy, onClick }: { configu
 function LegalAgreement({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
   return <label className="legal-consent">
     <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-    <span>I agree to the <a href="#terms" target="_blank">Terms of Service</a> and <a href="#privacy" target="_blank">Privacy Policy</a>.</span>
+    <span>I agree to the <a href={pageHref("terms")} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={pageHref("privacy")} target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span>
   </label>;
 }
 
@@ -197,7 +198,7 @@ export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanel
         {activeTab === "profile" && <section className="account-tab-panel">
           <div className="tab-heading"><span>Keeper identity</span><h3>Your profile</h3><p>This display name appears only within your Keeper experience.</p></div>
           <form className="account-form" onSubmit={(event) => { event.preventDefault(); void profile.save(); }}><label>Display Name<input value={profile.displayName} onChange={(event) => profile.setDisplayName(event.target.value)} maxLength={60} autoComplete="name" required /></label><label>Email<input value={auth.user?.email ?? "No email available"} disabled /></label><button className="button button-primary" disabled={profile.loading || profile.saving}>{profile.saving ? "Saving…" : "Edit Profile"}</button></form>
-          <nav className="account-legal-links"><a href="#terms">Terms of Service</a><a href="#privacy">Privacy Policy</a></nav>
+          <nav className="account-legal-links"><a href={pageHref("terms")}>Terms of Service</a><a href={pageHref("privacy")}>Privacy Policy</a></nav>
         </section>}
 
         {activeTab === "security" && <section className="account-tab-panel security-panel">
