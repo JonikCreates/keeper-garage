@@ -36,11 +36,10 @@ import { useKeeperAuth } from "./useKeeperAuth";
 import { useMaintenanceRecords } from "./useMaintenanceRecords";
 import { useTrackedMaintenance } from "./useTrackedMaintenance";
 import type { MaintenanceRecordRow, VehicleMaintenanceItemRow, VehicleRemovalSummary } from "./supabase";
-import type { LegalPageKind } from "./legal";
+import { getPageFromLocation, pageHref, type AppPage } from "./routing";
 
 type LibraryView = "mine" | "all" | string;
 type Theme = "dark" | "light";
-type AppPage = "garage" | "maintenance" | "issues" | "profile" | LegalPageKind;
 type MaintenanceTone = "overdue" | "soon" | "unrecorded" | "current";
 type MaintenanceStatus = { label: string; tone: MaintenanceTone };
 type MaintenanceFilter = "all" | "soon" | "overdue" | "fluids" | "no_schedule";
@@ -69,12 +68,6 @@ const pageLinks: Array<{ page: AppPage; label: string }> = [
   { page: "issues", label: "Known issues" },
   { page: "profile", label: "Profile" },
 ];
-
-function getPageFromHash(): AppPage {
-  const hash = window.location.hash.replace("#", "");
-  const routes: AppPage[] = [...pageLinks.map((link) => link.page), "terms", "privacy", "contact"];
-  return routes.includes(hash as AppPage) ? hash as AppPage : "garage";
-}
 
 const emergencyChecks = [
   {
@@ -279,8 +272,8 @@ export default function App() {
   const [vehicleRemovalTargetId, setVehicleRemovalTargetId] = useState<string | null>(null);
   const [vehicleRemovalSummary, setVehicleRemovalSummary] = useState<VehicleRemovalSummary | null>(null);
   const [vehicleRemovalLoading, setVehicleRemovalLoading] = useState(false);
-  // REVIEW DECISION: hash routes keep each view directly addressable without creating GitHub Pages 404s or adding a routing dependency.
-  const [page, setPage] = useState<AppPage>(getPageFromHash);
+  // REVIEW DECISION: Cloudflare uses clean page paths while the fallback GitHub Pages build retains addressable hash routes.
+  const [page, setPage] = useState<AppPage>(getPageFromLocation);
   // REVIEW DECISION: new visitors start in light mode, while a deliberate theme choice remains local to that browser.
   const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "dark" ? "dark" : "light");
 
@@ -292,9 +285,13 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    const syncPage = () => setPage(getPageFromHash());
+    const syncPage = () => setPage(getPageFromLocation());
     window.addEventListener("hashchange", syncPage);
-    return () => window.removeEventListener("hashchange", syncPage);
+    window.addEventListener("popstate", syncPage);
+    return () => {
+      window.removeEventListener("hashchange", syncPage);
+      window.removeEventListener("popstate", syncPage);
+    };
   }, []);
 
   useEffect(() => {
@@ -541,7 +538,7 @@ export default function App() {
     }
     if (!garage.vehicleId) {
       setSaveNotice("Save this vehicle before adding an issue to its maintenance plan.");
-      window.location.assign("#garage");
+      window.location.assign(pageHref("garage"));
       return;
     }
     await trackedMaintenance.addKnownIssue(issue);
@@ -554,7 +551,7 @@ export default function App() {
     }
     if (!garage.vehicleId) {
       setSaveNotice("Save this vehicle before adding work to its maintenance plan.");
-      window.location.assign("#garage");
+      window.location.assign(pageHref("garage"));
     }
   }
 
@@ -589,8 +586,8 @@ export default function App() {
         <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
       </section>
       <header className="topbar">
-        <a className="brand-lockup" href="#garage"><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
-        <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={`#${link.page}`} key={link.page}>{link.label}</a>)}</nav>
+        <a className="brand-lockup" href={pageHref("garage")}><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
+        <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={pageHref(link.page)} key={link.page}>{link.label}</a>)}</nav>
         <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><button className={`account-button ${auth.access.kind === "account" ? "active" : ""} ${auth.access.kind}`} onClick={() => openAccount("account")}>{accountLabel}</button></div>
       </header>
 
@@ -603,7 +600,7 @@ export default function App() {
               <span>{selectedSavedVehicle.nickname}</span>
               <h1 id="personal-garage-title">{selectedSavedVehicle.model_year} {selectedSavedVehicle.brand} {selectedSavedVehicle.trim}</h1>
               <p><strong>{currentVehicleMileage === null ? "Mileage not entered" : `${currentVehicleMileage.toLocaleString()} miles`}</strong><i />{selectedSavedVehicle.model}</p>
-              <div><a href="#maintenance" className="button button-primary">View Maintenance</a><a href="#issues" className="button button-quiet">Known Issues</a></div>
+              <div><a href={pageHref("maintenance")} className="button button-primary">View Maintenance</a><a href={pageHref("issues")} className="button button-quiet">Known Issues</a></div>
             </header>
             <aside className={`garage-health-card ${garageHealth.tone}`}>
               <span>Maintenance status</span>
@@ -623,7 +620,7 @@ export default function App() {
               <div><span>Matched research</span><strong>{matchedIssues.length} patterns</strong></div>
             </div>
             <section className="garage-attention-preview" aria-labelledby="garage-attention-title">
-              <header><div><span>What needs attention</span><h2 id="garage-attention-title">Next up</h2></div><a href="#maintenance">View full maintenance →</a></header>
+              <header><div><span>What needs attention</span><h2 id="garage-attention-title">Next up</h2></div><a href={pageHref("maintenance")}>View full maintenance →</a></header>
               <div className="garage-attention-counts" aria-label="Maintenance status counts">
                 <div className="overdue"><span>Overdue</span><strong>{overdueItems.length}</strong></div>
                 <div className="soon"><span>Due soon</span><strong>{dueSoonItems.length}</strong></div>
@@ -635,7 +632,7 @@ export default function App() {
             <p className="eyebrow">Multi-brand workshop archive · 16 vehicle families</p>
             <h1>Know what your car needs next.</h1>
             <p className="hero-intro">Factory information, researched owner patterns, and specialist maintenance guidance—filtered for the exact generation, year, engine, drivetrain, and transmission.</p>
-            <div className="hero-actions"><a href="#maintenance" className="button button-primary">Open maintenance list</a><a href="#issues" className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
+            <div className="hero-actions"><a href={pageHref("maintenance")} className="button button-primary">Open maintenance list</a><a href={pageHref("issues")} className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
           </div>}
           <aside className="configuration-panel" aria-labelledby="config-title">
             <div className="configuration-heading"><span>{hasPersonalVehicle ? "Edit saved vehicle" : "Configure this visit"}</span><strong id="config-title">{hasPersonalVehicle ? "Vehicle Settings" : "Your exact vehicle"}</strong></div>
@@ -671,7 +668,7 @@ export default function App() {
               <strong>{auth.access.label}</strong>
               <span>{auth.access.description}</span>
             </div>
-            <a className="plan-launch" href="#maintenance"><span>Next work order</span><strong>View {maintenance.length}-item maintenance list</strong><b>→</b></a>
+            <a className="plan-launch" href={pageHref("maintenance")}><span>Next work order</span><strong>View {maintenance.length}-item maintenance list</strong><b>→</b></a>
           </aside>
         </section>
 
@@ -689,7 +686,7 @@ export default function App() {
             <h1>{page === "maintenance" ? "Maintenance list." : "Known issues."}</h1>
             <p>{page === "maintenance" ? "Factory positions and conservative planning intervals, filtered to the car you configured." : "Urgent warning signs, recurring owner patterns, and supporting evidence kept separate from routine service."}</p>
           </div>
-          <div className="page-masthead-actions"><a className="button button-quiet" href="#garage">Change vehicle</a><a className="button button-primary" href={page === "maintenance" ? "#issues" : "#maintenance"}>{page === "maintenance" ? "Known issues" : "Maintenance list"}</a></div>
+          <div className="page-masthead-actions"><a className="button button-quiet" href={pageHref("garage")}>Change vehicle</a><a className="button button-primary" href={pageHref(page === "maintenance" ? "issues" : "maintenance")}>{page === "maintenance" ? "Known issues" : "Maintenance list"}</a></div>
         </section>
 
         <section className="vehicle-band">
@@ -741,7 +738,7 @@ export default function App() {
             <div className="maintenance-total-spent"><span>Total spent</span><strong>{serviceRecords.loading && !demoMode ? "Loading…" : formatUsdCents(totalSpentCents)}</strong></div>
             <MaintenanceExportMenu vehicle={selectedSavedVehicle} records={displayRecords} canExport={auth.access.canExport} onRequireAccount={() => openAccount("export")} />
             {!auth.user && <button className="button button-primary" onClick={() => openAccount("save")}>Create Profile to use My Garage</button>}
-            {auth.access.kind === "account" && !garage.vehicleId && <a className="button button-primary" href="#garage">Save this vehicle</a>}
+            {auth.access.kind === "account" && !garage.vehicleId && <a className="button button-primary" href={pageHref("garage")}>Save this vehicle</a>}
           </div>
           {(serviceRecords.error || trackedMaintenance.error) && <p className="maintenance-record-error">{serviceRecords.error ?? trackedMaintenance.error}</p>}
           <header className="maintenance-overview">
@@ -778,7 +775,7 @@ export default function App() {
             })}
             {!visibleDashboardItems.length && <p className="maintenance-empty-state">No maintenance items match these filters.</p>}
             </div>
-            <CustomMaintenanceForm enabled={Boolean(auth.access.canCustomize && garage.vehicleId)} saving={trackedMaintenance.saving} onRequireVehicle={() => { if (!auth.access.canCustomize) openAccount("save"); else window.location.assign("#garage"); }} onAdd={trackedMaintenance.addCustomItem} />
+            <CustomMaintenanceForm enabled={Boolean(auth.access.canCustomize && garage.vehicleId)} saving={trackedMaintenance.saving} onRequireVehicle={() => { if (!auth.access.canCustomize) openAccount("save"); else window.location.assign(pageHref("garage")); }} onAdd={trackedMaintenance.addCustomItem} />
           </section>
 
           <details className="fluid-summary-section" open={currentFluids.length > 0}>
@@ -840,7 +837,7 @@ export default function App() {
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
-      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href="#terms">Terms</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">Open source on GitHub ↗</a></footer>
+      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a><a href="mailto:support@keeperauto.com">support@keeperauto.com</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">Open source on GitHub ↗</a></footer>
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>

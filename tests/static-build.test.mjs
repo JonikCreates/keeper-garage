@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
-test("GitHub Pages build contains the Keeper application", async () => {
+test("production build contains the Keeper application", async () => {
   const html = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
   const assets = await readdir(new URL("../dist/assets/", import.meta.url));
   const scripts = assets.filter((file) => file.endsWith(".js"));
 
   assert.match(html, /Keeper — Owner's Workshop Log/);
-  assert.match(html, /\/keeper-garage\/assets\//);
+  assert.match(html, /\/(?:keeper-garage\/)?assets\//);
   assert.ok(scripts.length, "expected compiled JavaScript assets");
 
   const bundle = (await Promise.all(scripts.map((script) => readFile(

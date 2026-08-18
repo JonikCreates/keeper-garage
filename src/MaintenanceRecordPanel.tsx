@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { MaintenanceRecordRow } from "./supabase";
 import type { MaintenanceRecordInput } from "./useMaintenanceRecords";
+import { pageHref } from "./routing";
 
 type MaintenanceRecordPanelProps = {
   item: { slug: string; name: string };
@@ -89,7 +90,7 @@ export function MaintenanceRecordPanel({ item, records, tracksFluid, signedIn, i
   return <section className="maintenance-record-panel" aria-label={`${item.name} service history`}>
     <header><div><span>Log maintenance</span><strong>{records.length ? `Last completed ${displayDate(records[0].completed_at)}` : "No completed record yet"}</strong></div><a className="button button-quiet" href="#maintenance-history">View history</a></header>
     {!signedIn && <div className="maintenance-record-gate"><p>A Keeper Profile is required to save completed work, mileage, cost, fluids, and notes.</p><button className="button button-primary" type="button" onClick={onOpenAuth}>Create Account or Log In</button></div>}
-    {signedIn && !hasSavedVehicle && <div className="maintenance-record-gate"><p>Save this vehicle in My Garage before recording completed work.</p><a className="button button-primary" href="#garage">Save this vehicle</a></div>}
+    {signedIn && !hasSavedVehicle && <div className="maintenance-record-gate"><p>Save this vehicle in My Garage before recording completed work.</p><a className="button button-primary" href={pageHref("garage")}>Save this vehicle</a></div>}
     {signedIn && hasSavedVehicle && <>
       {isGuest && <p className="maintenance-guest-note">Guest Mode is demo-only. Sign in before recording personal service history.</p>}
       <form className="maintenance-record-form simplified" onSubmit={(event) => void submit(event)}>
