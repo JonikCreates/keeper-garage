@@ -3,23 +3,11 @@ import { pageHref } from "./routing";
 
 type Theme = "dark" | "light";
 
-const benefits = [
-  {
-    number: "01",
-    title: "Maintenance that fits the car",
-    body: "Filter service guidance by generation, year, engine, drivetrain, and transmission instead of relying on one-size-fits-all schedules.",
-  },
-  {
-    number: "02",
-    title: "Known issues, kept in context",
-    body: "Separate urgent warning signs from recurring owner patterns, with supporting sources and applicability matched to the vehicle you selected.",
-  },
-  {
-    number: "03",
-    title: "An ownership record that stays useful",
-    body: "Keep completed work, mileage, fluids, costs, and tracked repairs together so the next decision starts with your own history.",
-  },
-];
+const highlights = [
+  ["Exact vehicle matching", "Generation, year, engine, drivetrain, and transmission."],
+  ["Maintenance planning", "See what is due, what is done, and what should come next."],
+  ["Known issues & records", "Keep matched research and your ownership history in one place."],
+] as const;
 
 export function HomePage() {
   const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "dark" ? "dark" : "light");
@@ -54,54 +42,20 @@ export function HomePage() {
 
     <main className="home-main">
       <section className="home-hero">
-        <div className="home-hero-copy">
-          <p className="home-kicker">Vehicle ownership, organized</p>
-          <h1>Know your car.<br />Maintain it better.</h1>
-          <p className="home-lede">Keeper turns maintenance research, known issues, and your own service history into one workshop log built around the exact car you drive.</p>
-          <div className="home-actions">
-            <a className="button button-primary" href={pageHref("garage")}>Open My Garage</a>
-            <a className="button button-quiet" href={pageHref("maintenance")}>Try the Demo</a>
-          </div>
-          <div className="home-proof" aria-label="Keeper capabilities">
-            <span>Exact vehicle matching</span>
-            <span>Maintenance planning</span>
-            <span>Ownership records</span>
-          </div>
-        </div>
-
-        <aside className="home-work-order" aria-label="Keeper overview">
-          <header><span>KEEPER / WORK ORDER</span><b>01</b></header>
-          <div className="home-work-order-title">
-            <small>Your garage at a glance</small>
-            <strong>One place for what matters next.</strong>
-          </div>
-          <dl>
-            <div><dt>Vehicle</dt><dd>Exact configuration</dd></div>
-            <div><dt>Maintenance</dt><dd>Due / done / next</dd></div>
-            <div><dt>Known issues</dt><dd>Matched research</dd></div>
-            <div><dt>Records</dt><dd>Mileage · cost · fluids</dd></div>
-          </dl>
-          <footer><span>Built for owners, not dashboards.</span><i /></footer>
-        </aside>
-      </section>
-
-      <section className="home-benefits" aria-labelledby="home-benefits-title">
-        <header>
-          <div><p className="home-kicker">Why Keeper</p><h2 id="home-benefits-title">Less guessing. Better ownership.</h2></div>
-          <p>Keeper is designed to help you move from “what should I do?” to a clear next action without burying the useful information in a generic vehicle database.</p>
-        </header>
-        <div className="home-benefit-grid">
-          {benefits.map((benefit) => <article key={benefit.number}>
-            <span>{benefit.number}</span>
-            <h3>{benefit.title}</h3>
-            <p>{benefit.body}</p>
-          </article>)}
+        <p className="home-kicker">Vehicle ownership, organized</p>
+        <h1>Know your car.<br />Maintain it better.</h1>
+        <p className="home-lede">Keeper brings maintenance planning, known-issue research, and your service history together around the exact vehicle you own.</p>
+        <div className="home-actions">
+          <a className="button button-primary" href={pageHref("garage")}>Open My Garage</a>
+          <a className="button button-quiet" href={pageHref("maintenance")}>Try the Demo</a>
         </div>
       </section>
 
-      <section className="home-cta">
-        <div><p className="home-kicker">Ready when the car is</p><h2>Start with your garage.</h2></div>
-        <div><p>Choose the exact vehicle, then let Keeper narrow maintenance and issue research around it.</p><a className="button button-primary" href={pageHref("garage")}>Open Keeper Garage</a></div>
+      <section className="home-highlights" aria-label="What Keeper does">
+        {highlights.map(([title, body], index) => <article key={title}>
+          <span>0{index + 1}</span>
+          <div><h2>{title}</h2><p>{body}</p></div>
+        </article>)}
       </section>
     </main>
 
