@@ -67,7 +67,7 @@ export function HomePage() {
     <main className="home-main">
       <section className="home-hero">
         <p className="home-kicker">Vehicle ownership, organized</p>
-        <h1>Know your car.<br />Maintain it better.</h1>
+        <h1><span>Know your car.</span><span>Maintain it better.</span></h1>
         <p className="home-lede">Keeper brings maintenance planning, known-issue research, and your service history together around the exact vehicle you own.</p>
         <div className="home-actions">
           <a className="button button-primary" href={pageHref("garage")}>Open My Garage</a>
