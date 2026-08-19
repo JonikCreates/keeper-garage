@@ -1,8 +1,8 @@
 import type { LegalPageKind } from "./legal";
 
-export type AppPage = "garage" | "maintenance" | "issues" | "profile" | LegalPageKind;
+export type AppPage = "home" | "garage" | "maintenance" | "issues" | "profile" | LegalPageKind;
 
-const pages: AppPage[] = ["garage", "maintenance", "issues", "profile", "terms", "privacy", "contact"];
+const pages: AppPage[] = ["home", "garage", "maintenance", "issues", "profile", "terms", "privacy", "contact"];
 const githubPagesBuild = import.meta.env.MODE === "github-pages";
 
 function baseUrl() {
@@ -12,10 +12,10 @@ function baseUrl() {
 export function pageHref(page: AppPage) {
   const base = baseUrl();
   if (githubPagesBuild) {
-    base.hash = page;
+    base.hash = page === "home" ? "" : page;
     return `${base.pathname}${base.search}${base.hash}`;
   }
-  base.pathname = `${base.pathname}${page === "garage" ? "" : page}`;
+  base.pathname = `${base.pathname}${page === "home" ? "" : page}`;
   return `${base.pathname}${base.search}`;
 }
 
@@ -28,7 +28,8 @@ export function getPageFromLocation(): AppPage {
     ? window.location.pathname.slice(basePath.length)
     : window.location.pathname;
   const pathPage = relativePath.replace(/^\/+|\/+$/g, "").split("/", 1)[0];
-  return pages.includes(pathPage as AppPage) ? pathPage as AppPage : "garage";
+  if (!pathPage) return "home";
+  return pages.includes(pathPage as AppPage) ? pathPage as AppPage : "home";
 }
 
 export function authCallbackUrl(accountView: "profile" | "verify" | "recovery" = "profile") {
