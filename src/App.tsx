@@ -172,7 +172,7 @@ function maintenancePlanStatus(miles: number | null, months: number | null, late
 
 const maintenanceSections: Array<{ key: "overdue" | "soon" | "done"; tones: MaintenanceTone[]; label: string; description: string }> = [
   { key: "overdue", tones: ["overdue"], label: "Overdue", description: "Past its mileage or time plan. Start here." },
-  { key: "soon", tones: ["soon", "unrecorded"], label: "Do Soon", description: "Approaching its plan, newly tracked, or waiting for a first record." },
+  { key: "soon", tones: ["soon", "unrecorded"], label: "Due Soon", description: "Approaching its plan, newly tracked, or waiting for a first record." },
   { key: "done", tones: ["current"], label: "Done", description: "Completed work that is currently on plan." },
 ];
 
@@ -387,7 +387,7 @@ export default function App() {
       const scheduled = item.item_type === "custom" && item.plan_type !== "none";
       const unscheduledStatus: MaintenanceStatus = records.length || item.issue_status === "repaired"
         ? { label: "Done", tone: "current" }
-        : { label: item.issue_status === "watching" ? "Watching" : item.issue_status === "needs_repair" ? "Needs repair" : item.plan_type === "none" ? "No schedule" : "Do soon", tone: "soon" };
+        : { label: item.issue_status === "watching" ? "Watching" : item.issue_status === "needs_repair" ? "Needs repair" : item.plan_type === "none" ? "No schedule" : "Due Soon", tone: "soon" };
       return {
         slug: item.item_slug,
         name: item.item_name,
