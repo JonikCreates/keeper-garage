@@ -31,6 +31,7 @@ export function CustomMaintenanceForm({ enabled, saving, onRequireVehicle, onAdd
   const [timeUnit, setTimeUnit] = useState<"months" | "years">("years");
   const [tracksFluid, setTracksFluid] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [workType, setWorkType] = useState<"maintenance" | "repair" | "modification" | "upgrade">("maintenance");
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,8 +56,8 @@ export function CustomMaintenanceForm({ enabled, saving, onRequireVehicle, onAdd
   }
 
   return <section className="custom-maintenance">
-    <div><span>Repairs and owner-defined work</span><strong>Add custom maintenance</strong><p>Use a recurring interval for scheduled service, or No Scheduled Interval for one-time repairs.</p></div>
-    <button className="button button-quiet" type="button" aria-expanded={open} onClick={() => enabled ? setOpen((value) => !value) : onRequireVehicle()}>{open ? "Close" : "+ Add custom maintenance"}</button>
+	<div><span>Owner-defined work</span><strong>Add custom work</strong><p>Track maintenance, repairs, upgrades, and modifications. Use a recurring interval for scheduled work, or No Scheduled Interval for one-time items.</p></div>
+	<button className="button button-quiet" type="button" aria-expanded={open} onClick={() => enabled ? setOpen((value) => !value) : onRequireVehicle()}>{open ? "Close" : "+ Add custom work"}</button>
     {open && <form onSubmit={(event) => void submit(event)}>
       <label>Maintenance item<input value={name} onChange={(event) => setName(event.target.value.slice(0, 180))} maxLength={180} placeholder="e.g. Rear subframe bushings" required /></label>
       <label>Category<select value={category} onChange={(event) => { const value = event.target.value; setCategory(value); setTracksFluid(fluidCategories.has(value)); }}>{MAINTENANCE_CATEGORIES.map((value) => <option key={value}>{value}</option>)}</select></label>
