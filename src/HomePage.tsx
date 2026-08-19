@@ -33,6 +33,11 @@ export function HomePage() {
   }, [theme]);
 
   return <div className="home-shell">
+    <section className="forum-banner home-forum-banner" aria-label="Keeper workshop archive">
+      <div><span>Keeper Workshop Archive</span><strong>Owner-built maintenance intelligence</strong></div>
+      <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
+    </section>
+
     <header className="home-topbar">
       <a className="home-brand" href={pageHref("home")}><strong>KEEPER</strong><small>Owner&apos;s workshop log</small></a>
       <nav aria-label="Primary navigation">
@@ -43,7 +48,7 @@ export function HomePage() {
         <a href={pageHref("profile")}>Profile</a>
       </nav>
       <button className="home-theme-toggle" type="button" onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
-        {theme === "dark" ? "Light" : "Dark"}
+        {theme === "dark" ? "Light mode" : "Dark mode"}
       </button>
     </header>
 
