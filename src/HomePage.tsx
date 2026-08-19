@@ -9,6 +9,32 @@ const highlights = [
   ["Known issues & records", "Keep matched research and your ownership history in one place."],
 ] as const;
 
+function MParallelWheel() {
+  return <svg className="theme-wheel" viewBox="0 0 64 64" aria-hidden="true">
+    <circle className="wheel-tire" cx="32" cy="32" r="29" />
+    <circle className="wheel-rim" cx="32" cy="32" r="23" />
+    <g className="wheel-spokes">
+      {Array.from({ length: 5 }, (_, index) => <g key={index} transform={`rotate(${index * 72} 32 32)`}>
+        <path d="M28.3 28.3 20 12.5 25.4 10 31.1 27.2Z" />
+        <path d="M35.7 28.3 44 12.5 38.6 10 32.9 27.2Z" />
+      </g>)}
+    </g>
+    <circle className="wheel-hub" cx="32" cy="32" r="7" />
+    <circle className="wheel-cap" cx="32" cy="32" r="3" />
+    {Array.from({ length: 5 }, (_, index) => <circle key={index} className="wheel-lug" cx="32" cy="26.6" r="1" transform={`rotate(${index * 72} 32 32)`} />)}
+  </svg>;
+}
+
+function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
+  const next = theme === "dark" ? "light" : "dark";
+  return <button className="theme-toggle" type="button" onClick={onToggle} aria-label={`Switch to ${next} mode`} title={`Switch to ${next} mode`} aria-pressed={theme === "dark"}>
+    <span className="theme-icon" aria-hidden="true">☾</span>
+    <span className="theme-wheel-travel"><MParallelWheel /></span>
+    <span className="theme-icon" aria-hidden="true">☀</span>
+    <span className="sr-only">{theme} mode</span>
+  </button>;
+}
+
 export function HomePage() {
   const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "dark" ? "dark" : "light");
 
@@ -26,8 +52,8 @@ export function HomePage() {
       <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
     </section>
 
-    <header className="home-topbar">
-      <a className="home-brand" href={pageHref("home")}><strong>KEEPER</strong><small>Owner&apos;s workshop log</small></a>
+    <header className="topbar">
+      <a className="brand-lockup" href={pageHref("home")}><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
       <nav aria-label="Primary navigation">
         <a className="active" aria-current="page" href={pageHref("home")}>Home</a>
         <a href={pageHref("garage")}>Garage</a>
@@ -35,9 +61,7 @@ export function HomePage() {
         <a href={pageHref("issues")}>Known Issues</a>
         <a href={pageHref("profile")}>Profile</a>
       </nav>
-      <button className="home-theme-toggle" type="button" onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
-        {theme === "dark" ? "Light mode" : "Dark mode"}
-      </button>
+      <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /></div>
     </header>
 
     <main className="home-main">
