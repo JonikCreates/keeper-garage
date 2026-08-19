@@ -111,10 +111,6 @@ const engineLabels: Record<string, string> = {
   S62B50: "S62B50 5.0L V8",
 };
 
-function KeeperMark() {
-  return <span className="keeper-mark" aria-hidden="true"><img src={`${import.meta.env.BASE_URL}keeper-logo.png`} alt="" /></span>;
-}
-
 function MParallelWheel() {
   return <svg className="theme-wheel" viewBox="0 0 64 64" aria-hidden="true">
     <circle className="wheel-tire" cx="32" cy="32" r="29" />
@@ -586,7 +582,7 @@ export default function App() {
         <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
       </section>
       <header className="topbar">
-        <a className="brand-lockup" href={pageHref("garage")}><KeeperMark /><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
+        <a className="brand-lockup" href={pageHref("garage")}><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
         <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={pageHref(link.page)} key={link.page}>{link.label}</a>)}</nav>
         <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><button className={`account-button ${auth.access.kind === "account" ? "active" : ""} ${auth.access.kind}`} onClick={() => openAccount("account")}>{accountLabel}</button></div>
       </header>
@@ -837,7 +833,7 @@ export default function App() {
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
-      <footer className="site-footer"><div><KeeperMark /><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav><a href="https://github.com/JonikCreates/keeper-garage" target="_blank" rel="noreferrer">Open source on GitHub ↗</a></footer>
+      <footer className="site-footer"><div><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav></footer>
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>
