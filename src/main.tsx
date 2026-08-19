@@ -7,6 +7,7 @@ import { getPageFromLocation, isAuthCallbackLocation } from "./routing";
 import "./styles.css";
 import "./mechanical.css";
 import "./home.css";
+import "./footer.css";
 
 const root = document.getElementById("root")!;
 
