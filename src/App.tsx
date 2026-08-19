@@ -596,6 +596,25 @@ export default function App() {
               <span>{selectedSavedVehicle.nickname}</span>
               <h1 id="personal-garage-title">{selectedSavedVehicle.model_year} {selectedSavedVehicle.brand} {selectedSavedVehicle.trim}</h1>
               <p><strong>{currentVehicleMileage === null ? "Mileage not entered" : `${currentVehicleMileage.toLocaleString()} miles`}</strong><i />{selectedSavedVehicle.model}</p>
+<label className="mobile-garage-switcher">
+  <span>Switch vehicle</span>
+  <select
+    aria-label="Switch saved vehicle"
+    value={garage.vehicleId ?? "new"}
+    disabled={garage.loading || garage.saving}
+    onChange={(event) => {
+      setSaveNotice(null);
+      if (event.target.value === "new") garage.startNewVehicle();
+      else garage.selectVehicle(event.target.value);
+    }}
+  >
+    {garage.vehicles.map((vehicle) => (
+      <option value={vehicle.id} key={vehicle.id}>
+        {vehicle.nickname} · {vehicle.model_year} {vehicle.trim}
+      </option>
+    ))}
+  </select>
+</label>
               <div><a href={pageHref("maintenance")} className="button button-primary">View Maintenance</a><a href={pageHref("issues")} className="button button-quiet">Known Issues</a></div>
             </header>
             <aside className={`garage-health-card ${garageHealth.tone}`}>

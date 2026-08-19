@@ -978,3 +978,36 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .theme-wheel { transition: none; }
   .auth-loading-mark { animation: none; }
 }
+.mobile-garage-switcher {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .mobile-garage-switcher {
+    display: grid;
+    gap: 7px;
+    margin: 18px 0 4px;
+  }
+
+  .mobile-garage-switcher span {
+    color: var(--muted);
+    font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .mobile-garage-switcher select {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 36px 11px 12px;
+    color: var(--paper);
+    border: 1px solid var(--line);
+    background: var(--field);
+    font-size: 11px;
+  }
+
+  .mobile-garage-switcher select:focus {
+    border-color: var(--acid);
+    outline: none;
+  }
+}
