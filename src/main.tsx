@@ -6,6 +6,7 @@ import { HomePage } from "./HomePage";
 import { getPageFromLocation, isAuthCallbackLocation } from "./routing";
 import "./styles.css";
 import "./mechanical.css";
+import "./home.css";
 
 const root = document.getElementById("root")!;
 
