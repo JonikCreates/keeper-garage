@@ -1,0 +1,60 @@
+.site-footer,
+.home-footer {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.site-footer {
+  padding-top: 58px;
+  padding-bottom: 58px;
+  gap: 34px;
+}
+
+.site-footer > div,
+.home-footer > strong {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+
+.site-footer p,
+.home-footer p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.site-footer nav,
+.home-footer nav {
+  gap: 22px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.site-footer nav a,
+.home-footer nav a {
+  padding: 6px 0;
+}
+
+.home-footer {
+  padding-top: 38px;
+  padding-bottom: 52px;
+  gap: 34px;
+}
+
+@media (max-width: 760px) {
+  .site-footer,
+  .home-footer {
+    font-size: 11px;
+    gap: 20px;
+  }
+
+  .site-footer {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .site-footer > div,
+  .home-footer > strong {
+    font-size: 15px;
+  }
+}
