@@ -75,7 +75,10 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
         return;
       }
       const vehicles = sortVehicles(data ?? []);
-      const selected = vehicles.find((vehicle) => vehicle.is_primary) ?? vehicles[0];
+      const rememberedVehicleId = localStorage.getItem(`keeper-selected-vehicle:${currentUser.id}`);
+      const selected = vehicles.find((vehicle) => vehicle.id === rememberedVehicleId)
+        ?? vehicles.find((vehicle) => vehicle.is_primary)
+        ?? vehicles[0];
       if (!selected) {
         setState((current) => ({ ...current, vehicles: [], loading: false }));
         return;
@@ -104,6 +107,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
   const selectVehicle = useCallback((vehicleId: string) => {
     const selected = state.vehicles.find((vehicle) => vehicle.id === vehicleId);
     if (!selected) return;
+    if (user) localStorage.setItem(`keeper-selected-vehicle:${user.id}`, selected.id);
     onVehicleLoaded(vehicleProfile(selected));
     setState((current) => ({
       ...current,
@@ -113,7 +117,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       savedAt: selected.updated_at,
       error: null,
     }));
-  }, [onVehicleLoaded, state.vehicles]);
+  }, [onVehicleLoaded, state.vehicles, user]);
 
   // REVIEW DECISION: starting a new vehicle keeps the visible configuration as a useful template but clears every saved-car field.
   const startNewVehicle = useCallback(() => {
