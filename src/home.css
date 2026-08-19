@@ -14,6 +14,8 @@
 .home-hero { min-height: 510px; padding: 72px 64px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; border: 1px solid var(--line); border-top: 5px solid var(--acid); border-radius: 3px; background: var(--panel); box-shadow: 0 2px 5px var(--shadow); }
 .home-kicker { margin: 0 0 18px; color: var(--acid); font: 900 11px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .17em; text-transform: uppercase; }
 .home-hero h1 { max-width: 900px; margin: 0; font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif; font-size: clamp(64px, 7.2vw, 104px); line-height: .92; font-weight: 900; letter-spacing: -.04em; text-transform: uppercase; }
+.home-hero h1 span { display: block; }
+.home-hero h1 span + span { margin-top: .18em; }
 .home-lede { max-width: 760px; margin: 28px 0 0; padding-left: 16px; color: var(--cream); border-left: 4px solid var(--acid); font-size: 17px; line-height: 1.7; }
 .home-actions { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
 .home-actions .button { min-width: 178px; min-height: 46px; font-size: 11px; }
@@ -43,6 +45,7 @@
   .home-main { padding: 14px; }
   .home-hero { min-height: 430px; padding: 46px 24px; }
   .home-hero h1 { font-size: clamp(50px, 15vw, 72px); }
+  .home-hero h1 span + span { margin-top: .14em; }
   .home-lede { font-size: 15px; }
   .home-actions { width: 100%; }
   .home-actions .button { flex: 1 1 160px; }
