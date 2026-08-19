@@ -55,10 +55,35 @@ function printableReportText(value: string) {
 }
 
 function recordExportText(record: MaintenanceRecordRow) {
-  const fluid = [record.fluid_brand, record.fluid_product, record.fluid_viscosity ?? record.fluid_type, record.fluid_specification].filter(Boolean).join(" | ");
-  const quantity = record.fluid_quantity !== null ? `${record.fluid_quantity} ${record.fluid_unit ?? "units"}` : "";
-  const filter = record.filter_product ? `Filter: ${record.filter_product}` : "";
-  return printableReportText([record.work_performed.trim(), fluid, quantity, filter, record.notes].filter(Boolean).join(" - "));
+  const fluid = [
+    record.fluid_brand,
+    record.fluid_product,
+    record.fluid_viscosity ?? record.fluid_type,
+    record.fluid_specification,
+  ].filter(Boolean).join(" | ");
+
+  const quantity =
+    record.fluid_quantity !== null
+      ? `${record.fluid_quantity} ${record.fluid_unit ?? "units"}`
+      : "";
+
+  const filter = record.filter_product
+    ? `Filter: ${record.filter_product}`
+    : "";
+
+  const details = [
+    record.work_performed.trim(),
+    fluid,
+    quantity,
+    filter,
+    record.notes,
+  ].filter(Boolean).join(" - ");
+
+  return printableReportText(
+    details
+      ? `${record.maintenance_name} - ${details}`
+      : record.maintenance_name
+  );
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -118,7 +143,7 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
     document.setFont("helvetica", "bold");
     document.setFontSize(8);
     document.setTextColor(61, 76, 92);
-    document.text("WORK COMPLETED", margin + 10, y + 17);
+    document.text("SERVICE / WORK PERFORMED", margin + 10, y + 17);
     document.text("DATE", dateX, y + 17);
     document.text("MILEAGE", mileageX, y + 17, { align: "right" });
     document.text("COST", costX, y + 17, { align: "right" });
