@@ -70,7 +70,7 @@ export function HomePage() {
         <h1><span>Know your car.</span><span>Maintain it better.</span></h1>
         <p className="home-lede">Keeper brings maintenance planning, known-issue research, and your service history together around the exact vehicle you own.</p>
         <div className="home-actions">
-          <a className="button button-primary" href={pageHref("garage")}>Open My Garage</a>
+          <a className="button button-primary" href={`${pageHref("profile")}?account`}>Open My Garage</a>
           <a className="button button-quiet" href={pageHref("maintenance")}>Try the Demo</a>
         </div>
       </section>
