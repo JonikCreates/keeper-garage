@@ -561,7 +561,7 @@ export default function App() {
       auth.access.planId === "collector"
         ? "Collector supports up to 3 vehicles."
         : auth.access.planId === "project_car"
-          ? "Project Car includes 1 vehicle slot. Upgrade to Collector to add more."
+          ? "Tester access supports up to 3 vehicles."
           : "Basic Traffic includes 1 saved vehicle. Upgrade to Project Car or Collector for full garage access.",
     );
     return;
