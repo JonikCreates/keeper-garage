@@ -50,6 +50,7 @@ function slug(value: string) {
 function transmissionFamily(value: string) {
   const source = value.toLowerCase();
   if (source.includes("manual") || /\b[456]-?mt\b/.test(source)) return "manual";
+  if (source.includes("smg")) return "smg";
   if (source.includes("pdk")) return "pdk";
   if (source.includes("dsg")) return "dsg";
   if (source.includes("dct")) return "dct";
@@ -57,6 +58,34 @@ function transmissionFamily(value: string) {
   if (source.includes("tiptronic")) return "tiptronic";
   if (source.includes("automatic") || /\b\d+-?at\b/.test(source)) return "automatic";
   return normalized(value);
+}
+
+const PLATFORM_DRIVETRAIN_OVERRIDES: Record<string, string> = {
+  E36: "RWD",
+  E39: "RWD",
+  E82: "RWD",
+  VA: "AWD",
+  S550: "RWD",
+  AP1: "RWD",
+  AP2: "RWD",
+  Z33: "RWD",
+  Z34: "RWD",
+  R35: "AWD",
+  A90: "RWD",
+  W463: "AWD",
+};
+
+// Several research indexes use the worksheet/configuration name in the column
+// where other workbooks store drivetrain. Normalize those known platforms at
+// the adapter boundary while retaining the original workbook value in the
+// generated research file.
+export function normalizeEnhancedDrivetrain(platform: string, value: string) {
+  if (/^(RWD|FWD|AWD|xDrive|AWD \(quattro\))$/i.test(value.trim())) return value;
+  const fixed = PLATFORM_DRIVETRAIN_OVERRIDES[platform];
+  if (fixed) return fixed;
+  if (platform === "E46") return /\bxi\b/i.test(value) ? "AWD" : "RWD";
+  if (["E9X", "F10", "F30"].includes(platform)) return /xdrive|\bxd\b/i.test(value) ? "xDrive" : "RWD";
+  return value;
 }
 
 function driveFamily(value: string) {
@@ -79,8 +108,9 @@ function profileScore(profile: VehicleProfile, candidate: EnhancedScheduleProfil
   if (profile.year < candidate.yearStart || profile.year > candidate.yearEnd) return -1;
 
   let score = 10;
-  if (driveFamily(candidate.drivetrain) === driveFamily(profile.drivetrain)) score += 5;
-  else if (driveFamily(candidate.drivetrain) !== "notspecified") return -1;
+  const candidateDrivetrain = normalizeEnhancedDrivetrain(candidate.platform, candidate.drivetrain);
+  if (driveFamily(candidateDrivetrain) === driveFamily(profile.drivetrain)) score += 5;
+  else if (driveFamily(candidateDrivetrain) !== "notspecified") return -1;
 
   if (transmissionFamily(candidate.transmission) === transmissionFamily(profile.transmission)) score += 6;
   else return -1;

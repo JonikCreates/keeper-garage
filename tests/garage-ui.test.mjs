@@ -4,11 +4,13 @@ import test from "node:test";
 
 test("My Garage loads every owned vehicle and keeps add separate from edit", async () => {
   const hook = await readFile(new URL("../src/useGarage.ts", import.meta.url), "utf8");
+  const persistence = await readFile(new URL("../src/vehiclePersistence.ts", import.meta.url), "utf8");
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
 
   assert.match(hook, /\.returns<VehicleRow\[\]>/);
   assert.doesNotMatch(hook, /\.eq\("is_primary", true\)/);
-  assert.match(hook, /is_primary: selectedVehicle\?\.is_primary \?\? state\.vehicles\.length === 0/);
+  assert.match(hook, /isPrimary: selectedVehicle\?\.is_primary \?\? state\.vehicles\.length === 0/);
+  assert.match(persistence, /is_primary: options\.isPrimary/);
   assert.match(hook, /vehicleId: null,[\s\S]*nickname: "My vehicle",[\s\S]*mileage: ""/);
   assert.match(app, /aria-label="Saved vehicles"/);
   assert.match(app, /garage\.startNewVehicle\(\)/);

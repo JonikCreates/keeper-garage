@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { PLATFORM_OPTIONS, getPlatform, type VehicleProfile } from "../lib/catalog";
+import type { VehicleProfile } from "../lib/catalog";
 import { friendlyGarageError } from "./keeperApi";
 import { supabase, type VehicleRemovalResult, type VehicleRemovalSummary, type VehicleRow } from "./supabase";
+import { vehicleInsertFromProfile, vehicleProfileFromRow } from "./vehiclePersistence";
 
 type GarageState = {
   ownerId: string | null;
@@ -29,19 +30,6 @@ const initialState: GarageState = {
   savedAt: null,
   error: null,
 };
-
-function vehicleProfile(vehicle: VehicleRow): VehicleProfile {
-  const platform = PLATFORM_OPTIONS.find((option) => option.label === vehicle.model && option.brand === vehicle.brand) ?? PLATFORM_OPTIONS[0];
-  return {
-    brand: vehicle.brand,
-    platform: platform.value,
-    year: vehicle.model_year,
-    trim: vehicle.trim,
-    engineCode: vehicle.engine_code,
-    drivetrain: vehicle.drivetrain,
-    transmission: vehicle.transmission,
-  };
-}
 
 function sortVehicles(vehicles: VehicleRow[]) {
   return [...vehicles].sort((left, right) => Number(right.is_primary) - Number(left.is_primary)
@@ -83,7 +71,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
         setState((current) => ({ ...current, vehicles: [], loading: false }));
         return;
       }
-      onVehicleLoaded(vehicleProfile(selected));
+      onVehicleLoaded(vehicleProfileFromRow(selected));
       setState({
         ownerId: currentUser.id,
         vehicles,
@@ -108,7 +96,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     const selected = state.vehicles.find((vehicle) => vehicle.id === vehicleId);
     if (!selected) return;
     if (user) localStorage.setItem(`keeper-selected-vehicle:${user.id}`, selected.id);
-    onVehicleLoaded(vehicleProfile(selected));
+    onVehicleLoaded(vehicleProfileFromRow(selected));
     setState((current) => ({
       ...current,
       vehicleId: selected.id,
@@ -136,21 +124,13 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     setState((current) => ({ ...current, saving: true, error: null }));
 
     const mileage = state.mileage.trim() ? Number(state.mileage) : null;
-    const platform = getPlatform(profile.platform);
     const selectedVehicle = state.vehicles.find((vehicle) => vehicle.id === state.vehicleId);
-    const vehicle = {
-      owner_id: user.id,
-      nickname: state.nickname.trim() || `My ${profile.brand}`,
-      brand: profile.brand,
-      model: platform.label,
-      model_year: profile.year,
-      trim: profile.trim,
-      engine_code: profile.engineCode,
-      drivetrain: profile.drivetrain,
-      transmission: profile.transmission,
+    const vehicle = vehicleInsertFromProfile(profile, {
+      ownerId: user.id,
+      nickname: state.nickname,
       mileage,
-      is_primary: selectedVehicle?.is_primary ?? state.vehicles.length === 0,
-    };
+      isPrimary: selectedVehicle?.is_primary ?? state.vehicles.length === 0,
+    });
 
     const request = state.vehicleId
       ? supabase.from("vehicles").update(vehicle).eq("id", state.vehicleId).select().single<VehicleRow>()
@@ -201,7 +181,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       .filter((vehicle) => vehicle.id !== result.removed_vehicle_id)
       .map((vehicle) => ({ ...vehicle, is_primary: vehicle.id === result.next_vehicle_id })));
     const selected = remainingVehicles.find((vehicle) => vehicle.id === result.next_vehicle_id) ?? remainingVehicles[0] ?? null;
-    if (selected) onVehicleLoaded(vehicleProfile(selected));
+    if (selected) onVehicleLoaded(vehicleProfileFromRow(selected));
     setState((current) => ({
       ...current,
       vehicles: remainingVehicles,

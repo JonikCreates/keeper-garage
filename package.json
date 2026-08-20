@@ -10,8 +10,12 @@
     "build": "tsc --noEmit && vite build",
     "build:github-pages": "tsc --noEmit && vite build --mode github-pages",
     "preview": "vite preview",
-    "test": "node --test tests/*.test.mjs",
-    "lint": "eslint src lib/*.ts vite.config.ts"
+    "test": "pnpm run test:unit && pnpm run test:catalog",
+    "test:unit": "node --test tests/*.test.mjs",
+    "test:catalog": "tsx scripts/validate-catalog.ts",
+    "test:integration": "tsx scripts/validate-supabase-integration.ts",
+    "generate:catalog-migration": "tsx scripts/generate-catalog-migration.ts",
+    "lint": "eslint src lib scripts/*.ts vite.config.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
@@ -30,6 +34,7 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "16.4.0",
+    "tsx": "^4.23.12",
     "typescript": "5.9.3",
     "typescript-eslint": "8.59.3",
     "vite": "8.0.16"

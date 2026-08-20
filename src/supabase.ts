@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { VehicleBrand } from "../lib/catalog";
 import { authCallbackUrl } from "./routing";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -89,7 +90,7 @@ export type VehicleRow = {
   id: string;
   owner_id: string;
   nickname: string;
-  brand: "BMW" | "Subaru" | "Porsche" | "Mazda";
+  brand: VehicleBrand;
   model: string;
   model_year: number;
   trim: string;

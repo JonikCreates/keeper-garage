@@ -3,6 +3,7 @@ import {
   ENHANCED_KNOWN_ISSUES,
   getEnhancedMaintenanceCatalog,
   matchesEnhancedSchedule,
+  normalizeEnhancedDrivetrain,
   type MaintenanceResearch,
 } from "./enhancedCatalog";
 import { ENHANCED_PLATFORMS, ENHANCED_VARIANTS } from "./enhancedVehicleData";
@@ -126,9 +127,24 @@ export const PLATFORM_OPTIONS: PlatformOption[] = [
   ...ENHANCED_PLATFORMS.filter((platform) => !existingPlatformIds.has(platform.value)) as PlatformOption[],
 ];
 
+const newlySelectableExistingSchedules = new Set([
+  "research-f10-535i-11-16-n55-6mt",
+  "research-f10-550i-11-13-n63-6mt",
+  "research-f30-f30-activehybrid-3",
+]);
+
+const adaptedEnhancedVariants = ENHANCED_VARIANTS
+  .filter((variant) => !existingPlatformIds.has(variant.platform) || newlySelectableExistingSchedules.has(variant.scheduleId))
+  .map((variant) => ({
+    ...variant,
+    trim: variant.scheduleId === "research-f30-f30-activehybrid-3" ? "ActiveHybrid 3" : variant.trim,
+    label: variant.scheduleId === "research-f30-f30-activehybrid-3" ? "ActiveHybrid 3" : variant.label,
+    drivetrain: normalizeEnhancedDrivetrain(variant.platform, variant.drivetrain),
+  }));
+
 const catalogVariants = [
   ...EXPANDED_VARIANTS,
-  ...ENHANCED_VARIANTS.filter((variant) => !existingPlatformIds.has(variant.platform)),
+  ...adaptedEnhancedVariants,
 ];
 
 export const TRIM_OPTIONS: TrimOption[] = [
@@ -184,8 +200,7 @@ export const TRIM_OPTIONS: TrimOption[] = [
 export function getTrimOptions(platform: VehicleProfile["platform"], year?: number) {
   const expanded = catalogVariants.filter((variant) => variant.platform === platform
     && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
-  if (expanded.length) {
-    return [...new Set(expanded.map((variant) => variant.trim))].map((trim): TrimOption => {
+  const expandedOptions = [...new Set(expanded.map((variant) => variant.trim))].map((trim): TrimOption => {
       const matches = expanded.filter((variant) => variant.trim === trim);
       return {
         platform,
@@ -198,9 +213,11 @@ export function getTrimOptions(platform: VehicleProfile["platform"], year?: numb
         transmissions: [...new Set(matches.map((variant) => variant.transmission))],
       };
     });
-  }
-  return TRIM_OPTIONS.filter((option) => option.platform === platform &&
-    (year === undefined || (year >= option.yearStart && year <= option.yearEnd)));
+  const expandedTrims = new Set(expandedOptions.map((option) => option.value));
+  const manualOptions = TRIM_OPTIONS.filter((option) => option.platform === platform
+    && !expandedTrims.has(option.value)
+    && (year === undefined || (year >= option.yearStart && year <= option.yearEnd)));
+  return [...manualOptions, ...expandedOptions];
 }
 
 export function getPlatform(platform: VehicleProfile["platform"]) {
@@ -217,7 +234,15 @@ export function getBrandForPlatform(platform: VehicleProfile["platform"]) {
 
 export function getYearOptions(platform: VehicleProfile["platform"]) {
   const option = getPlatform(platform);
-  return Array.from({ length: option.yearEnd - option.yearStart + 1 }, (_, index) => option.yearEnd - index);
+  const variantRanges = catalogVariants.filter((variant) => variant.platform === platform);
+  const trimRanges = TRIM_OPTIONS.filter((trim) => trim.platform === platform);
+  const ranges = [...variantRanges, ...trimRanges];
+  if (!ranges.length) return Array.from({ length: option.yearEnd - option.yearStart + 1 }, (_, index) => option.yearEnd - index);
+  const years = new Set<number>();
+  for (const range of ranges) {
+    for (let year = range.yearStart; year <= range.yearEnd; year += 1) years.add(year);
+  }
+  return [...years].sort((left, right) => right - left);
 }
 
 export function getEngineOptions(platform: VehicleProfile["platform"], trim: string, year: number, transmission?: string) {
@@ -235,7 +260,10 @@ export function getEngineOptions(platform: VehicleProfile["platform"], trim: str
     return engines;
   }
   if (platform === "E39") {
-    if (trim.startsWith("528")) return engines.filter((engine) => year <= 1998 ? engine === "M52B28" : engine === "M52TUB28");
+    if (trim.startsWith("528")) {
+      if (year <= 1998 || (year === 1999 && transmission === "4-speed automatic")) return engines.filter((engine) => engine === "M52B28");
+      return engines.filter((engine) => engine === "M52TUB28");
+    }
     if (trim.startsWith("540")) return engines.filter((engine) => year <= 1998 ? engine === "M62B44" : engine === "M62TUB44");
     return engines;
   }
@@ -262,7 +290,10 @@ export function getTransmissionOptions(platform: VehicleProfile["platform"], tri
     return transmissions.filter((transmission) => transmission === "5-speed automatic" || (year <= 2003 ? transmission === "5-speed manual" : transmission === "6-speed manual"));
   }
   if (platform === "E39" && trim === "528i" && year) {
-    return transmissions.filter((transmission) => transmission === "5-speed manual" || (year <= 1998 ? transmission === "4-speed automatic" : transmission === "5-speed automatic"));
+    return transmissions.filter((transmission) => transmission === "5-speed manual"
+      || (year <= 1998 && transmission === "4-speed automatic")
+      || (year === 1999 && ["4-speed automatic", "5-speed automatic"].includes(transmission))
+      || (year >= 2000 && transmission === "5-speed automatic"));
   }
   return transmissions;
 }

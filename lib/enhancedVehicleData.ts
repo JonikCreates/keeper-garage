@@ -4812,46 +4812,6 @@ export const ENHANCED_VARIANTS: EnhancedVariantRecord[] = [
   },
   {
     "brand": "BMW",
-    "platform": "F10M5",
-    "scheduleId": "research-f10m5-m5-13-16-m-dct",
-    "tab": "M5 13-16 M-DCT",
-    "trim": "M5",
-    "label": "M5",
-    "yearStart": 2013,
-    "yearEnd": 2016,
-    "engineCodes": [
-      "S63TU"
-    ],
-    "engineLabel": "S63TU 4.4L twin-turbo V8",
-    "drivetrain": "RWD",
-    "transmission": "7-speed 7-speed M-DCT",
-    "body": "",
-    "applicability": "Verify VIN/options/Competition Package/CCB and modification history.",
-    "sourceWorkbook": "BMW F10 5 Series and M5 USDM Maintenance Schedules - Community Revised.xlsx",
-    "engineCode": "S63TU"
-  },
-  {
-    "brand": "BMW",
-    "platform": "F10M5",
-    "scheduleId": "research-f10m5-m5-13-16-6mt",
-    "tab": "M5 13-16 6MT",
-    "trim": "M5",
-    "label": "M5",
-    "yearStart": 2013,
-    "yearEnd": 2016,
-    "engineCodes": [
-      "S63TU"
-    ],
-    "engineLabel": "S63TU 4.4L twin-turbo V8",
-    "drivetrain": "RWD",
-    "transmission": "6-speed manual",
-    "body": "",
-    "applicability": "Verify VIN/options/Competition Package/CCB and modification history.",
-    "sourceWorkbook": "BMW F10 5 Series and M5 USDM Maintenance Schedules - Community Revised.xlsx",
-    "engineCode": "S63TU"
-  },
-  {
-    "brand": "BMW",
     "platform": "F22",
     "scheduleId": "research-f22-f22-228i-6mt-rwd",
     "tab": "F22 228i 6MT RWD",
@@ -13214,44 +13174,6 @@ export const ENHANCED_SCHEDULE_PROFILES: EnhancedScheduleProfileRecord[] = [
     "transmission": "8-speed hybrid automatic",
     "body": "",
     "applicability": "Verify VIN, production date, options and service history.",
-    "sourceWorkbook": "BMW F10 5 Series and M5 USDM Maintenance Schedules - Community Revised.xlsx"
-  },
-  {
-    "brand": "BMW",
-    "platform": "F10M5",
-    "scheduleId": "research-f10m5-m5-13-16-m-dct",
-    "tab": "M5 13-16 M-DCT",
-    "trim": "M5",
-    "label": "M5",
-    "yearStart": 2013,
-    "yearEnd": 2016,
-    "engineCodes": [
-      "S63TU"
-    ],
-    "engineLabel": "S63TU 4.4L twin-turbo V8",
-    "drivetrain": "RWD",
-    "transmission": "7-speed 7-speed M-DCT",
-    "body": "",
-    "applicability": "Verify VIN/options/Competition Package/CCB and modification history.",
-    "sourceWorkbook": "BMW F10 5 Series and M5 USDM Maintenance Schedules - Community Revised.xlsx"
-  },
-  {
-    "brand": "BMW",
-    "platform": "F10M5",
-    "scheduleId": "research-f10m5-m5-13-16-6mt",
-    "tab": "M5 13-16 6MT",
-    "trim": "M5",
-    "label": "M5",
-    "yearStart": 2013,
-    "yearEnd": 2016,
-    "engineCodes": [
-      "S63TU"
-    ],
-    "engineLabel": "S63TU 4.4L twin-turbo V8",
-    "drivetrain": "RWD",
-    "transmission": "6-speed manual",
-    "body": "",
-    "applicability": "Verify VIN/options/Competition Package/CCB and modification history.",
     "sourceWorkbook": "BMW F10 5 Series and M5 USDM Maintenance Schedules - Community Revised.xlsx"
   },
   {

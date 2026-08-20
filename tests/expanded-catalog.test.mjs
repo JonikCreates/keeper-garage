@@ -47,12 +47,14 @@ test("brand and model selectors cascade instead of staying BMW-locked", async ()
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
   const catalog = await readFile(new URL("../lib/catalog.ts", import.meta.url), "utf8");
   const garage = await readFile(new URL("../src/useGarage.ts", import.meta.url), "utf8");
+  const persistence = await readFile(new URL("../src/vehiclePersistence.ts", import.meta.url), "utf8");
 
   assert.match(app, /selectBrand\(event\.target\.value as VehicleBrand\)/);
   assert.match(app, /platformOptions\.map/);
   assert.match(catalog, /getPlatformOptions\(brand: VehicleBrand\)/);
-  assert.match(garage, /brand: profile\.brand/);
-  assert.doesNotMatch(garage, /brand: "BMW" as const/);
+  assert.match(garage, /vehicleInsertFromProfile\(profile/);
+  assert.match(persistence, /brand: profile\.brand/);
+  assert.doesNotMatch(`${garage}\n${persistence}`, /brand: "BMW" as const/);
 });
 
 test("every expanded vehicle family has multiple fitment-aware known issues", async () => {

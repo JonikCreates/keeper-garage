@@ -72,6 +72,16 @@ const maintenanceCostsMigrationUrl = new URL(
   import.meta.url,
 );
 
+const testerCatalogMigrationUrl = new URL(
+  "../supabase/migrations/20260820210000_allow_tester_catalog_vehicles.sql",
+  import.meta.url,
+);
+
+const catalogRegistryMigrationUrl = new URL(
+  "../supabase/migrations/20260820220000_validate_catalog_fitments.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -224,4 +234,24 @@ test("expanded fitment remains allow-listed without weakening account isolation"
   assert.match(sql, /drop constraint if exists vehicles_brand_check/i);
   assert.match(sql, /add constraint vehicles_supported_fitment check/i);
   assert.doesNotMatch(sql, /disable row level security|drop policy|delete from|truncate/i);
+});
+
+test("tester catalog migration removes stale fitment checks without weakening garage security", async () => {
+  const sql = await readFile(testerCatalogMigrationUrl, "utf8");
+  assert.match(sql, /drop constraint if exists vehicles_supported_fitment/i);
+  assert.match(sql, /temporary Keeper tester-mode migration/i);
+  assert.doesNotMatch(sql, /disable row level security|drop policy|delete from|truncate/i);
+});
+
+test("generated catalog registry validates exact fitments while preserving owner-only RLS", async () => {
+  const sql = await readFile(catalogRegistryMigrationUrl, "utf8");
+  assert.match(sql, /keeper-catalog-manifest/i);
+  assert.match(sql, /keeper-catalog-count: 1701/i);
+  assert.match(sql, /create table if not exists public\.vehicle_catalog_fitments/i);
+  assert.match(sql, /alter table public\.vehicle_catalog_fitments enable row level security/i);
+  assert.match(sql, /revoke all on public\.vehicle_catalog_fitments from public, anon, authenticated/i);
+  assert.match(sql, /create or replace function public\.validate_keeper_vehicle_fitment/i);
+  assert.match(sql, /raise exception using[\s\S]*errcode = '23514'/i);
+  assert.match(sql, /create trigger vehicles_validate_catalog_fitment/i);
+  assert.doesNotMatch(sql, /disable row level security|drop policy|delete from public\.vehicles|truncate public\.vehicles/i);
 });

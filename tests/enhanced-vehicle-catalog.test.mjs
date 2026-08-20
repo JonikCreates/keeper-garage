@@ -20,7 +20,7 @@ test("all Enhanced Vehicles workbooks produce catalog-driven platforms and exact
   assert.match(generated, /Generated from the 33 user-provided Enhanced Vehicles workbooks/);
   assert.ok(platforms.length >= 42);
   assert.ok(variants.length >= 450);
-  assert.ok(profiles.length >= 390);
+  assert.ok(profiles.length >= 389);
   assert.ok(Object.keys(schedules).length >= 385);
   assert.ok(Object.keys(rows).length >= 2_200, "repeated workbook rows should remain normalized into a shared library");
 

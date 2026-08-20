@@ -15,7 +15,7 @@ The platform library covers BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford,
 - Porsche 911 996.1, 996.2, 997.1, and 997.2 Carrera, Turbo, Targa, GT, RS, GTS, and special-model branches
 - Mazda MX-5 Miata NA, NB, NC, and ND, including Mazdaspeed, PRHT, RF, manual, and automatic branches
 - Enhanced research for Volkswagen Mk7/Mk8, additional modern BMW platforms, Audi B8/C7, Ford S550, Honda S2000, Lexus IS, Nissan Z/GTR, Toyota/Scion/Subaru 86/BRZ, Toyota Supra A90, and Mercedes-Benz G-Class platforms
-- 33 enhanced research workbooks normalized into 391 configuration profiles, 389 populated schedules, 2,232 reusable service rows, 1,111 grouped issue records, and 114 ownership-intelligence notes
+- 33 enhanced research workbooks normalized into 389 populated configuration profiles and schedules, 2,232 reusable service rows, 1,111 grouped issue records, and 114 ownership-intelligence notes
 - Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
@@ -48,6 +48,8 @@ pnpm lint
 pnpm build
 pnpm test
 ```
+
+The default test command includes an exhaustive offline audit of every vehicle configuration. Use `pnpm test:catalog` for the catalog report and `pnpm test:integration` with an isolated Supabase test user for real save/read/RLS validation. See [`docs/catalog-validation.md`](docs/catalog-validation.md) for setup and the generated migration workflow.
 
 Copy `.env.example` to `.env.local` and add the project URL and publishable browser key when testing authentication locally. Never place a Supabase secret or service-role key in the frontend.
 
