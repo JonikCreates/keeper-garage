@@ -157,16 +157,15 @@ export function ProfilePage({ auth, vehicleCount, onOpenAccount }: ProfilePagePr
             <button onClick={() => onOpenAccount("account")}>Log Out</button>
           </section>
 
-          {import.meta.env.DEV && (
-            <section className="profile-plan-lab">
+          <section className="profile-plan-lab">
               <div className="profile-plan-heading">
                 <div>
-                  <span>Development only</span>
+                  <span>Keeper memberships</span>
                   <h2>Choose your Keeper</h2>
                 </div>
                 <p>
-                  Preview each membership locally. Project Car is the full Keeper experience for
-                  one vehicle; Collector expands it to a three-car garage.
+                  Basic Traffic keeps the research free. Project Car unlocks the full Keeper
+                  experience for one vehicle, while Collector expands it to a three-car garage.
                 </p>
               </div>
 
@@ -219,17 +218,24 @@ export function ProfilePage({ auth, vehicleCount, onOpenAccount }: ProfilePagePr
                       <button
                         className={isFeatured ? "button button-primary" : "button button-quiet"}
                         type="button"
-                        disabled={isCurrent}
-                        onClick={() => setDevPlan(planId)}
+                        disabled={isCurrent || !import.meta.env.DEV}
+                        onClick={() => {
+                          if (import.meta.env.DEV) setDevPlan(planId);
+                        }}
                       >
-                        {isCurrent ? "Selected" : plan.monthlyPrice === 0 ? "Choose Basic" : `Choose ${plan.name}`}
+                        {isCurrent
+                          ? "Current plan"
+                          : import.meta.env.DEV
+                            ? plan.monthlyPrice === 0
+                              ? "Choose Basic"
+                              : `Choose ${plan.name}`
+                            : "Coming soon"}
                       </button>
                     </article>
                   );
                 })}
               </div>
-            </section>
-          )}
+          </section>
         </div>
       )}
 
