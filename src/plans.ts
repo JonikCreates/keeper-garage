@@ -1,53 +1,54 @@
 export type KeeperPlanId =
-  | "keeper_1"
-  | "keeper_1_export"
-  | "keeper_3"
-  | "keeper_3_export";
+  | "basic_traffic"
+  | "project_car"
+  | "collector";
 
 export type KeeperPlan = {
   id: KeeperPlanId;
   name: string;
   monthlyPrice: number;
   vehicleSlots: number;
+  canTrackMaintenance: boolean;
+  canModifyVehicle: boolean;
   canExport: boolean;
   description: string;
 };
 
 export const KEEPER_PLANS: Record<KeeperPlanId, KeeperPlan> = {
-  keeper_1: {
-    id: "keeper_1",
-    name: "Keeper 1",
+  basic_traffic: {
+    id: "basic_traffic",
+    name: "Basic Traffic",
+    monthlyPrice: 0,
+    vehicleSlots: 1,
+    canTrackMaintenance: false,
+    canModifyVehicle: false,
+    canExport: false,
+    description:
+      "Save one vehicle and access Keeper's researched facts, known issues, and ownership intelligence.",
+  },
+
+  project_car: {
+    id: "project_car",
+    name: "Project Car",
+    monthlyPrice: 1.99,
+    vehicleSlots: 1,
+    canTrackMaintenance: true,
+    canModifyVehicle: true,
+    canExport: true,
+    description:
+      "Full Keeper access for one enthusiast vehicle, including maintenance, repairs, modifications, mileage, history, and exports.",
+  },
+
+  collector: {
+    id: "collector",
+    name: "Collector",
     monthlyPrice: 2.99,
-    vehicleSlots: 1,
-    canExport: false,
-    description: "One vehicle slot with Keeper's core garage and maintenance features.",
-  },
-
-  keeper_1_export: {
-    id: "keeper_1_export",
-    name: "Keeper 1 + Export",
-    monthlyPrice: 3.99,
-    vehicleSlots: 1,
-    canExport: true,
-    description: "One vehicle slot with maintenance and ownership exports.",
-  },
-
-  keeper_3: {
-    id: "keeper_3",
-    name: "Keeper 3",
-    monthlyPrice: 5.99,
     vehicleSlots: 3,
-    canExport: false,
-    description: "Up to three vehicle slots with Keeper's core garage and maintenance features.",
-  },
-
-  keeper_3_export: {
-    id: "keeper_3_export",
-    name: "Keeper 3 + Export",
-    monthlyPrice: 7.99,
-    vehicleSlots: 3,
+    canTrackMaintenance: true,
+    canModifyVehicle: true,
     canExport: true,
-    description: "Up to three vehicle slots with exports enabled for every vehicle.",
+    description:
+      "Full Keeper access for up to three enthusiast vehicles.",
   },
 };
 
@@ -55,8 +56,19 @@ export function getKeeperPlan(planId: KeeperPlanId) {
   return KEEPER_PLANS[planId];
 }
 
-export function canPlanAddVehicle(planId: KeeperPlanId, currentVehicleCount: number) {
+export function canPlanAddVehicle(
+  planId: KeeperPlanId,
+  currentVehicleCount: number,
+) {
   return currentVehicleCount < KEEPER_PLANS[planId].vehicleSlots;
+}
+
+export function canPlanTrackMaintenance(planId: KeeperPlanId) {
+  return KEEPER_PLANS[planId].canTrackMaintenance;
+}
+
+export function canPlanModifyVehicle(planId: KeeperPlanId) {
+  return KEEPER_PLANS[planId].canModifyVehicle;
 }
 
 export function canPlanExport(planId: KeeperPlanId) {

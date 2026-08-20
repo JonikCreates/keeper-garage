@@ -6,10 +6,9 @@ export type AccountKind = "guest" | "legacy" | "setup" | "account";
 
 export type EntitlementKey =
   | "authenticated_account"
-  | "keeper_1"
-  | "keeper_1_export"
-  | "keeper_3"
-  | "keeper_3_export";
+  | "basic_traffic"
+  | "project_car"
+  | "collector";
 
 export type AccountAccess = {
   planId: KeeperPlanId | null;
@@ -31,9 +30,9 @@ export function isTemporaryGuest(user: User | null) {
   if (!user) return false;
 
   const hasRecoverableIdentity = Boolean(
-    user.email
-    || user.phone
-    || user.identities?.some((identity) => identity.provider !== "anonymous"),
+    user.email ||
+      user.phone ||
+      user.identities?.some((identity) => identity.provider !== "anonymous"),
   );
 
   return Boolean(user.is_anonymous && !hasRecoverableIdentity);
@@ -54,10 +53,9 @@ const noPersistentAccess = {
 };
 
 const keeperPlanIds: KeeperPlanId[] = [
-  "keeper_3_export",
-  "keeper_3",
-  "keeper_1_export",
-  "keeper_1",
+  "collector",
+  "project_car",
+  "basic_traffic",
 ];
 
 function isKeeperPlanId(value: string | null): value is KeeperPlanId {
@@ -78,10 +76,6 @@ function activeKeeperPlan(
   return keeperPlanIds.find((planId) => entitlements.has(planId)) ?? null;
 }
 
-// REVIEW DECISION:
-// Every account-only capability resolves here.
-// Stripe/Supabase subscription entitlements can plug into this later
-// without scattering premium checks across Keeper.
 export function getAccountAccess(
   user: User | null,
   entitlements: ReadonlySet<string> = new Set(),
@@ -125,27 +119,31 @@ export function getAccountAccess(
     };
   }
 
-  const planId = activeKeeperPlan(entitlements);
-  const plan = planId ? getKeeperPlan(planId) : null;
+  const planId = activeKeeperPlan(entitlements) ?? "basic_traffic";
+  const plan = getKeeperPlan(planId);
+
+  const isBasic = planId === "basic_traffic";
 
   return {
     kind: "account",
-    label: "Keeper Account",
-    description:
-      "Your garage is stored in Supabase and follows this Keeper Profile across devices.",
+    label: plan.name,
+    description: isBasic
+      ? "Save one vehicle and access Keeper's researched facts, known issues, and ownership intelligence."
+      : "Your garage is stored in Supabase and follows this Keeper Profile across devices.",
 
     planId,
-    vehicleSlots: plan?.vehicleSlots ?? 0,
+    vehicleSlots: plan.vehicleSlots,
 
     canExploreDemo: true,
     canSaveGarage: true,
-    canSaveMileage: true,
-    canSaveMaintenance: true,
-    canCustomize: true,
-    canSync: true,
 
-    // Keep existing account behavior until the paywall is deliberately enabled.
-    canExport: true,
-    canDownloadPdf: true,
+    // Basic Traffic can save one vehicle, but cannot actively manage ownership records.
+    canSaveMileage: !isBasic,
+    canSaveMaintenance: !isBasic,
+    canCustomize: !isBasic,
+
+    canSync: true,
+    canExport: plan.canExport,
+    canDownloadPdf: plan.canExport,
   };
 }

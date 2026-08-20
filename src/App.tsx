@@ -488,15 +488,36 @@ export default function App() {
   }
 
   async function saveGarage() {
-    setSaveNotice(null);
-    if (!auth.access.canSaveGarage) {
-      openAccount("save");
-      return;
-    }
-    const editing = Boolean(garage.vehicleId);
-    const saved = await garage.saveVehicle(profile);
-    setSaveNotice(saved ? editing ? "Vehicle changes saved." : "Vehicle added to My Garage." : null);
+  setSaveNotice(null);
+
+  if (!auth.access.canSaveGarage) {
+    openAccount("save");
+    return;
   }
+
+  const editing = Boolean(garage.vehicleId);
+
+  if (!editing && garage.vehicles.length >= auth.access.vehicleSlots) {
+    setSaveNotice(
+      auth.access.planId === "collector"
+        ? "Collector supports up to 3 vehicles."
+        : auth.access.planId === "project_car"
+          ? "Project Car includes 1 vehicle slot. Upgrade to Collector to add more."
+          : "Basic Traffic includes 1 saved vehicle. Upgrade to Project Car or Collector for full garage access.",
+    );
+    return;
+  }
+
+  const saved = await garage.saveVehicle(profile);
+
+  setSaveNotice(
+    saved
+      ? editing
+        ? "Vehicle changes saved."
+        : "Vehicle added to My Garage."
+      : null,
+  );
+}
 
   async function openVehicleRemoval() {
     const vehicleId = garage.vehicleId;
@@ -584,7 +605,13 @@ export default function App() {
       <header className="topbar">
         <a className="brand-lockup" href={pageHref("garage")}><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
         <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={pageHref(link.page)} key={link.page}>{link.label}</a>)}</nav>
-        <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><button className={`account-button ${auth.access.kind === "account" ? "active" : ""} ${auth.access.kind}`} onClick={() => openAccount("account")}>{accountLabel}</button></div>
+        <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><button className={`account-button ${auth.access.kind === "account" ? "active" : ""} ${auth.access.kind}`} onClick={() => {
+          if (auth.access.kind === "account") {
+            window.location.assign(pageHref("profile"));
+            return;
+          }
+          openAccount("account");
+        }}>{accountLabel}</button></div>
       </header>
 
       <main id="top">

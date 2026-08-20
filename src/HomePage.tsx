@@ -3,6 +3,8 @@ import { pageHref } from "./routing";
 
 type Theme = "dark" | "light";
 
+import { useKeeperAuth } from "./useKeeperAuth";
+
 const highlights = [
   ["Exact vehicle matching", "Generation, year, engine, drivetrain, and transmission."],
   ["Maintenance planning", "See what is due, what is done, and what should come next."],
@@ -36,6 +38,7 @@ function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }
 }
 
 export function HomePage() {
+  const auth = useKeeperAuth();
   const [theme, setTheme] = useState<Theme>(() => localStorage.getItem("keeper-theme") === "dark" ? "dark" : "light");
 
   useEffect(() => {
@@ -70,7 +73,12 @@ export function HomePage() {
         <h1><span>Know your car.</span><span>Maintain it better.</span></h1>
         <p className="home-lede">Keeper brings maintenance planning, known-issue research, and your service history together around the exact vehicle you own.</p>
         <div className="home-actions">
-          <a className="button button-primary" href={`${pageHref("profile")}?account`}>Open My Garage</a>
+          <a
+            className="button button-primary"
+            href={auth.access.kind === "account" ? pageHref("garage") : `${pageHref("profile")}?account`}
+          >
+            Open My Garage
+          </a>
           <a className="button button-quiet" href={pageHref("maintenance")}>Try the Demo</a>
         </div>
       </section>

@@ -11,10 +11,9 @@ type ProfilePageProps = {
 };
 
 const planOptions: KeeperPlanId[] = [
-  "keeper_1",
-  "keeper_1_export",
-  "keeper_3",
-  "keeper_3_export",
+  "basic_traffic",
+  "project_car",
+  "collector",
 ];
 
 export function ProfilePage({ auth, vehicleCount, onOpenAccount }: ProfilePageProps) {
@@ -159,36 +158,76 @@ export function ProfilePage({ auth, vehicleCount, onOpenAccount }: ProfilePagePr
           </section>
 
           {import.meta.env.DEV && (
-            <section>
-              <span>Development only</span>
-              <h2>Test subscription plan</h2>
-              <p>This selector only appears in the local development build.</p>
+            <section className="profile-plan-lab">
+              <div className="profile-plan-heading">
+                <div>
+                  <span>Development only</span>
+                  <h2>Choose your Keeper</h2>
+                </div>
+                <p>
+                  Preview each membership locally. Project Car is the full Keeper experience for
+                  one vehicle; Collector expands it to a three-car garage.
+                </p>
+              </div>
 
-              <label>
-                Keeper plan
-                <select
-                  value={auth.access.planId ?? "keeper_1"}
-                  onChange={(event) => setDevPlan(event.target.value as KeeperPlanId)}
-                >
-                  {planOptions.map((planId) => {
-                    const plan = KEEPER_PLANS[planId];
+              <div className="profile-plan-grid">
+                {planOptions.map((planId) => {
+                  const plan = KEEPER_PLANS[planId];
+                  const isCurrent = auth.access.planId === planId;
+                  const isFeatured = planId === "project_car";
 
-                    return (
-                      <option value={planId} key={planId}>
-                        {plan.name} · ${plan.monthlyPrice.toFixed(2)}/mo
-                      </option>
-                    );
-                  })}
-                </select>
-              </label>
+                  return (
+                    <article
+                      className={`profile-plan-card${isFeatured ? " featured" : ""}${isCurrent ? " current" : ""}`}
+                      key={planId}
+                    >
+                      <header>
+                        <div>
+                          <span>{isFeatured ? "Enthusiast pick" : planId === "collector" ? "Multi-car garage" : "Research access"}</span>
+                          <h3>{plan.name}</h3>
+                        </div>
+                        {isCurrent && <b>Current plan</b>}
+                      </header>
 
-              <small>
-                {auth.access.vehicleSlots} vehicle slot
-                {auth.access.vehicleSlots === 1 ? "" : "s"} ·{" "}
-                {auth.access.planId && KEEPER_PLANS[auth.access.planId].canExport
-                  ? "Export included"
-                  : "No export entitlement"}
-              </small>
+                      <div className="profile-plan-price">
+                        {plan.monthlyPrice === 0 ? (
+                          <>
+                            <strong>Free</strong>
+                            <small>forever</small>
+                          </>
+                        ) : (
+                          <>
+                            <strong>${plan.monthlyPrice.toFixed(2)}</strong>
+                            <small>/ month</small>
+                          </>
+                        )}
+                      </div>
+
+                      <p>{plan.description}</p>
+
+                      <ul>
+                        <li>
+                          <strong>{plan.vehicleSlots}</strong> vehicle slot
+                          {plan.vehicleSlots === 1 ? "" : "s"}
+                        </li>
+                        <li>{plan.canTrackMaintenance ? "Full maintenance tracking" : "Research, facts & known issues"}</li>
+                        <li>{plan.canModifyVehicle ? "Repairs, modifications & custom work" : "No owner modifications or service logging"}</li>
+                        <li>{plan.canExport ? "PDF and ownership exports included" : "Exports not included"}</li>
+                        {planId === "collector" && <li>Track multiple builds in one garage</li>}
+                      </ul>
+
+                      <button
+                        className={isFeatured ? "button button-primary" : "button button-quiet"}
+                        type="button"
+                        disabled={isCurrent}
+                        onClick={() => setDevPlan(planId)}
+                      >
+                        {isCurrent ? "Selected" : plan.monthlyPrice === 0 ? "Choose Basic" : `Choose ${plan.name}`}
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
             </section>
           )}
         </div>
