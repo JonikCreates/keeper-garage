@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { getAccountAccess, isTemporaryGuest } from "./access";
 import { PRIVACY_VERSION, TERMS_VERSION } from "./legal";
 import {
@@ -19,6 +19,27 @@ const initialCapabilities: AuthCapabilities = { email: false, google: false };
 const pendingLegalKey = "keeper-pending-legal";
 const pendingLegacyClaimKey = "keeper-pending-legacy-claim";
 const initialAuthCallbackResult = takeAuthCallbackResult();
+
+const devAuthEnabled = import.meta.env.DEV;
+
+const devUser: User | null = devAuthEnabled
+  ? ({
+      id: "00000000-0000-4000-8000-000000000001",
+      aud: "authenticated",
+      role: "authenticated",
+      email: "dev@keeper.local",
+      email_confirmed_at: new Date(0).toISOString(),
+      phone: "",
+      confirmed_at: new Date(0).toISOString(),
+      last_sign_in_at: new Date(0).toISOString(),
+      app_metadata: { provider: "dev", providers: ["dev"] },
+      user_metadata: { display_name: "Keeper Dev" },
+      identities: [],
+      created_at: new Date(0).toISOString(),
+      updated_at: new Date(0).toISOString(),
+      is_anonymous: false,
+    } as User)
+  : null;
 
 type LegalSource = "web" | "legacy_upgrade";
 export type SignUpResult = "created" | "existing" | false;
@@ -71,14 +92,14 @@ function authMessage(kind: "login" | "signup" | "recovery" | "update") {
 
 export function useKeeperAuth() {
   const [session, setSession] = useState<Session | null>(null);
-  const [ready, setReady] = useState(!hasSupabaseConfig);
+  const [ready, setReady] = useState(devAuthEnabled || !hasSupabaseConfig);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(initialAuthError);
   const [capabilities, setCapabilities] = useState(initialCapabilities);
   const [capabilitiesReady, setCapabilitiesReady] = useState(!hasSupabaseConfig);
   const [entitlements, setEntitlements] = useState<Set<string>>(new Set());
-  const [accountStateReady, setAccountStateReady] = useState(!hasSupabaseConfig);
+  const [accountStateReady, setAccountStateReady] = useState(devAuthEnabled || !hasSupabaseConfig);
   const [legacyClaim, setLegacyClaim] = useState<LegacyGarageClaim | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const [recoveryMode, setRecoveryMode] = useState(new URLSearchParams(window.location.search).get("account") === "recovery");
@@ -135,7 +156,7 @@ export function useKeeperAuth() {
   }, []);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (devAuthEnabled || !supabase) return;
 
     const client = supabase;
     let active = true;
@@ -450,13 +471,29 @@ export function useKeeperAuth() {
     return true;
   }, [begin]);
 
-  const user = session?.user ?? null;
+  const user = devUser ?? session?.user ?? null;
   const isLegacyGuest = isTemporaryGuest(user);
-  const access = useMemo(() => getAccountAccess(user, entitlements), [entitlements, user]);
-  const dataUser = access.kind === "account" || access.kind === "legacy" ? user : null;
+
+  const accessEntitlements = useMemo(() => {
+    if (!devUser) return entitlements;
+    return new Set<string>(["authenticated_account"]);
+  }, [entitlements]);
+
+  const access = useMemo(
+    () => getAccountAccess(user, accessEntitlements),
+    [accessEntitlements, user],
+  );
+
+  // Development auth is intentionally UI-only so localhost never writes fake-user data into Supabase.
+  const dataUser = devUser
+    ? null
+    : access.kind === "account" || access.kind === "legacy"
+      ? user
+      : null;
 
   return useMemo(() => ({
     configured: hasSupabaseConfig,
+    devAuth: Boolean(devUser),
     session,
     user,
     dataUser,
