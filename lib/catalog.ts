@@ -1,4 +1,11 @@
 import { CLASSIC_KNOWN_ISSUES, getClassicMaintenanceCatalog } from "./classicCatalog";
+import {
+  ENHANCED_KNOWN_ISSUES,
+  getEnhancedMaintenanceCatalog,
+  matchesEnhancedSchedule,
+  type MaintenanceResearch,
+} from "./enhancedCatalog";
+import { ENHANCED_PLATFORMS, ENHANCED_VARIANTS } from "./enhancedVehicleData";
 import { getExpandedMaintenanceCatalog } from "./expandedCatalog";
 import { EXPANDED_PLATFORMS, EXPANDED_VARIANTS } from "./expandedCatalogData";
 import { EXPANDED_KNOWN_ISSUES } from "./expandedKnownIssues";
@@ -20,10 +27,29 @@ export type Applicability = {
   engines?: string[];
   drivetrains?: string[];
   transmissions?: string[];
+  scheduleIds?: string[];
 };
 
-export type VehicleBrand = "BMW" | "Subaru" | "Porsche" | "Mazda";
-export type VehiclePlatform = "F30" | "E46" | "E39" | "E36" | "E9X" | "F10" | "F10M5" | "VA" | "9961" | "9962" | "9971" | "9972" | "NA" | "NB" | "NC" | "ND";
+export const BRAND_OPTIONS = [
+  { value: "BMW", label: "BMW" },
+  { value: "Porsche", label: "Porsche" },
+  { value: "Subaru", label: "Subaru" },
+  { value: "Mazda", label: "Mazda" },
+  { value: "Volkswagen", label: "Volkswagen" },
+  { value: "Audi", label: "Audi" },
+  { value: "Ford", label: "Ford" },
+  { value: "Honda", label: "Honda" },
+  { value: "Lexus", label: "Lexus" },
+  { value: "Nissan", label: "Nissan" },
+  { value: "Toyota", label: "Toyota" },
+  { value: "Scion", label: "Scion" },
+  { value: "Mercedes-Benz", label: "Mercedes-Benz" },
+] as const;
+
+export type VehicleBrand = typeof BRAND_OPTIONS[number]["value"];
+// Platform identifiers are catalog data, not a closed code enum. This keeps future
+// research imports from requiring a type-system rewrite for every new chassis.
+export type VehiclePlatform = string;
 
 export type VehicleProfile = {
   brand: VehicleBrand;
@@ -48,6 +74,7 @@ export type MaintenanceCatalogItem = {
   parts: Array<{ name: string; partNumber: string | null; note: string; purchaseUrl?: string }>;
   sources: CatalogSource[];
   diy: string[];
+  research?: MaintenanceResearch;
 };
 
 export type KnownIssue = {
@@ -66,6 +93,12 @@ export type KnownIssue = {
   preventativeAction: string;
   appliesTo: Applicability;
   sources: CatalogSource[];
+  evidenceLabel?: string;
+  inspectionReminder?: string;
+  verification?: string;
+  clarification?: string;
+  configuration?: string;
+  sourceWorkbook?: string;
 };
 
 export type ProjectIdea = {
@@ -76,22 +109,26 @@ export type ProjectIdea = {
   appliesTo: Applicability;
 };
 
-export const BRAND_OPTIONS = [
-  { value: "BMW", label: "BMW" },
-  { value: "Subaru", label: "Subaru" },
-  { value: "Porsche", label: "Porsche" },
-  { value: "Mazda", label: "Mazda" },
-] as const;
-
 export type PlatformOption = { value: VehiclePlatform; brand: VehicleBrand; label: string; yearStart: number; yearEnd: number };
 export type TrimOption = { platform: VehiclePlatform; value: string; label: string; yearStart: number; yearEnd: number; engines: string[]; drivetrains: string[]; transmissions: string[] };
 
-export const PLATFORM_OPTIONS: PlatformOption[] = [
+const CORE_PLATFORM_OPTIONS: PlatformOption[] = [
   { value: "F30", brand: "BMW", label: "3 Series (F30)", yearStart: 2012, yearEnd: 2018 },
   { value: "E46", brand: "BMW", label: "3 Series (E46)", yearStart: 1999, yearEnd: 2006 },
   { value: "E39", brand: "BMW", label: "5 Series (E39)", yearStart: 1997, yearEnd: 2003 },
   { value: "E36", brand: "BMW", label: "3 Series (E36)", yearStart: 1992, yearEnd: 1999 },
   ...EXPANDED_PLATFORMS as PlatformOption[],
+];
+
+const existingPlatformIds = new Set(CORE_PLATFORM_OPTIONS.map((platform) => platform.value));
+export const PLATFORM_OPTIONS: PlatformOption[] = [
+  ...CORE_PLATFORM_OPTIONS,
+  ...ENHANCED_PLATFORMS.filter((platform) => !existingPlatformIds.has(platform.value)) as PlatformOption[],
+];
+
+const catalogVariants = [
+  ...EXPANDED_VARIANTS,
+  ...ENHANCED_VARIANTS.filter((variant) => !existingPlatformIds.has(variant.platform)),
 ];
 
 export const TRIM_OPTIONS: TrimOption[] = [
@@ -145,7 +182,7 @@ export const TRIM_OPTIONS: TrimOption[] = [
 ];
 
 export function getTrimOptions(platform: VehicleProfile["platform"], year?: number) {
-  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+  const expanded = catalogVariants.filter((variant) => variant.platform === platform
     && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
   if (expanded.length) {
     return [...new Set(expanded.map((variant) => variant.trim))].map((trim): TrimOption => {
@@ -184,7 +221,7 @@ export function getYearOptions(platform: VehicleProfile["platform"]) {
 }
 
 export function getEngineOptions(platform: VehicleProfile["platform"], trim: string, year: number, transmission?: string) {
-  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+  const expanded = catalogVariants.filter((variant) => variant.platform === platform
     && variant.trim === trim
     && year >= variant.yearStart
     && year <= variant.yearEnd
@@ -210,7 +247,7 @@ export function getEngineOptions(platform: VehicleProfile["platform"], trim: str
 }
 
 export function getTransmissionOptions(platform: VehicleProfile["platform"], trim: string, drivetrain: string, year?: number) {
-  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+  const expanded = catalogVariants.filter((variant) => variant.platform === platform
     && variant.trim === trim
     && variant.drivetrain === drivetrain
     && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
@@ -231,7 +268,7 @@ export function getTransmissionOptions(platform: VehicleProfile["platform"], tri
 }
 
 export function getDrivetrainOptions(platform: VehicleProfile["platform"], trim: string, year?: number) {
-  const expanded = EXPANDED_VARIANTS.filter((variant) => variant.platform === platform
+  const expanded = catalogVariants.filter((variant) => variant.platform === platform
     && variant.trim === trim
     && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
   if (expanded.length) return [...new Set(expanded.map((variant) => variant.drivetrain))];
@@ -245,7 +282,7 @@ export function inferEngine(platform: VehicleProfile["platform"], trim: string, 
 }
 
 export function getEngineLabel(profile: VehicleProfile) {
-  return EXPANDED_VARIANTS.find((variant) => variant.platform === profile.platform
+  return catalogVariants.find((variant) => variant.platform === profile.platform
     && variant.trim === profile.trim
     && profile.year >= variant.yearStart
     && profile.year <= variant.yearEnd
@@ -259,7 +296,8 @@ export function matchesApplicability(profile: VehicleProfile, rule: Applicabilit
     (!rule.trims || rule.trims.includes(profile.trim)) &&
     (!rule.engines || rule.engines.includes(profile.engineCode)) &&
     (!rule.drivetrains || rule.drivetrains.includes(profile.drivetrain)) &&
-    (!rule.transmissions || rule.transmissions.includes(profile.transmission));
+    (!rule.transmissions || rule.transmissions.includes(profile.transmission)) &&
+    (!rule.scheduleIds || matchesEnhancedSchedule(profile, rule.scheduleIds));
 }
 
 const BMW_2016: CatalogSource = {
@@ -609,6 +647,8 @@ function resolveE36Maintenance(item: MaintenanceCatalogItem, profile: VehiclePro
 }
 
 export function getMaintenanceCatalog(profile: VehicleProfile) {
+  const enhanced = getEnhancedMaintenanceCatalog(profile);
+  if (enhanced.length) return enhanced;
   if (EXPANDED_VARIANTS.some((variant) => variant.platform === profile.platform)) {
     return getExpandedMaintenanceCatalog(profile);
   }
@@ -962,7 +1002,7 @@ const issues: KnownIssue[] = [
   },
 ];
 
-export const KNOWN_ISSUES = [...issues, ...CLASSIC_KNOWN_ISSUES, ...EXPANDED_KNOWN_ISSUES];
+export const KNOWN_ISSUES = [...ENHANCED_KNOWN_ISSUES, ...issues, ...CLASSIC_KNOWN_ISSUES, ...EXPANDED_KNOWN_ISSUES];
 
 export const PROJECT_IDEAS: ProjectIdea[] = [
   { slug: "tires", title: "Replace aging run-flats with a quality tire setup", description: "A fresh, correctly sized tire is often the biggest ride, grip, and noise improvement on an F30.", payoff: "Ride · grip · confidence", appliesTo: {} },

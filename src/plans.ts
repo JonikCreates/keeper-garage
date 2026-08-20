@@ -42,7 +42,7 @@ export const KEEPER_PLANS: Record<KeeperPlanId, KeeperPlan> = {
   collector: {
     id: "collector",
     name: "Collector",
-    monthlyPrice: 2.99,
+    monthlyPrice: 3.99,
     vehicleSlots: 3,
     canTrackMaintenance: true,
     canModifyVehicle: true,

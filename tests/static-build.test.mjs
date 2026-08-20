@@ -48,7 +48,7 @@ test("production build contains the Keeper application", async () => {
   assert.match(bundle, /My Garage/);
   assert.match(bundle, /What needs attention/);
   assert.match(bundle, /Recorded spending/);
-  assert.match(bundle, /Open source on GitHub/);
+  assert.match(bundle, /Independent, multi-brand vehicle ownership research/);
   assert.match(bundle, /Saved vehicles/);
   assert.match(bundle, /Add another vehicle/);
   assert.match(bundle, /Save changes/);
@@ -75,7 +75,7 @@ test("production build contains the Keeper application", async () => {
   assert.match(bundle, /What does this vehicle need/);
   assert.match(bundle, /Current fluids/);
   assert.match(bundle, /No Scheduled Interval/);
-  assert.match(bundle, /Add custom maintenance/);
+  assert.match(bundle, /Add custom work/);
   assert.match(bundle, /Export as PDF/);
   assert.match(bundle, /Export as image/);
   assert.match(bundle, /Search a part, symptom, issue, or common name/);

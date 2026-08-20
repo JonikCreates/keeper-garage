@@ -79,7 +79,7 @@ test("auth changes clear account-specific state before a new garage loads", asyn
   const records = await readFile(new URL("../src/useMaintenanceRecords.ts", import.meta.url), "utf8");
 
   assert.match(auth, /setEntitlements\(new Set\(\)\);[\s\S]*setSession\(nextSession\)/);
-  assert.match(auth, /const dataUser = access\.kind === "account" \|\| access\.kind === "legacy" \? user : null/);
+  assert.match(auth, /access\.kind === "account" \|\| access\.kind === "legacy"\s*\? user\s*: null/);
   assert.match(garage, /state\.ownerId === user\.id \? state : initialState/);
   assert.match(records, /state\.scope === scope \? state : initialState/);
   assert.match(auth, /setDataVersion\(\(version\) => version \+ 1\)/);

@@ -1,8 +1,8 @@
 # Keeper
 
-Configuration-aware maintenance research for U.S.-spec BMW, Mazda, Porsche, and Subaru enthusiast platforms. Cloudflare Pages is the production target, with [GitHub Pages](https://jonikcreates.github.io/keeper-garage/) retained as the rollout fallback.
+Configuration-aware maintenance and ownership research for U.S.-spec enthusiast platforms across 13 makes. Cloudflare Pages is the production target, with [GitHub Pages](https://jonikcreates.github.io/keeper-garage/) retained as the rollout fallback.
 
-The platform library covers 16 vehicle families. Maintenance and issue records carry applicability rules for brand, generation, year, model type, engine, drivetrain, and transmission, so a saved vehicle only receives relevant recommendations.
+The platform library covers BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford, Honda, Lexus, Nissan, Toyota, Scion, and Mercedes-Benz. Maintenance and issue records carry applicability rules for brand, generation, year, model type, engine, drivetrain, transmission, and exact research profile, so a saved vehicle only receives relevant recommendations.
 
 ## What it covers
 
@@ -14,7 +14,8 @@ The platform library covers 16 vehicle families. Maintenance and issue records c
 - Subaru VA WRX, WRX STI, Type RA, and S209
 - Porsche 911 996.1, 996.2, 997.1, and 997.2 Carrera, Turbo, Targa, GT, RS, GTS, and special-model branches
 - Mazda MX-5 Miata NA, NB, NC, and ND, including Mazdaspeed, PRHT, RF, manual, and automatic branches
-- 133 exact schedule variants and 5,112 applicable workbook-derived maintenance entries
+- Enhanced research for Volkswagen Mk7/Mk8, additional modern BMW platforms, Audi B8/C7, Ford S550, Honda S2000, Lexus IS, Nissan Z/GTR, Toyota/Scion/Subaru 86/BRZ, Toyota Supra A90, and Mercedes-Benz G-Class platforms
+- 33 enhanced research workbooks normalized into 391 configuration profiles, 389 populated schedules, 2,232 reusable service rows, 1,111 grouped issue records, and 114 ownership-intelligence notes
 - Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes
 - Sourced issue patterns and workbook-derived maintenance planners with engine, body, and driveline branches
@@ -22,7 +23,7 @@ The platform library covers 16 vehicle families. Maintenance and issue records c
 - Clean Cloudflare page routes with a GitHub Pages-safe fallback build
 - Account-owned multi-vehicle picker with separate add and edit states
 - A simplified vehicle-specific maintenance view with compact last-completed, next-due, and status rows that expand only when more detail is wanted
-- Clearly separated Overdue, Do Soon, and Done sections plus lightweight status, category, fluid, and no-schedule filters
+- Clearly separated Overdue, Due Soon, and Done sections plus lightweight status, category, fluid, and no-schedule filters
 - Optional per-service fluid records—including product, brand, viscosity/type, specification, quantity, unit, filter, and notes—with previous-product recall and a current-fluid summary
 - Organized custom maintenance categories with mileage, time, combined, or no-schedule plans for recurring service and one-time repairs
 - Vehicle-specific work lists for researched known issues and owner-added repairs, restoration, or cosmetic jobs

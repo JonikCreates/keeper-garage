@@ -19,6 +19,7 @@ import {
   type VehicleProfile,
   type VehicleBrand,
 } from "../lib/catalog";
+import { getOwnershipInsights } from "../lib/enhancedCatalog";
 import { searchKnownIssues } from "../lib/knownIssueSearch";
 import { AuthPanel, type AuthIntent } from "./AuthPanel";
 import { CustomIssueForm } from "./CustomIssueForm";
@@ -161,13 +162,18 @@ function maintenancePlanStatus(miles: number | null, months: number | null, late
 
   const dueMileage = miles ? latest.mileage + miles : null;
   const completedDate = new Date(`${latest.completed_at}T00:00:00Z`);
-  const dueDate = months ? new Date(Date.UTC(completedDate.getUTCFullYear(), completedDate.getUTCMonth() + months, completedDate.getUTCDate())) : null;
+  const dueDate = months ? addServiceMonths(completedDate, months) : null;
   const mileageRemaining = dueMileage !== null && currentMileage !== null ? dueMileage - currentMileage : null;
   const timeRemaining = dueDate ? dueDate.getTime() - Date.now() : null;
   const overdue = (mileageRemaining !== null && mileageRemaining <= 0) || (timeRemaining !== null && timeRemaining <= 0);
   if (overdue) return { label: "Overdue", tone: "overdue" };
   const dueSoon = (mileageRemaining !== null && mileageRemaining <= Math.max(1_000, (miles ?? 0) * .1)) || (timeRemaining !== null && timeRemaining <= 30 * 86_400_000);
   return dueSoon ? { label: "Due soon", tone: "soon" } : { label: "On plan", tone: "current" };
+}
+
+function addServiceMonths(date: Date, months: number) {
+  if (Number.isInteger(months)) return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, date.getUTCDate()));
+  return new Date(date.getTime() + months * 30.4375 * 86_400_000);
 }
 
 const maintenanceSections: Array<{ key: "overdue" | "soon" | "done"; tones: MaintenanceTone[]; label: string; description: string }> = [
@@ -194,8 +200,7 @@ function nextDueLabel(item: Pick<DashboardItem, "mileageInterval" | "timeInterva
   const mileage = item.mileageInterval ? `${(latest.mileage + item.mileageInterval).toLocaleString()} mi` : null;
   const date = item.timeIntervalMonths ? (() => {
     const value = new Date(`${latest.completed_at}T00:00:00Z`);
-    value.setUTCMonth(value.getUTCMonth() + item.timeIntervalMonths!);
-    return new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric", timeZone: "UTC" }).format(value);
+    return new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric", timeZone: "UTC" }).format(addServiceMonths(value, item.timeIntervalMonths!));
   })() : null;
   return [mileage, date].filter(Boolean).join(" / ");
 }
@@ -214,8 +219,7 @@ function garageAttentionLabel(item: DashboardItem, currentMileage: number | null
   }
   if (item.timeIntervalMonths) {
     const dueDate = new Date(`${latest.completed_at}T00:00:00Z`);
-    dueDate.setUTCMonth(dueDate.getUTCMonth() + item.timeIntervalMonths);
-    details.push(new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric", timeZone: "UTC" }).format(dueDate));
+    details.push(new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric", timeZone: "UTC" }).format(addServiceMonths(dueDate, item.timeIntervalMonths)));
   }
   return details.join(" / ") || item.planLabel;
 }
@@ -227,6 +231,17 @@ function maintenanceRecordFluid(record: MaintenanceRecordRow) {
 }
 
 const severityRank: Record<DashboardItem["severity"], number> = { critical: 0, important: 1, routine: 2 };
+
+const CONFIGURED_PROFILE_KEY = "keeper-configured-vehicle";
+const DEFAULT_PROFILE: VehicleProfile = {
+  brand: "BMW",
+  platform: "F30",
+  year: 2014,
+  trim: "328i",
+  engineCode: "N20",
+  drivetrain: "RWD",
+  transmission: "8-speed automatic",
+};
 
 function resolveProfile(platform: VehicleProfile["platform"], year: number, trim: string | undefined, current?: VehicleProfile): VehicleProfile {
   const options = getTrimOptions(platform, year);
@@ -246,16 +261,20 @@ function resolveProfile(platform: VehicleProfile["platform"], year: number, trim
   };
 }
 
+function initialConfiguredProfile(): VehicleProfile {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(CONFIGURED_PROFILE_KEY) ?? "null") as Partial<VehicleProfile> | null;
+    if (!stored?.platform || getPlatform(stored.platform).value !== stored.platform || !Number.isInteger(stored.year)) return DEFAULT_PROFILE;
+    const platform = getPlatform(stored.platform);
+    if (stored.year! < platform.yearStart || stored.year! > platform.yearEnd) return DEFAULT_PROFILE;
+    return resolveProfile(stored.platform, stored.year!, stored.trim, stored as VehicleProfile);
+  } catch {
+    return DEFAULT_PROFILE;
+  }
+}
+
 export default function App() {
-  const [profile, setProfile] = useState<VehicleProfile>({
-    brand: "BMW",
-    platform: "F30",
-    year: 2014,
-    trim: "328i",
-    engineCode: "N20",
-    drivetrain: "RWD",
-    transmission: "8-speed automatic",
-  });
+  const [profile, setProfile] = useState<VehicleProfile>(initialConfiguredProfile);
   const [libraryView, setLibraryView] = useState<LibraryView>("mine");
   const [libraryQuery, setLibraryQuery] = useState("");
   const [maintenanceFilter, setMaintenanceFilter] = useState<MaintenanceFilter>("all");
@@ -279,6 +298,12 @@ export default function App() {
     document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#121416" : "#0d2b46");
     localStorage.setItem("keeper-theme", theme);
   }, [theme]);
+
+  // Keep an unsaved vehicle configuration intact across Keeper's clean-path page reloads.
+  // Saved-garage loading still wins afterward, and guest mode still resets to the public demo.
+  useEffect(() => {
+    sessionStorage.setItem(CONFIGURED_PROFILE_KEY, JSON.stringify(profile));
+  }, [profile]);
 
   useEffect(() => {
     const syncPage = () => setPage(getPageFromLocation());
@@ -318,7 +343,7 @@ export default function App() {
 
   useEffect(() => {
     if (auth.access.kind !== "guest") return;
-    queueMicrotask(() => setProfile({ brand: "BMW", platform: "F30", year: 2014, trim: "328i", engineCode: "N20", drivetrain: "RWD", transmission: "8-speed automatic" }));
+    queueMicrotask(() => setProfile(DEFAULT_PROFILE));
   }, [auth.access.kind]);
 
   const platform = getPlatform(profile.platform);
@@ -337,6 +362,7 @@ export default function App() {
     () => KNOWN_ISSUES.filter((issue) => matchesApplicability(profile, issue.appliesTo)),
     [profile],
   );
+  const ownershipInsights = useMemo(() => getOwnershipInsights(profile), [profile]);
   const urgentIssues = matchedIssues.filter((issue) => issue.urgency === "urgent");
   const watchIssues = matchedIssues.filter((issue) => issue.urgency === "watch");
   const projects = PROJECT_IDEAS.filter((project) => matchesApplicability(profile, project.appliesTo));
@@ -671,7 +697,7 @@ export default function App() {
               {attentionItems.length ? <ol>{attentionItems.map((item) => <li key={item.slug}><div><span className={item.status.tone}>{item.status.label}</span><strong>{item.name}</strong></div><small>{garageAttentionLabel(item, currentVehicleMileage)}</small></li>)}</ol> : <p className="garage-attention-clear">Nothing is overdue or due soon based on the records currently entered.</p>}
             </section>
           </section> : <div className="hero-copy">
-            <p className="eyebrow">Multi-brand workshop archive · 16 vehicle families</p>
+            <p className="eyebrow">Multi-brand workshop archive · {BRAND_OPTIONS.length} enthusiast makes</p>
             <h1>Know what your car needs next.</h1>
             <p className="hero-intro">Factory information, researched owner patterns, and specialist maintenance guidance—filtered for the exact generation, year, engine, drivetrain, and transmission.</p>
             <div className="hero-actions"><a href={pageHref("maintenance")} className="button button-primary">Open maintenance list</a><a href={pageHref("issues")} className="button button-quiet">Browse all {KNOWN_ISSUES.length} issues</a></div>
@@ -719,6 +745,11 @@ export default function App() {
           <article><span>02</span><div><strong>Open maintenance</strong><p>Only the service rows that match the selected configuration.</p></div></article>
           <article><span>03</span><div><strong>Check known issues</strong><p>Urgent signals and researched patterns stay on their own page.</p></div></article>
         </section>
+
+        {ownershipInsights.length > 0 && <section className="ownership-intelligence" aria-labelledby="ownership-intelligence-title">
+          <header className="section-heading"><div><p className="eyebrow">Platform-specific research</p><h2 id="ownership-intelligence-title">Ownership intelligence.</h2></div><p>Configuration notes, factory changes, preservation checks, and enthusiast context that do not belong in a routine maintenance interval.</p></header>
+          <div>{ownershipInsights.slice(0, 8).map((insight) => <article key={insight.slug}><span>{insight.category}</span><h3>{insight.title}</h3><p>{insight.summary}</p>{insight.sourceUrl && <a href={insight.sourceUrl} target="_blank" rel="noreferrer">Research source ↗</a>}</article>)}</div>
+        </section>}
         </>}
 
         {(page === "maintenance" || page === "issues") && <>
@@ -806,7 +837,23 @@ export default function App() {
                   return <details className={`maintenance-dashboard-item ${item.records.length ? "completed" : ""} ${item.kind}`} key={`${selectedSavedVehicle?.id ?? "configured"}:${item.slug}`}>
                     <summary><div className="maintenance-item-name"><strong>{item.name}</strong><small>{item.category}{item.tracksFluid ? " · Fluid tracking" : ""}</small></div><div data-label="Last completed"><strong>{latest ? `${latest.mileage.toLocaleString()} mi` : "Not recorded"}</strong><small>{latest ? shortServiceDate(latest.completed_at) : "No service history"}</small></div><div data-label="Plan"><strong>{maintenancePlanLabel(item.mileageInterval, item.timeIntervalMonths)}</strong><small>{item.planLabel}</small></div><div data-label="Next due"><strong>{nextDueLabel(item, latest)}</strong></div><div className={`maintenance-status-pill ${item.status.tone}`} data-label="Status"><span aria-hidden="true">●</span>{item.status.label}</div><b aria-hidden="true">＋</b></summary>
                     <div className="maintenance-record-drawer">
-                      {(item.catalog || item.notes || item.issue) && <details className="maintenance-technical-notes"><summary>Technical notes and sources</summary>{item.catalog && <div className="maintenance-technical-grid"><article><span>Factory position</span><p>{item.catalog.oem.summary}</p></article><article><span>Planning baseline</span><p>{item.catalog.community.summary}</p></article><article><span>Before service</span><ul>{item.catalog.diy.map((note) => <li key={note}>{note}</li>)}</ul></article></div>}{!item.catalog && <p>{item.notes ?? "Owner-added maintenance or repair."}</p>}<footer>{(item.catalog?.sources ?? item.issue?.sources ?? []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><b>{source.type}</b>{source.title} ↗</a>)}</footer></details>}
+                      {(item.catalog || item.notes || item.issue) && <details className="maintenance-technical-notes"><summary>Technical notes and sources</summary>
+                        {item.catalog && <>
+                          <div className="maintenance-technical-grid">
+                            <article><span>Factory position</span><p>{item.catalog.oem.summary}</p></article>
+                            <article><span>Planning baseline</span><p>{item.catalog.community.summary}</p></article>
+                            {item.catalog.diy.length > 0 && <article><span>Before service</span><ul>{item.catalog.diy.map((note) => <li key={note}>{note}</li>)}</ul></article>}
+                          </div>
+                          {item.catalog.research && <div className="maintenance-research-grid">
+                            <article><span>Guidance type</span><strong>{item.catalog.research.entryType}</strong><p>{item.catalog.research.basis}</p></article>
+                            <article><span>Recommended action</span><strong>{item.catalog.research.action || "Inspect by condition"}</strong><p>{item.catalog.research.trigger}</p></article>
+                            {(item.catalog.research.fluidAmount || item.catalog.research.fluidSpecification) && <article><span>Fluid / specification</span><strong>{item.catalog.research.fluidAmount || "Verify service quantity"}</strong><p>{item.catalog.research.fluidSpecification}</p></article>}
+                            <article><span>Evidence check</span><strong>{item.catalog.research.verification || "Verify exact configuration"}</strong><p>{item.catalog.research.notes}</p></article>
+                          </div>}
+                        </>}
+                        {!item.catalog && <p>{item.notes ?? "Owner-added maintenance or repair."}</p>}
+                        <footer>{(item.catalog?.sources ?? item.issue?.sources ?? []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><b>{source.type}</b>{source.title} ↗</a>)}</footer>
+                      </details>}
                       <MaintenanceRecordPanel item={item} records={item.records} tracksFluid={item.tracksFluid} signedIn={auth.access.canSaveMaintenance} isGuest={!auth.access.canSaveMaintenance} hasSavedVehicle={Boolean(garage.vehicleId && auth.access.canSaveMaintenance)} defaultMileage={demoMode ? String(DEMO_VEHICLE.mileage) : garage.mileage} saving={serviceRecords.savingSlug === item.slug} onOpenAuth={() => openAccount("save")} onAdd={(input) => serviceRecords.addRecord(item.slug, item.name, input)} />
                       {item.kind !== "baseline" && <div className="tracked-item-removal"><div><strong>Active-plan controls</strong><p>Removal hides this tracked item from the plan. Any completed service records remain in your account.</p></div><RemoveTrackedItemButton removing={trackedMaintenance.removingSlug === item.slug} onRemove={() => auth.access.canCustomize ? trackedMaintenance.removeItem(item.slug) : (openAccount("save"), Promise.resolve(false))} /></div>}
                     </div>
@@ -852,6 +899,7 @@ export default function App() {
                 ...(issue.appliesTo.engines ?? []),
                 ...(issue.appliesTo.drivetrains ?? []),
                 ...(issue.appliesTo.transmissions ?? []),
+                ...(issue.configuration ? [issue.configuration] : []),
               ];
               const addedToMaintenance = trackedMaintenance.itemSlugs.has(`issue-${issue.slug}`);
               const searchMatch = issueSearchBySlug.get(issue.slug);
@@ -859,6 +907,12 @@ export default function App() {
                 <summary><span className="issue-system">{issue.system}</span><div><h3>{issue.issue}</h3><p>{issue.description}</p></div><EvidenceTag value={issue.evidence} /><b className={searchMatch ? "issue-match-badge" : ""}>{searchMatch?.matchLabel ?? (matched ? "MATCH" : "LIBRARY")}</b></summary>
                 {searchMatch && <div className="issue-match-explanation"><span>Why this matched</span><p>{searchMatch.reason}</p>{issue.aliases?.length ? <small>Also known as: {issue.aliases.slice(0, 5).join(" · ")}</small> : null}</div>}
                 <div className="issue-detail-grid"><article><span>Watch for</span><p>{issue.symptoms}</p></article><article><span>Context</span><p>{issue.typicalMileage}</p></article><article><span>What to do</span><p>{issue.preventativeAction}</p></article><article><span>Applies to</span><p>{appliesTo.length ? appliesTo.join(" · ") : `All ${profile.platform} variants`}</p></article></div>
+                {(issue.evidenceLabel || issue.inspectionReminder || issue.verification || issue.clarification) && <div className="issue-intelligence-grid">
+                  {issue.evidenceLabel && <article><span>Evidence layer</span><p>{issue.evidenceLabel}</p></article>}
+                  {issue.inspectionReminder && <article><span>Inspection / reminder</span><p>{issue.inspectionReminder}</p></article>}
+                  {issue.verification && <article><span>Verification</span><p>{issue.verification}</p></article>}
+                  {issue.clarification && <article><span>Important clarification</span><p>{issue.clarification}</p></article>}
+                </div>}
                 <footer>{issue.sources.map((source) => <a href={source.url} target="_blank" rel="noreferrer" key={source.url}><span>{source.type}</span>{source.title} ↗</a>)}</footer>
                 <TrackedIssueAction matched={matched} added={addedToMaintenance} saving={trackedMaintenance.saving} removing={trackedMaintenance.removingSlug === `issue-${issue.slug}`} onAdd={() => addIssueToMaintenance(issue)} onRemove={() => auth.access.canCustomize ? trackedMaintenance.removeItem(`issue-${issue.slug}`) : (openAccount("save"), Promise.resolve(false))} />
               </details>;
@@ -879,7 +933,7 @@ export default function App() {
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
-      <footer className="site-footer"><div><strong>KEEPER</strong></div><p>Independent vehicle ownership research covering BMW, Mazda, Porsche, and Subaru platforms. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav></footer>
+      <footer className="site-footer"><div><strong>KEEPER</strong></div><p>Independent, multi-brand vehicle ownership research built for enthusiasts. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav></footer>
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>

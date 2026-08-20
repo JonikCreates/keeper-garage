@@ -30,7 +30,7 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
   assert.match(app, /garageAttentionLabel\(item, currentVehicleMileage\)/);
   assert.match(app, /Vehicle Settings/);
   assert.doesNotMatch(topbarActions, /GitHub|github/);
-  assert.match(app, /Open source on GitHub/);
+  assert.match(app, /Independent, multi-brand vehicle ownership research/);
   assert.match(css, /\.personal-garage-dashboard/);
   assert.match(css, /@media \(max-width: 430px\)[\s\S]*\.personal-garage-specs, \.personal-garage-stats/);
 });
@@ -78,7 +78,7 @@ test("maintenance is importance-sorted and accepts issue and custom work items",
   const custom = await readFile(new URL("../src/CustomMaintenanceForm.tsx", import.meta.url), "utf8");
 
   assert.match(app, /label: "Overdue"/);
-  assert.match(app, /label: "Do Soon"/);
+  assert.match(app, /label: "Due Soon"/);
   assert.match(app, /label: "Done"/);
   assert.match(app, /toneRank\[left\.status\.tone\]/);
   assert.match(app, /TrackedIssueAction/);
