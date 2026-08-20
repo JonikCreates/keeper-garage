@@ -12,6 +12,7 @@ import {
   getTransmissionOptions,
   getTrimOptions,
   getYearOptions,
+  getYearOptionsForBrand,
   inferEngine,
   matchesApplicability,
   type MaintenanceCatalogItem,
@@ -275,6 +276,10 @@ function initialConfiguredProfile(): VehicleProfile {
 
 export default function App() {
   const [profile, setProfile] = useState<VehicleProfile>(initialConfiguredProfile);
+  // A saved/complete VehicleProfile always has a year and platform, but a new
+  // garage configuration intentionally starts incomplete: Brand -> Year -> Model.
+  const [configurationYear, setConfigurationYear] = useState<number | null>(null);
+  const [configurationPlatform, setConfigurationPlatform] = useState<VehicleProfile["platform"] | null>(null);
   const [libraryView, setLibraryView] = useState<LibraryView>("mine");
   const [libraryQuery, setLibraryQuery] = useState("");
   const [maintenanceFilter, setMaintenanceFilter] = useState<MaintenanceFilter>("all");
@@ -334,6 +339,8 @@ export default function App() {
   const auth = useKeeperAuth();
   const loadVehicle = useCallback((vehicle: VehicleProfile) => {
     setProfile(vehicle);
+    setConfigurationYear(vehicle.year);
+    setConfigurationPlatform(vehicle.platform);
     setLibraryView("mine");
     setWatchExpanded(false);
   }, []);
@@ -343,17 +350,22 @@ export default function App() {
 
   useEffect(() => {
     if (auth.access.kind !== "guest") return;
-    queueMicrotask(() => setProfile(DEFAULT_PROFILE));
+    queueMicrotask(() => {
+      setProfile(DEFAULT_PROFILE);
+      setConfigurationYear(DEFAULT_PROFILE.year);
+      setConfigurationPlatform(DEFAULT_PROFILE.platform);
+    });
   }, [auth.access.kind]);
 
   const platform = getPlatform(profile.platform);
-  const platformOptions = getPlatformOptions(profile.brand);
-  const years = getYearOptions(profile.platform);
-  const trimOptions = getTrimOptions(profile.platform, profile.year);
+  const years = getYearOptionsForBrand(profile.brand);
+  const platformOptions = configurationYear ? getPlatformOptions(profile.brand, configurationYear) : [];
+  const configurationReady = configurationYear !== null && configurationPlatform !== null;
+  const trimOptions = configurationReady ? getTrimOptions(profile.platform, profile.year) : [];
   const libraryTrimOptions = getTrimOptions(profile.platform);
-  const drivetrains = getDrivetrainOptions(profile.platform, profile.trim, profile.year);
-  const transmissions = getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain, profile.year);
-  const engines = getEngineOptions(profile.platform, profile.trim, profile.year, profile.transmission);
+  const drivetrains = configurationReady ? getDrivetrainOptions(profile.platform, profile.trim, profile.year) : [];
+  const transmissions = configurationReady ? getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain, profile.year) : [];
+  const engines = configurationReady ? getEngineOptions(profile.platform, profile.trim, profile.year, profile.transmission) : [];
   const selectedEngineLabel = engineLabels[profile.engineCode] ?? getEngineLabel(profile);
   const profileLabel = `${profile.year} ${profile.brand} ${profile.trim} · ${platform.label}`;
 
@@ -478,23 +490,39 @@ export default function App() {
 
   function selectBrand(brand: VehicleBrand) {
     resetGenerationView();
-    const nextPlatform = getPlatformOptions(brand)[0];
-    if (!nextPlatform) return;
-    setProfile((current) => resolveProfile(nextPlatform.value, nextPlatform.yearEnd, undefined, { ...current, brand }));
-  }
+    setConfigurationYear(null);
+    setConfigurationPlatform(null);
 
-  function selectPlatform(nextPlatform: VehicleProfile["platform"]) {
-    resetGenerationView();
-    const year = getPlatform(nextPlatform).yearEnd;
-    setProfile((current) => resolveProfile(nextPlatform, year, current.trim, current));
-  }
-
-  function selectTrim(trim: string) {
-    setProfile((current) => resolveProfile(current.platform, current.year, trim, current));
+    // Keep the completed profile structurally valid while the new configuration
+    // is incomplete. The downstream selectors stay blank/disabled until Year
+    // and Model are explicitly chosen.
+    const representative = getPlatformOptions(brand)[0];
+    if (!representative) return;
+    setProfile((current) =>
+      resolveProfile(representative.value, getYearOptions(representative.value)[0] ?? representative.yearEnd, undefined, { ...current, brand }),
+    );
   }
 
   function selectYear(year: number) {
-    setProfile((current) => resolveProfile(current.platform, year, current.trim, current));
+    resetGenerationView();
+    setConfigurationYear(year);
+    setConfigurationPlatform(null);
+
+    const representative = getPlatformOptions(profile.brand, year)[0];
+    if (!representative) return;
+    setProfile((current) => resolveProfile(representative.value, year, undefined, current));
+  }
+
+  function selectPlatform(nextPlatform: VehicleProfile["platform"]) {
+    if (configurationYear === null) return;
+    resetGenerationView();
+    setConfigurationPlatform(nextPlatform);
+    setProfile((current) => resolveProfile(nextPlatform, configurationYear, undefined, current));
+  }
+
+  function selectTrim(trim: string) {
+    if (!configurationReady) return;
+    setProfile((current) => resolveProfile(current.platform, current.year, trim, current));
   }
 
   function selectDrivetrain(drivetrain: string) {
@@ -522,6 +550,11 @@ export default function App() {
   }
 
   const editing = Boolean(garage.vehicleId);
+
+  if (configurationYear === null || configurationPlatform === null) {
+    setSaveNotice("Choose a year and model before saving this vehicle.");
+    return;
+  }
 
   if (!editing && garage.vehicles.length >= auth.access.vehicleSlots) {
     setSaveNotice(
@@ -707,7 +740,11 @@ export default function App() {
             <div className="garage-picker">
               <div className="garage-picker-copy"><span>{garageTitle}</span><strong>{demoVehicleSelected ? "2014 BMW 328i · Demo Vehicle" : demoMode ? `${profileLabel} · Guest preview` : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : auth.access.kind === "setup" ? "Finish Profile setup to load your garage" : "No saved vehicles yet"}</strong></div>
               {auth.dataUser ? <>
-                <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") garage.startNewVehicle(); else garage.selectVehicle(event.target.value); }}>
+                <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") {
+                    garage.startNewVehicle();
+                    setConfigurationYear(null);
+                    setConfigurationPlatform(null);
+                  } else garage.selectVehicle(event.target.value); }}>
                   {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} {vehicle.trim}</option>)}
                   {auth.access.canSaveGarage && <option value="new">＋ Add another vehicle</option>}
                 </select></label>
@@ -717,14 +754,32 @@ export default function App() {
             <p className="configuration-flow">{hasPersonalVehicle ? "Update the exact specification or ownership details below." : "Choose in order. Each selection narrows the choices that follow."}</p>
             <div className="config-grid">
               <label>Brand<select value={profile.brand} onChange={(event) => selectBrand(event.target.value as VehicleBrand)}>{BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
-              <label>Model<select value={profile.platform} onChange={(event) => selectPlatform(event.target.value as VehicleProfile["platform"])}>{platformOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
-              <label>Year<select value={profile.year} onChange={(event) => selectYear(Number(event.target.value))}>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
-              <label>Type<select value={profile.trim} onChange={(event) => selectTrim(event.target.value)}>{trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
-              <label>Drivetrain<select value={profile.drivetrain} onChange={(event) => selectDrivetrain(event.target.value)}>{drivetrains.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label>Transmission<select value={profile.transmission} onChange={(event) => selectTransmission(event.target.value)}>{transmissions.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label>Engine<select value={profile.engineCode} disabled={engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>{engines.map((engine) => <option value={engine} key={engine}>{engineLabels[engine] ?? getEngineLabel({ ...profile, engineCode: engine })}</option>)}</select></label>
+              <label>Year<select value={configurationYear ?? ""} onChange={(event) => selectYear(Number(event.target.value))}>
+                <option value="" disabled>Select year</option>
+                {years.map((year) => <option value={year} key={year}>{year}</option>)}
+              </select></label>
+              <label>Model<select value={configurationPlatform ?? ""} disabled={configurationYear === null} onChange={(event) => selectPlatform(event.target.value as VehicleProfile["platform"])}>
+                <option value="" disabled>{configurationYear === null ? "Select year first" : "Select model"}</option>
+                {platformOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select></label>
+              <label>Type<select value={configurationReady ? profile.trim : ""} disabled={!configurationReady} onChange={(event) => selectTrim(event.target.value)}>
+                {!configurationReady && <option value="">Select model first</option>}
+                {trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select></label>
+              <label>Engine<select value={configurationReady ? profile.engineCode : ""} disabled={!configurationReady || engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>
+                {!configurationReady && <option value="">Select model first</option>}
+                {engines.map((engine) => <option value={engine} key={engine}>{engineLabels[engine] ?? getEngineLabel({ ...profile, engineCode: engine })}</option>)}
+              </select></label>
+              <label>Drivetrain<select value={configurationReady ? profile.drivetrain : ""} disabled={!configurationReady} onChange={(event) => selectDrivetrain(event.target.value)}>
+                {!configurationReady && <option value="">Select model first</option>}
+                {drivetrains.map((value) => <option key={value}>{value}</option>)}
+              </select></label>
+              <label>Transmission<select value={configurationReady ? profile.transmission : ""} disabled={!configurationReady} onChange={(event) => selectTransmission(event.target.value)}>
+                {!configurationReady && <option value="">Select model first</option>}
+                {transmissions.map((value) => <option key={value}>{value}</option>)}
+              </select></label>
             </div>
-            {(engines.length > 1 || profile.platform === "E36") && <div className="inference-note"><strong>{selectedEngineLabel} selected</strong><p>Keeper uses the year as a starting point. Confirm the VIN, production date, emissions label, engine stamp, and transmission tag before ordering parts or fluids.</p></div>}
+            {configurationReady && (engines.length > 1 || profile.platform === "E36") && <div className="inference-note"><strong>{selectedEngineLabel} selected</strong><p>Keeper uses the year as a starting point. Confirm the VIN, production date, emissions label, engine stamp, and transmission tag before ordering parts or fluids.</p></div>}
             <div className="garage-save">
               <label>Garage name<input value={demoVehicleSelected ? DEMO_VEHICLE.nickname : demoMode ? "" : garage.nickname} onChange={(event) => garage.setNickname(event.target.value)} maxLength={60} placeholder={`My ${profile.brand}`} disabled={!auth.access.canSaveGarage} /></label>
               <label>Mileage<input value={demoVehicleSelected ? String(DEMO_VEHICLE.mileage) : demoMode ? "" : garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" disabled={!auth.access.canSaveMileage} /></label>

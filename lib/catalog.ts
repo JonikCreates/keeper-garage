@@ -224,8 +224,20 @@ export function getPlatform(platform: VehicleProfile["platform"]) {
   return PLATFORM_OPTIONS.find((option) => option.value === platform) ?? PLATFORM_OPTIONS[0];
 }
 
-export function getPlatformOptions(brand: VehicleBrand) {
-  return PLATFORM_OPTIONS.filter((option) => option.brand === brand);
+export function getPlatformOptions(brand: VehicleBrand, year?: number) {
+  return PLATFORM_OPTIONS.filter((option) =>
+    option.brand === brand &&
+    (year === undefined || getYearOptions(option.value).includes(year))
+  );
+}
+
+export function getYearOptionsForBrand(brand: VehicleBrand) {
+  const years = new Set<number>();
+  for (const platform of PLATFORM_OPTIONS) {
+    if (platform.brand !== brand) continue;
+    for (const year of getYearOptions(platform.value)) years.add(year);
+  }
+  return [...years].sort((left, right) => right - left);
 }
 
 export function getBrandForPlatform(platform: VehicleProfile["platform"]) {
