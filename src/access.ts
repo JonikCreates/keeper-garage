@@ -3,7 +3,6 @@ import type { KeeperPlanId } from "./plans";
 import { getKeeperPlan } from "./plans";
 
 export type AccountKind = "guest" | "legacy" | "setup" | "account";
-
 export type EntitlementKey =
   | "authenticated_account"
   | "basic_traffic"
@@ -28,13 +27,11 @@ export type AccountAccess = {
 
 export function isTemporaryGuest(user: User | null) {
   if (!user) return false;
-
   const hasRecoverableIdentity = Boolean(
     user.email ||
       user.phone ||
       user.identities?.some((identity) => identity.provider !== "anonymous"),
   );
-
   return Boolean(user.is_anonymous && !hasRecoverableIdentity);
 }
 
@@ -62,19 +59,19 @@ function isKeeperPlanId(value: string | null): value is KeeperPlanId {
   return value !== null && keeperPlanIds.includes(value as KeeperPlanId);
 }
 
-function activeKeeperPlan(
-  entitlements: ReadonlySet<string>,
-): KeeperPlanId | null {
+function activeKeeperPlan(entitlements: ReadonlySet<string>): KeeperPlanId | null {
   if (import.meta.env.DEV) {
     const devPlan = localStorage.getItem("keeper-dev-plan");
-
-    if (isKeeperPlanId(devPlan)) {
-      return devPlan;
-    }
+    if (isKeeperPlanId(devPlan)) return devPlan;
   }
 
   return keeperPlanIds.find((planId) => entitlements.has(planId)) ?? null;
 }
+
+// Temporary public tester mode.
+// Keep this true until Stripe/subscription enforcement is ready.
+// Authenticated testers get full Keeper functionality without payment.
+const PUBLIC_TESTER_MODE = true;
 
 export function getAccountAccess(
   user: User | null,
@@ -119,9 +116,27 @@ export function getAccountAccess(
     };
   }
 
+  if (PUBLIC_TESTER_MODE) {
+    return {
+      kind: "account",
+      label: "Keeper Tester Access",
+      description:
+        "Tester access is active. Garage editing, mileage, maintenance, custom work, syncing, and exports are temporarily unlocked while Keeper is in testing.",
+      planId: "project_car",
+      vehicleSlots: 3,
+      canExploreDemo: true,
+      canSaveGarage: true,
+      canSaveMileage: true,
+      canSaveMaintenance: true,
+      canCustomize: true,
+      canSync: true,
+      canExport: true,
+      canDownloadPdf: true,
+    };
+  }
+
   const planId = activeKeeperPlan(entitlements) ?? "basic_traffic";
   const plan = getKeeperPlan(planId);
-
   const isBasic = planId === "basic_traffic";
 
   return {
@@ -130,18 +145,13 @@ export function getAccountAccess(
     description: isBasic
       ? "Save one vehicle and access Keeper's researched facts, known issues, and ownership intelligence."
       : "Your garage is stored in Supabase and follows this Keeper Profile across devices.",
-
     planId,
     vehicleSlots: plan.vehicleSlots,
-
     canExploreDemo: true,
     canSaveGarage: true,
-
-    // Basic Traffic can save one vehicle, but cannot actively manage ownership records.
     canSaveMileage: !isBasic,
     canSaveMaintenance: !isBasic,
     canCustomize: !isBasic,
-
     canSync: true,
     canExport: plan.canExport,
     canDownloadPdf: plan.canExport,
