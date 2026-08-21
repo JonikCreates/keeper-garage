@@ -31,7 +31,6 @@ export function CustomMaintenanceForm({ enabled, saving, onRequireVehicle, onAdd
   const [timeUnit, setTimeUnit] = useState<"months" | "years">("years");
   const [tracksFluid, setTracksFluid] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setNotice(null);

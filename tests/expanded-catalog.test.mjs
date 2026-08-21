@@ -51,7 +51,7 @@ test("brand and model selectors cascade instead of staying BMW-locked", async ()
 
   assert.match(app, /selectBrand\(event\.target\.value as VehicleBrand\)/);
   assert.match(app, /platformOptions\.map/);
-  assert.match(catalog, /getPlatformOptions\(brand: VehicleBrand\)/);
+  assert.match(catalog, /getPlatformOptions\(brand: VehicleBrand, year\?: number\)/);
   assert.match(garage, /vehicleInsertFromProfile\(profile/);
   assert.match(persistence, /brand: profile\.brand/);
   assert.doesNotMatch(`${garage}\n${persistence}`, /brand: "BMW" as const/);

@@ -71,6 +71,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
         setState((current) => ({ ...current, vehicles: [], loading: false }));
         return;
       }
+      localStorage.setItem(`keeper-selected-vehicle:${currentUser.id}`, selected.id);
       onVehicleLoaded(vehicleProfileFromRow(selected));
       setState({
         ownerId: currentUser.id,
@@ -142,6 +143,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       return false;
     }
 
+    localStorage.setItem(`keeper-selected-vehicle:${user.id}`, data.id);
     setState((current) => ({
       ...current,
       vehicles: sortVehicles(current.vehicles.some((vehicle) => vehicle.id === data.id)
@@ -181,6 +183,9 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
       .filter((vehicle) => vehicle.id !== result.removed_vehicle_id)
       .map((vehicle) => ({ ...vehicle, is_primary: vehicle.id === result.next_vehicle_id })));
     const selected = remainingVehicles.find((vehicle) => vehicle.id === result.next_vehicle_id) ?? remainingVehicles[0] ?? null;
+    const selectionKey = `keeper-selected-vehicle:${user.id}`;
+    if (selected) localStorage.setItem(selectionKey, selected.id);
+    else localStorage.removeItem(selectionKey);
     if (selected) onVehicleLoaded(vehicleProfileFromRow(selected));
     setState((current) => ({
       ...current,

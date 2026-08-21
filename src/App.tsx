@@ -30,6 +30,12 @@ import { LegalPage } from "./LegalPage";
 import { MaintenanceExportMenu } from "./MaintenanceExportMenu";
 import { formatUsdCents, maintenanceTotalCents } from "./maintenanceExport";
 import { MaintenanceRecordPanel } from "./MaintenanceRecordPanel";
+import { OwnershipDashboard } from "./OwnershipDashboard";
+import {
+  createOwnershipInsights,
+  type OwnershipStatusTone,
+  type RecommendationType,
+} from "./ownershipIntelligence";
 import { ProfilePage } from "./ProfilePage";
 import { RemoveTrackedItemButton, TrackedIssueAction } from "./TrackedIssueAction";
 import { VehicleRemovalDialog } from "./VehicleRemovalDialog";
@@ -42,8 +48,7 @@ import { getPageFromLocation, pageHref, type AppPage } from "./routing";
 
 type LibraryView = "mine" | "all" | string;
 type Theme = "dark" | "light";
-type MaintenanceTone = "overdue" | "soon" | "unrecorded" | "current";
-type MaintenanceStatus = { label: string; tone: MaintenanceTone };
+type MaintenanceStatus = { label: string; tone: OwnershipStatusTone };
 type MaintenanceFilter = "all" | "soon" | "overdue" | "fluids" | "no_schedule";
 
 type DashboardItem = {
@@ -177,7 +182,7 @@ function addServiceMonths(date: Date, months: number) {
   return new Date(date.getTime() + months * 30.4375 * 86_400_000);
 }
 
-const maintenanceSections: Array<{ key: "overdue" | "soon" | "done"; tones: MaintenanceTone[]; label: string; description: string }> = [
+const maintenanceSections: Array<{ key: "overdue" | "soon" | "done"; tones: OwnershipStatusTone[]; label: string; description: string }> = [
   { key: "overdue", tones: ["overdue"], label: "Overdue", description: "Past its mileage or time plan. Start here." },
   { key: "soon", tones: ["soon", "unrecorded"], label: "Due Soon", description: "Approaching its plan, newly tracked, or waiting for a first record." },
   { key: "done", tones: ["current"], label: "Done", description: "Completed work that is currently on plan." },
@@ -206,25 +211,6 @@ function nextDueLabel(item: Pick<DashboardItem, "mileageInterval" | "timeInterva
   return [mileage, date].filter(Boolean).join(" / ");
 }
 
-function garageAttentionLabel(item: DashboardItem, currentMileage: number | null) {
-  const latest = item.records[0];
-  if (!latest) return item.mileageInterval || item.timeIntervalMonths ? "First baseline not recorded" : item.planLabel;
-  const details: string[] = [];
-  if (item.mileageInterval) {
-    const dueMileage = latest.mileage + item.mileageInterval;
-    if (currentMileage === null) details.push(`Due at ${dueMileage.toLocaleString()} mi`);
-    else {
-      const remaining = dueMileage - currentMileage;
-      details.push(remaining <= 0 ? `${Math.abs(remaining).toLocaleString()} mi overdue` : `${remaining.toLocaleString()} mi remaining`);
-    }
-  }
-  if (item.timeIntervalMonths) {
-    const dueDate = new Date(`${latest.completed_at}T00:00:00Z`);
-    details.push(new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric", timeZone: "UTC" }).format(addServiceMonths(dueDate, item.timeIntervalMonths)));
-  }
-  return details.join(" / ") || item.planLabel;
-}
-
 function maintenanceRecordFluid(record: MaintenanceRecordRow) {
   const product = [record.fluid_brand, record.fluid_product, record.fluid_viscosity ?? record.fluid_type].filter(Boolean).join(" · ");
   const quantity = record.fluid_quantity !== null ? `${record.fluid_quantity} ${record.fluid_unit ?? "units"}` : "";
@@ -243,6 +229,18 @@ const DEFAULT_PROFILE: VehicleProfile = {
   drivetrain: "RWD",
   transmission: "8-speed automatic",
 };
+
+function dashboardRecommendationType(item: DashboardItem): RecommendationType {
+  if (item.kind === "known_issue" || item.kind === "custom_issue") return "inspection";
+  if (item.kind === "custom") return "owner";
+  if (!item.catalog) return "preventative";
+  const guidance = `${item.catalog.name} ${item.catalog.description} ${item.catalog.community.label}`;
+  if (/inspect|check|condition based/i.test(guidance)) return "inspection";
+  const oem = item.catalog.oem;
+  const communityMatchesOem = item.mileageInterval === oem.mileage && item.timeIntervalMonths === oem.months;
+  if (communityMatchesOem && (oem.mileage || oem.months)) return "manufacturer";
+  return item.mileageInterval || item.timeIntervalMonths ? "keeper" : "preventative";
+}
 
 function resolveProfile(platform: VehicleProfile["platform"], year: number, trim: string | undefined, current?: VehicleProfile): VehicleProfile {
   const options = getTrimOptions(platform, year);
@@ -374,7 +372,7 @@ export default function App() {
     () => KNOWN_ISSUES.filter((issue) => matchesApplicability(profile, issue.appliesTo)),
     [profile],
   );
-  const ownershipInsights = useMemo(() => getOwnershipInsights(profile), [profile]);
+  const catalogOwnershipInsights = useMemo(() => getOwnershipInsights(profile), [profile]);
   const urgentIssues = matchedIssues.filter((issue) => issue.urgency === "urgent");
   const watchIssues = matchedIssues.filter((issue) => issue.urgency === "watch");
   const projects = PROJECT_IDEAS.filter((project) => matchesApplicability(profile, project.appliesTo));
@@ -444,7 +442,7 @@ export default function App() {
         status: scheduled ? maintenancePlanStatus(item.mileage_interval, item.time_interval_months, records[0], currentVehicleMileage) : unscheduledStatus,
       };
     });
-    const toneRank: Record<MaintenanceTone, number> = { overdue: 0, soon: 1, unrecorded: 1, current: 2 };
+    const toneRank: Record<OwnershipStatusTone, number> = { overdue: 0, soon: 1, unrecorded: 1, current: 2 };
     return [...baselineItems, ...addedItems].sort((left, right) =>
       toneRank[left.status.tone] - toneRank[right.status.tone]
       || severityRank[left.severity] - severityRank[right.severity]
@@ -452,13 +450,32 @@ export default function App() {
   }, [currentVehicleMileage, displayRecordsBySlug, displayTrackedItems, maintenance]);
 
   const maintenanceCategories = useMemo(() => [...new Set(dashboardItems.map((item) => item.category))].sort(), [dashboardItems]);
-  // REVIEW DECISION: derive the Garage summary from the Maintenance list so both views always agree.
-  const overdueItems = useMemo(() => dashboardItems.filter((item) => item.status.tone === "overdue"), [dashboardItems]);
-  const dueSoonItems = useMemo(() => dashboardItems.filter((item) => item.status.tone === "soon" || item.status.tone === "unrecorded"), [dashboardItems]);
-  const onPlanItems = useMemo(() => dashboardItems.filter((item) => item.status.tone === "current"), [dashboardItems]);
-  const attentionItems = useMemo(() => [...overdueItems, ...dueSoonItems].slice(0, 4), [dueSoonItems, overdueItems]);
   const activeTrackedIssues = useMemo(() => displayTrackedItems.filter((item) =>
     (item.item_type === "known_issue" || item.item_type === "custom_issue") && item.issue_status !== "repaired").length, [displayTrackedItems]);
+  const ownershipInsights = useMemo(() => createOwnershipInsights({
+    currentMileage: currentVehicleMileage,
+    records: displayRecords.map((record) => ({
+      name: record.maintenance_name,
+      completedAt: record.completed_at,
+      mileage: record.mileage,
+      costCents: record.cost_cents,
+    })),
+    items: dashboardItems.map((item) => ({
+      slug: item.slug,
+      name: item.name,
+      category: item.category,
+      severity: item.severity,
+      kind: item.kind,
+      statusTone: item.status.tone,
+      recommendationType: dashboardRecommendationType(item),
+      description: item.issue?.description ?? item.catalog?.description ?? item.notes,
+      mileageInterval: item.mileageInterval,
+      timeIntervalMonths: item.timeIntervalMonths,
+      latestRecord: item.records[0] ? { completedAt: item.records[0].completed_at, mileage: item.records[0].mileage } : null,
+      issueStatus: item.trackedItem?.issue_status ?? null,
+      knownIssueUrgency: item.issue?.urgency ?? null,
+    })),
+  }), [currentVehicleMileage, dashboardItems, displayRecords]);
   const visibleDashboardItems = useMemo(() => dashboardItems.filter((item) => {
     if (maintenanceCategory !== "all" && item.category !== maintenanceCategory) return false;
     if (maintenanceFilter === "overdue") return item.status.tone === "overdue";
@@ -649,12 +666,6 @@ export default function App() {
   const accountLabel = !auth.ready ? "Checking…" : auth.access.kind === "account" ? "My Profile" : auth.access.kind === "setup" ? "Finish setup" : "Sign In";
   const garageTitle = auth.access.kind === "account" ? "My Garage" : auth.access.kind === "legacy" ? "Existing Garage" : auth.access.kind === "setup" ? "Profile setup" : "Demo Garage";
   const hasPersonalVehicle = Boolean(selectedSavedVehicle);
-  const garageHealth = overdueItems.length
-    ? { label: "Action needed", tone: "overdue", detail: `${overdueItems.length} overdue item${overdueItems.length === 1 ? "" : "s"} should be reviewed first.` }
-    : dueSoonItems.length
-      ? { label: "Planning needed", tone: "soon", detail: `${dueSoonItems.length} item${dueSoonItems.length === 1 ? "" : "s"} are due soon or still need a baseline.` }
-      : { label: "On plan", tone: "current", detail: "Recorded work is currently on plan." };
-
   return (
     <div className="site-shell">
       <section className="forum-banner" aria-label="Keeper workshop archive">
@@ -682,7 +693,7 @@ export default function App() {
               <span>{selectedSavedVehicle.nickname}</span>
               <h1 id="personal-garage-title">{selectedSavedVehicle.model_year} {selectedSavedVehicle.brand} {selectedSavedVehicle.trim}</h1>
               <p><strong>{currentVehicleMileage === null ? "Mileage not entered" : `${currentVehicleMileage.toLocaleString()} miles`}</strong><i />{selectedSavedVehicle.model}</p>
-<label className="mobile-garage-switcher">
+{garage.vehicles.length > 1 && <label className="mobile-garage-switcher">
   <span>Switch vehicle</span>
   <select
     aria-label="Switch saved vehicle"
@@ -700,14 +711,9 @@ export default function App() {
       </option>
     ))}
   </select>
-</label>
+</label>}
               <div><a href={pageHref("maintenance")} className="button button-primary">View Maintenance</a><a href={pageHref("issues")} className="button button-quiet">Known Issues</a></div>
             </header>
-            <aside className={`garage-health-card ${garageHealth.tone}`}>
-              <span>Maintenance status</span>
-              <strong>{garageHealth.label}</strong>
-              <p>{garageHealth.detail}</p>
-            </aside>
             <dl className="personal-garage-specs">
               <div><dt>Engine</dt><dd>{selectedEngineLabel}</dd></div>
               <div><dt>Drivetrain</dt><dd>{profile.drivetrain}</dd></div>
@@ -720,15 +726,7 @@ export default function App() {
               <div><span>Recorded spending</span><strong>{formatUsdCents(totalSpentCents)}</strong></div>
               <div><span>Matched research</span><strong>{matchedIssues.length} patterns</strong></div>
             </div>
-            <section className="garage-attention-preview" aria-labelledby="garage-attention-title">
-              <header><div><span>What needs attention</span><h2 id="garage-attention-title">Next up</h2></div><a href={pageHref("maintenance")}>View full maintenance →</a></header>
-              <div className="garage-attention-counts" aria-label="Maintenance status counts">
-                <div className="overdue"><span>Overdue</span><strong>{overdueItems.length}</strong></div>
-                <div className="soon"><span>Due soon</span><strong>{dueSoonItems.length}</strong></div>
-                <div className="current"><span>On plan</span><strong>{onPlanItems.length}</strong></div>
-              </div>
-              {attentionItems.length ? <ol>{attentionItems.map((item) => <li key={item.slug}><div><span className={item.status.tone}>{item.status.label}</span><strong>{item.name}</strong></div><small>{garageAttentionLabel(item, currentVehicleMileage)}</small></li>)}</ol> : <p className="garage-attention-clear">Nothing is overdue or due soon based on the records currently entered.</p>}
-            </section>
+            <OwnershipDashboard insights={ownershipInsights} currentMileage={currentVehicleMileage} maintenanceHref={pageHref("maintenance")} issuesHref={pageHref("issues")} />
           </section> : <div className="hero-copy">
             <p className="eyebrow">Multi-brand workshop archive · {BRAND_OPTIONS.length} enthusiast makes</p>
             <h1>Know what your car needs next.</h1>
@@ -801,9 +799,9 @@ export default function App() {
           <article><span>03</span><div><strong>Check known issues</strong><p>Urgent signals and researched patterns stay on their own page.</p></div></article>
         </section>
 
-        {ownershipInsights.length > 0 && <section className="ownership-intelligence" aria-labelledby="ownership-intelligence-title">
+        {catalogOwnershipInsights.length > 0 && <section className="ownership-intelligence" aria-labelledby="ownership-intelligence-title">
           <header className="section-heading"><div><p className="eyebrow">Platform-specific research</p><h2 id="ownership-intelligence-title">Ownership intelligence.</h2></div><p>Configuration notes, factory changes, preservation checks, and enthusiast context that do not belong in a routine maintenance interval.</p></header>
-          <div>{ownershipInsights.slice(0, 8).map((insight) => <article key={insight.slug}><span>{insight.category}</span><h3>{insight.title}</h3><p>{insight.summary}</p>{insight.sourceUrl && <a href={insight.sourceUrl} target="_blank" rel="noreferrer">Research source ↗</a>}</article>)}</div>
+          <div>{catalogOwnershipInsights.slice(0, 8).map((insight) => <article key={insight.slug}><span>{insight.category}</span><h3>{insight.title}</h3><p>{insight.summary}</p>{insight.sourceUrl && <a href={insight.sourceUrl} target="_blank" rel="noreferrer">Research source ↗</a>}</article>)}</div>
         </section>}
         </>}
 

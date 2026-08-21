@@ -15,10 +15,13 @@ test("My Garage loads every owned vehicle and keeps add separate from edit", asy
   assert.match(app, /aria-label="Saved vehicles"/);
   assert.match(app, /garage\.startNewVehicle\(\)/);
   assert.match(app, /garage\.selectVehicle\(event\.target\.value\)/);
+  assert.match(app, /garage\.vehicles\.length > 1 && <label className="mobile-garage-switcher">/);
 });
 
 test("Garage prioritizes a personal vehicle dashboard using existing ownership state", async () => {
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const ownership = await readFile(new URL("../src/OwnershipDashboard.tsx", import.meta.url), "utf8");
+  const intelligence = await readFile(new URL("../src/ownershipIntelligence.ts", import.meta.url), "utf8");
   const css = await readFile(new URL("../src/mechanical.css", import.meta.url), "utf8");
   const topbarActions = app.match(/<div className="topbar-actions">([\s\S]*?)<\/div>/)?.[1] ?? "";
 
@@ -27,14 +30,30 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
   assert.match(app, /displayRecords\.length/);
   assert.match(app, /activeTrackedIssues/);
   assert.match(app, /formatUsdCents\(totalSpentCents\)/);
-  assert.match(app, /overdueItems\.length/);
-  assert.match(app, /dueSoonItems\.length/);
-  assert.match(app, /garageAttentionLabel\(item, currentVehicleMileage\)/);
+  assert.match(app, /createOwnershipInsights/);
+  assert.match(app, /<OwnershipDashboard/);
+  assert.match(ownership, /Keeper Health/);
+  assert.match(ownership, /What needs attention/);
+  assert.match(ownership, /Upcoming maintenance/);
+  assert.match(ownership, /Estimated upcoming cost/);
+  assert.match(intelligence, /assessPriority/);
+  assert.match(intelligence, /More data needed/);
   assert.match(app, /Vehicle Settings/);
   assert.doesNotMatch(topbarActions, /GitHub|github/);
   assert.match(app, /Independent, multi-brand vehicle ownership research/);
-  assert.match(css, /\.personal-garage-dashboard/);
+  assert.match(css, /\.ownership-command-center/);
+  assert.match(css, /grid-template-columns: repeat\(5, 1fr\)/);
   assert.match(css, /@media \(max-width: 430px\)[\s\S]*\.personal-garage-specs, \.personal-garage-stats/);
+});
+
+test("active vehicle selection has one persisted Garage source of truth", async () => {
+  const hook = await readFile(new URL("../src/useGarage.ts", import.meta.url), "utf8");
+
+  assert.match(hook, /keeper-selected-vehicle:\$\{currentUser\.id\}/);
+  assert.match(hook, /vehicles\.find\(\(vehicle\) => vehicle\.id === rememberedVehicleId\)/);
+  assert.match(hook, /keeper-selected-vehicle:\$\{user\.id\}/);
+  assert.match(hook, /localStorage\.setItem\(selectionKey, selected\.id\)/);
+  assert.match(hook, /localStorage\.removeItem\(selectionKey\)/);
 });
 
 test("vehicle removal is deliberate, record-aware, and refreshes garage selection only after success", async () => {

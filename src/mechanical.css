@@ -242,14 +242,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .personal-garage-identity > p strong { color: var(--paper); font-size: 13px; }
 .personal-garage-identity > p i { width: 4px; height: 4px; background: var(--acid); transform: rotate(45deg); }
 .personal-garage-identity > div { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
-.garage-health-card { padding: 18px; display: grid; align-content: start; gap: 8px; border: 1px solid var(--line); border-left: 5px solid var(--green); background: var(--panel-2); }
-.garage-health-card.overdue { border-left-color: var(--red); }
-.garage-health-card.soon { border-left-color: var(--amber); }
-.garage-health-card > span, .personal-garage-specs dt, .personal-garage-stats span, .garage-attention-preview header span, .garage-attention-counts span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
-.garage-health-card > strong { color: var(--green); font: 900 25px/.95 "Arial Narrow", Arial, sans-serif; text-transform: uppercase; }
-.garage-health-card.overdue > strong { color: var(--red); }
-.garage-health-card.soon > strong { color: var(--amber); }
-.garage-health-card p { margin: 0; color: var(--cream); font-size: 9px; line-height: 1.55; }
+.personal-garage-specs dt, .personal-garage-stats span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .personal-garage-specs { grid-column: 1 / -1; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); }
 .personal-garage-specs div { min-width: 0; padding: 13px 14px; border-right: 1px solid var(--line); background: var(--field); }
 .personal-garage-specs div:last-child { border-right: 0; }
@@ -257,28 +250,97 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .personal-garage-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .personal-garage-stats > div { min-width: 0; padding: 13px 14px; display: grid; gap: 7px; border: 1px solid var(--line); background: var(--panel-2); }
 .personal-garage-stats strong { overflow-wrap: anywhere; color: var(--blue); font-size: 18px; }
-.garage-attention-preview { grid-column: 1 / -1; border: 1px solid var(--line); background: var(--field); }
-.garage-attention-preview > header { padding: 14px 16px; display: flex; align-items: end; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--line); }
-.garage-attention-preview h2 { margin: 4px 0 0; font: 900 27px/.95 "Arial Narrow", Arial, sans-serif; text-transform: uppercase; }
-.garage-attention-preview header a { color: var(--blue); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
-.garage-attention-counts { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
-.garage-attention-counts > div { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-right: 1px solid var(--line); }
-.garage-attention-counts > div:last-child { border-right: 0; }
-.garage-attention-counts .overdue { box-shadow: inset 4px 0 var(--red); }
-.garage-attention-counts .soon { box-shadow: inset 4px 0 var(--amber); }
-.garage-attention-counts .current { box-shadow: inset 4px 0 var(--green); }
-.garage-attention-counts strong { font-size: 16px; }
-.garage-attention-preview ol { margin: 0; padding: 0; list-style: none; }
-.garage-attention-preview li { min-height: 54px; padding: 10px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; border-bottom: 1px solid var(--line); }
-.garage-attention-preview li:last-child { border-bottom: 0; }
-.garage-attention-preview li:nth-child(even) { background: var(--panel-2); }
-.garage-attention-preview li > div { min-width: 0; display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 10px; }
-.garage-attention-preview li > div span { color: var(--green); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
-.garage-attention-preview li > div span.overdue { color: var(--red); }
-.garage-attention-preview li > div span.soon, .garage-attention-preview li > div span.unrecorded { color: var(--amber); }
-.garage-attention-preview li strong { overflow-wrap: anywhere; font-size: 10px; }
-.garage-attention-preview li small { max-width: 165px; color: var(--muted); font: 800 8px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; text-align: right; }
-.garage-attention-clear { margin: 0; padding: 18px; color: var(--muted); font-size: 10px; }
+.ownership-command-center { grid-column: 1 / -1; display: grid; gap: 12px; }
+.ownership-command-heading { padding: 16px 18px; display: flex; align-items: end; justify-content: space-between; gap: 22px; border: 1px solid var(--line); border-left: 5px solid var(--acid); background: var(--field); }
+.ownership-command-heading span, .ownership-command-center article > span, .ownership-command-center header span, .attention-item-heading small, .keeper-health-title small, .attention-item dt, .upcoming-groups small, .maintenance-timeline li span, .cost-forecast-block > span { color: var(--muted); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .11em; text-transform: uppercase; }
+.ownership-command-heading h2, .ownership-command-center h3 { margin: 5px 0 0; font: 900 28px/.95 "Arial Narrow", Arial, sans-serif; letter-spacing: -.02em; text-transform: uppercase; }
+.ownership-command-heading > p { max-width: 360px; margin: 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.ownership-health-layout { display: grid; grid-template-columns: minmax(260px, .72fr) minmax(0, 1.28fr); gap: 12px; }
+.keeper-health-score { padding: 20px; display: grid; align-content: start; border: 1px solid var(--line); border-top: 5px solid var(--green); background: var(--panel-2); }
+.keeper-health-score.fair, .keeper-health-score.attention { border-top-color: var(--amber); }
+.keeper-health-score.poor { border-top-color: var(--red); }
+.keeper-health-score.unknown { border-top-color: var(--muted); }
+.keeper-health-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.keeper-health-title > span { color: var(--paper); font-size: 8px; }
+.keeper-health-title small { padding: 4px 6px; border: 1px solid var(--line); }
+.keeper-health-score > strong { margin-top: 12px; display: flex; align-items: baseline; color: var(--green); font: 900 56px/.8 "Arial Narrow", Arial, sans-serif; letter-spacing: -.05em; }
+.keeper-health-score.fair > strong, .keeper-health-score.attention > strong { color: var(--amber); }
+.keeper-health-score.poor > strong { color: var(--red); }
+.keeper-health-score > strong small { margin-left: 7px; color: var(--muted); font: 900 12px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 0; }
+.keeper-health-score > strong.keeper-health-unscored { color: var(--muted); }
+.keeper-health-score h3 { color: var(--green); font-size: 20px; }
+.keeper-health-score.fair h3, .keeper-health-score.attention h3 { color: var(--amber); }
+.keeper-health-score.poor h3 { color: var(--red); }
+.keeper-health-score.unknown h3 { color: var(--muted); }
+.keeper-health-score > p { margin: 9px 0 0; color: var(--cream); font-size: 9px; line-height: 1.5; }
+.keeper-health-score ul { margin: 13px 0 0; padding: 12px 0 0; display: grid; gap: 7px; list-style: none; border-top: 1px solid var(--line); }
+.keeper-health-score li { padding-left: 14px; position: relative; color: var(--muted); font-size: 8px; line-height: 1.4; }
+.keeper-health-score li::before { width: 6px; height: 6px; position: absolute; top: 3px; left: 0; content: ""; border-radius: 50%; background: var(--muted); }
+.keeper-health-score li.positive::before { background: var(--green); }
+.keeper-health-score li.negative::before { background: var(--red); }
+.ownership-at-a-glance { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ownership-at-a-glance article { min-width: 0; padding: 16px; display: grid; align-content: start; gap: 8px; border: 1px solid var(--line); background: var(--field); }
+.ownership-at-a-glance strong { overflow-wrap: anywhere; font-size: 12px; line-height: 1.25; }
+.ownership-at-a-glance small { color: var(--muted); font-size: 8px; line-height: 1.4; }
+.ownership-at-a-glance a { margin-top: auto; color: var(--blue); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.ownership-primary-grid, .ownership-secondary-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); gap: 12px; align-items: start; }
+.ownership-primary-grid > section, .ownership-secondary-grid > section { min-width: 0; border: 1px solid var(--line); background: var(--field); }
+.ownership-primary-grid > section > header, .ownership-secondary-grid > section > header { min-height: 66px; padding: 14px 16px; display: flex; align-items: end; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); background: var(--panel-2); }
+.ownership-primary-grid header > b { min-width: 30px; padding: 6px; color: var(--paper); border: 1px solid var(--line); font: 900 13px ui-monospace, monospace; text-align: center; }
+.ownership-primary-grid header > a { color: var(--blue); font: 900 7px ui-monospace, monospace; text-transform: uppercase; }
+.attention-list { display: grid; }
+.attention-item { padding: 16px; border-bottom: 1px solid var(--line); box-shadow: inset 4px 0 var(--muted); }
+.attention-item:last-child { border-bottom: 0; }
+.attention-item:nth-child(even) { background: var(--panel-2); }
+.attention-item.critical { box-shadow: inset 4px 0 var(--red); }
+.attention-item.high { box-shadow: inset 4px 0 var(--amber); }
+.attention-item.medium { box-shadow: inset 4px 0 var(--blue); }
+.attention-item.low, .attention-item.info { box-shadow: inset 4px 0 var(--green); }
+.attention-item-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.attention-item-heading > span { padding: 4px 6px; color: var(--paper); border: 1px solid var(--line); background: var(--panel-2); font: 900 7px ui-monospace, monospace; letter-spacing: .09em; text-transform: uppercase; }
+.attention-item.critical .attention-item-heading > span { color: var(--red); border-color: var(--red); }
+.attention-item.high .attention-item-heading > span { color: var(--amber); border-color: var(--amber); }
+.attention-item.medium .attention-item-heading > span { color: var(--blue); border-color: var(--blue); }
+.attention-item h4 { margin: 11px 0 4px; font-size: 13px; }
+.attention-item > strong { color: var(--cream); font-size: 9px; }
+.attention-item > p { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.attention-item dl { margin: 12px 0 0; padding-top: 10px; display: grid; gap: 7px; border-top: 1px solid var(--line); }
+.attention-item dl > div { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 12px; }
+.attention-item dd { margin: 0; color: var(--cream); font-size: 8px; line-height: 1.45; }
+.ownership-empty { padding: 22px 18px; }
+.ownership-empty strong { font-size: 11px; }
+.ownership-empty p { margin: 6px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.ownership-panel-link { padding: 12px 16px; display: block; color: var(--blue); border-top: 1px solid var(--line); font: 900 8px ui-monospace, monospace; text-transform: uppercase; }
+.upcoming-groups > section { border-bottom: 1px solid var(--line); }
+.upcoming-groups > section:last-child { border-bottom: 0; }
+.upcoming-groups h4 { margin: 0; padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; color: var(--cream); background: var(--panel-2); font: 900 8px ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.upcoming-groups h4 b { color: var(--paper); }
+.upcoming-groups ul { margin: 0; padding: 0; list-style: none; }
+.upcoming-groups li { padding: 11px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; border-top: 1px solid var(--line); }
+.upcoming-groups li > div { min-width: 0; display: grid; gap: 4px; }
+.upcoming-groups li strong { overflow-wrap: anywhere; font-size: 9px; }
+.upcoming-groups li > span { color: var(--cream); font: 800 8px ui-monospace, monospace; text-align: right; }
+.ownership-guidance-note { margin: 0; padding: 13px 14px; color: var(--muted); border-top: 1px solid var(--line); font-size: 8px; line-height: 1.5; }
+.maintenance-timeline ol { margin: 0; padding: 18px 18px 6px; list-style: none; }
+.maintenance-timeline li { min-height: 66px; padding: 0 0 18px 30px; position: relative; }
+.maintenance-timeline li::before { width: 2px; position: absolute; top: 10px; bottom: -2px; left: 6px; content: ""; background: var(--line); }
+.maintenance-timeline li:last-child::before { display: none; }
+.maintenance-timeline li > i { width: 14px; height: 14px; position: absolute; top: 0; left: 0; z-index: 1; border: 3px solid var(--field); border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 1px var(--line); }
+.maintenance-timeline li.today > i { background: var(--acid); }
+.maintenance-timeline li > div { display: grid; gap: 4px; }
+.maintenance-timeline li strong { font-size: 10px; }
+.maintenance-timeline li small { color: var(--muted); font-size: 8px; line-height: 1.4; }
+.timeline-empty { margin: 0; padding: 0 18px 18px; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.cost-forecast-block { padding: 17px; border-bottom: 1px solid var(--line); }
+.cost-forecast-block > strong { margin-top: 7px; display: block; color: var(--green); font: 900 24px/.95 "Arial Narrow", Arial, sans-serif; }
+.cost-forecast-block.potential > strong { color: var(--amber); }
+.cost-forecast-block ul { margin: 13px 0 0; padding: 0; list-style: none; }
+.cost-forecast-block li { padding: 7px 0; display: flex; justify-content: space-between; gap: 12px; color: var(--cream); border-top: 1px solid var(--line); font-size: 8px; }
+.cost-forecast-block li b { white-space: nowrap; }
+.cost-forecast-block p { margin: 10px 0 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.ownership-method-note { border: 1px solid var(--line); background: var(--panel-2); }
+.ownership-method-note summary { padding: 12px 15px; cursor: pointer; color: var(--cream); font: 900 8px ui-monospace, monospace; text-transform: uppercase; }
+.ownership-method-note p { margin: 0; padding: 0 15px 15px; color: var(--muted); font-size: 8px; line-height: 1.55; }
 
 .configuration-panel {
   position: relative;
@@ -836,7 +898,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
     left: 0;
     z-index: 55;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 0;
     color: var(--header-muted);
     border-top: 1px solid rgba(255, 255, 255, .18);
@@ -883,15 +945,15 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .hero-intro { font-size: 13px; }
   .personal-garage-dashboard { padding: 24px 18px; grid-template-columns: 1fr; border-right: 0; border-left: 0; border-radius: 0; }
   .personal-garage-identity h1 { font-size: clamp(42px, 12vw, 58px); }
-  .garage-health-card { grid-column: 1; }
   .personal-garage-specs { grid-template-columns: 1fr 1fr; }
   .personal-garage-specs div { border-bottom: 1px solid var(--line); }
   .personal-garage-specs div:nth-child(2) { border-right: 0; }
   .personal-garage-specs div:nth-last-child(-n + 2) { border-bottom: 0; }
   .personal-garage-stats { grid-template-columns: 1fr 1fr; }
-  .garage-attention-preview > header { align-items: flex-start; flex-direction: column; gap: 8px; }
-  .garage-attention-preview li { grid-template-columns: 1fr; gap: 7px; }
-  .garage-attention-preview li small { max-width: none; padding-left: 84px; text-align: left; }
+  .ownership-command-heading { align-items: flex-start; flex-direction: column; }
+  .ownership-command-heading > p { max-width: none; }
+  .ownership-health-layout, .ownership-primary-grid, .ownership-secondary-grid { grid-template-columns: 1fr; }
+  .ownership-at-a-glance { grid-template-columns: 1fr 1fr; }
   .configuration-panel { border-right: 0; border-left: 0; border-radius: 0; }
   .garage-route-strip { margin-bottom: 10px; border-right: 0; border-left: 0; border-radius: 0; }
   .ownership-intelligence { margin-bottom: 10px; padding: 26px 18px; border-right: 0; border-left: 0; border-radius: 0; }
@@ -989,11 +1051,11 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   .personal-garage-specs, .personal-garage-stats { grid-template-columns: 1fr; }
   .personal-garage-specs div { border-right: 0; border-bottom: 1px solid var(--line) !important; }
   .personal-garage-specs div:last-child { border-bottom: 0 !important; }
-  .garage-attention-counts { grid-template-columns: 1fr; }
-  .garage-attention-counts > div { border-right: 0; border-bottom: 1px solid var(--line); }
-  .garage-attention-counts > div:last-child { border-bottom: 0; }
-  .garage-attention-preview li > div { grid-template-columns: 1fr; gap: 5px; }
-  .garage-attention-preview li small { padding-left: 0; }
+  .ownership-at-a-glance { grid-template-columns: 1fr; }
+  .attention-item-heading { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .attention-item dl > div { grid-template-columns: 1fr; gap: 4px; }
+  .upcoming-groups li { grid-template-columns: 1fr; }
+  .upcoming-groups li > span { text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1230,4 +1292,3 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
     font-size: 34px;
   }
 }
-
