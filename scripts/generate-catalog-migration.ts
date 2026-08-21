@@ -7,7 +7,7 @@ import {
   persistencePayload,
 } from "./catalog-validation";
 
-const requestedPath = process.argv[2];
+const requestedPath = process.argv.slice(2).find((argument) => argument !== "--");
 if (!requestedPath) {
   throw new Error("Provide a new migration path, for example: supabase/migrations/20260820220000_validate_catalog_fitments.sql");
 }

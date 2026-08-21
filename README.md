@@ -10,11 +10,12 @@ The platform library covers BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford,
 - E39 M52, M54, M62, and S62 schedules across Sedan, Touring, manual, and automatic configurations
 - E46 M52TU, M54, M56, and S54 schedules across Sedan, Coupe, Convertible, Touring, AWD, manual, automatic, and SMG configurations
 - F30 320i, 328i, 328d, 330e, 330i, 335i, and 340i trims
-- BMW E9x 3 Series/M3, F10 5 Series, and F10 M5
+- BMW E9x 3 Series/M3, grouped F10 5 Series/M5, and grouped F32/F33 4 Series Coupe/Convertible families
 - Subaru VA WRX, WRX STI, Type RA, and S209
 - Porsche 911 996.1, 996.2, 997.1, and 997.2 Carrera, Turbo, Targa, GT, RS, GTS, and special-model branches
 - Mazda MX-5 Miata NA, NB, NC, and ND, including Mazdaspeed, PRHT, RF, manual, and automatic branches
 - Enhanced research for Volkswagen Mk7/Mk8, additional modern BMW platforms, Audi B8/C7, Ford S550, Honda S2000, Lexus IS, Nissan Z/GTR, Toyota/Scion/Subaru 86/BRZ, Toyota Supra A90, and Mercedes-Benz G-Class platforms
+- Source-backed Nissan 350Z, 370Z, and GT-R NISMO variants retained as trims within their normal model families
 - 33 enhanced research workbooks normalized into 389 populated configuration profiles and schedules, 2,232 reusable service rows, 1,111 grouped issue records, and 114 ownership-intelligence notes
 - Generation, year, engine, drivetrain, and transmission applicability
 - Urgent, watch-list, and optional project lanes

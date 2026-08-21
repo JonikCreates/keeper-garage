@@ -4,13 +4,14 @@ import { join } from "node:path";
 import {
   KNOWN_ISSUES,
   PLATFORM_OPTIONS,
+  VEHICLE_FAMILY_OPTIONS,
   getDrivetrainOptions,
   getEngineOptions,
   getMaintenanceCatalog,
   getPlatform,
   getTransmissionOptions,
-  getTrimOptions,
-  getYearOptions,
+  getVehicleVariantOptions,
+  getYearOptionsForTrim,
   matchesApplicability,
   type VehicleProfile,
 } from "../lib/catalog";
@@ -148,46 +149,50 @@ export function enumerateCatalogConfigurations(): EnumerationResult {
   const configurations = new Map<string, CatalogConfiguration>();
   const failures: CatalogFailure[] = [];
 
-  for (const platform of PLATFORM_OPTIONS) {
-    const years = getYearOptions(platform.value);
-    if (!years.length) addEnumerationFailure(failures, partialConfiguration(platform.value), "Platform exposes no selectable model years.");
+  for (const family of VEHICLE_FAMILY_OPTIONS) {
+    const variants = getVehicleVariantOptions(family.value);
+    if (!variants.length) {
+      addEnumerationFailure(failures, partialConfiguration(family.platforms[0]), "Customer-facing model/generation exposes no selectable trims or variants.");
+      continue;
+    }
 
-    for (const year of years) {
-      const trims = getTrimOptions(platform.value, year);
-      if (!trims.length) {
-        addEnumerationFailure(failures, partialConfiguration(platform.value, year), "The UI exposes this year, but it has no selectable trim.");
+    for (const variant of variants) {
+      const years = getYearOptionsForTrim(variant.platform, variant.trim);
+      if (!years.length) {
+        addEnumerationFailure(failures, partialConfiguration(variant.platform, 0, variant.trim), "Trim/variant exposes no selectable production years.");
         continue;
       }
 
-      for (const trim of trims) {
-        const base = partialConfiguration(platform.value, year, trim.value);
-        const drivetrains = getDrivetrainOptions(platform.value, trim.value, year);
+      for (const year of years) {
+        const base = partialConfiguration(variant.platform, year, variant.trim);
+        const drivetrains = getDrivetrainOptions(variant.platform, variant.trim, year);
         if (!drivetrains.length) {
           addEnumerationFailure(failures, base, "The UI trim has no selectable drivetrain.");
           continue;
         }
 
         for (const drivetrain of drivetrains) {
-          const transmissions = getTransmissionOptions(platform.value, trim.value, drivetrain, year);
+          const transmissions = getTransmissionOptions(variant.platform, variant.trim, drivetrain, year);
           if (!transmissions.length) {
             addEnumerationFailure(failures, { ...base, drivetrain }, "The UI drivetrain has no selectable transmission.");
             continue;
           }
 
           for (const transmission of transmissions) {
-            const engines = getEngineOptions(platform.value, trim.value, year, transmission);
+            const engines = getEngineOptions(variant.platform, variant.trim, year, transmission);
             if (!engines.length) {
               addEnumerationFailure(failures, { ...base, drivetrain, transmission }, "The UI transmission has no selectable engine.");
               continue;
             }
 
             for (const engineCode of engines) {
+              const platform = getPlatform(variant.platform);
               const configuration: CatalogConfiguration = {
                 brand: platform.brand,
                 platform: platform.value,
                 model: platform.label,
                 year,
-                trim: trim.value,
+                trim: variant.trim,
                 engineCode,
                 drivetrain,
                 transmission,

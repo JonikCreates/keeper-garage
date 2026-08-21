@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { MaintenanceRecordRow } from "./supabase";
 import type { MaintenanceRecordInput } from "./useMaintenanceRecords";
 import { pageHref } from "./routing";
@@ -33,31 +33,6 @@ function optional(value: string) {
 function fluidLabel(record: MaintenanceRecordRow) {
   return [record.fluid_brand, record.fluid_product, record.fluid_viscosity ?? record.fluid_type].filter(Boolean).join(" · ");
 }
-type MaintenanceDraft = {
-  workPerformed: string;
-  mileage: string;
-  completedAt: string;
-  notes: string;
-  fluidBrand: string;
-  fluidProduct: string;
-  fluidType: string;
-  fluidViscosity: string;
-  fluidSpecification: string;
-  fluidQuantity: string;
-  fluidUnit: string;
-  filterProduct: string;
-  cost: string;
-};
-
-function readDraft(key: string): Partial<MaintenanceDraft> {
-  try {
-    const saved = sessionStorage.getItem(key);
-    return saved ? JSON.parse(saved) as Partial<MaintenanceDraft> : {};
-  } catch {
-    return {};
-  }
-}
-
 export function MaintenanceRecordPanel({ item, records, tracksFluid, signedIn, isGuest, hasSavedVehicle, defaultMileage, saving, onOpenAuth, onAdd }: MaintenanceRecordPanelProps) {
   const [workPerformed, setWorkPerformed] = useState("");
   const [mileage, setMileage] = useState(defaultMileage);

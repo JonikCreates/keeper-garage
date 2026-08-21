@@ -112,6 +112,8 @@ export type ProjectIdea = {
 
 export type PlatformOption = { value: VehiclePlatform; brand: VehicleBrand; label: string; yearStart: number; yearEnd: number };
 export type TrimOption = { platform: VehiclePlatform; value: string; label: string; yearStart: number; yearEnd: number; engines: string[]; drivetrains: string[]; transmissions: string[] };
+export type VehicleFamilyOption = { value: string; brand: VehicleBrand; label: string; platforms: VehiclePlatform[] };
+export type VehicleVariantOption = { value: string; platform: VehiclePlatform; trim: string; label: string; yearStart: number; yearEnd: number };
 
 const CORE_PLATFORM_OPTIONS: PlatformOption[] = [
   { value: "F30", brand: "BMW", label: "3 Series (F30)", yearStart: 2012, yearEnd: 2018 },
@@ -127,6 +129,34 @@ export const PLATFORM_OPTIONS: PlatformOption[] = [
   ...ENHANCED_PLATFORMS.filter((platform) => !existingPlatformIds.has(platform.value)) as PlatformOption[],
 ];
 
+const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
+  { value: "F10", brand: "BMW", label: "5 Series / M5 (F10)", platforms: ["F10", "F10M5"] },
+  { value: "F32", brand: "BMW", label: "4 Series Coupe / Convertible (F32/F33)", platforms: ["F32", "F33"] },
+];
+
+const groupedFamilyByPlatform = new Map(GROUPED_VEHICLE_FAMILIES.flatMap((family) =>
+  family.platforms.map((platform) => [platform, family] as const)));
+
+// Customer-facing families may contain multiple technical chassis. The profile,
+// maintenance matching, and persisted model continue to use the exact platform.
+export const VEHICLE_FAMILY_OPTIONS: VehicleFamilyOption[] = (() => {
+  const families: VehicleFamilyOption[] = [];
+  const seen = new Set<string>();
+  for (const platform of PLATFORM_OPTIONS) {
+    const grouped = groupedFamilyByPlatform.get(platform.value);
+    const family = grouped ?? {
+      value: platform.value,
+      brand: platform.brand,
+      label: platform.label,
+      platforms: [platform.value],
+    };
+    if (seen.has(family.value)) continue;
+    seen.add(family.value);
+    families.push(family);
+  }
+  return families;
+})();
+
 const newlySelectableExistingSchedules = new Set([
   "research-f10-535i-11-16-n55-6mt",
   "research-f10-550i-11-13-n63-6mt",
@@ -135,12 +165,16 @@ const newlySelectableExistingSchedules = new Set([
 
 const adaptedEnhancedVariants = ENHANCED_VARIANTS
   .filter((variant) => !existingPlatformIds.has(variant.platform) || newlySelectableExistingSchedules.has(variant.scheduleId))
-  .map((variant) => ({
-    ...variant,
-    trim: variant.scheduleId === "research-f30-f30-activehybrid-3" ? "ActiveHybrid 3" : variant.trim,
-    label: variant.scheduleId === "research-f30-f30-activehybrid-3" ? "ActiveHybrid 3" : variant.label,
-    drivetrain: normalizeEnhancedDrivetrain(variant.platform, variant.drivetrain),
-  }));
+  .map((variant) => {
+    const activeHybrid = variant.scheduleId === "research-f30-f30-activehybrid-3";
+    const nismo = ["Z33", "Z34"].includes(variant.platform) && variant.scheduleId.includes("-nismo-");
+    return {
+      ...variant,
+      trim: activeHybrid ? "ActiveHybrid 3" : nismo ? "NISMO" : variant.trim,
+      label: activeHybrid ? "ActiveHybrid 3" : nismo ? "NISMO" : variant.label,
+      drivetrain: normalizeEnhancedDrivetrain(variant.platform, variant.drivetrain),
+    };
+  });
 
 const catalogVariants = [
   ...EXPANDED_VARIANTS,
@@ -220,6 +254,42 @@ export function getTrimOptions(platform: VehicleProfile["platform"], year?: numb
   return [...manualOptions, ...expandedOptions];
 }
 
+export function getVehicleFamilyOptions(brand: VehicleBrand) {
+  return VEHICLE_FAMILY_OPTIONS.filter((family) => family.brand === brand);
+}
+
+export function getVehicleFamilyForPlatform(platform: VehiclePlatform) {
+  return groupedFamilyByPlatform.get(platform)
+    ?? VEHICLE_FAMILY_OPTIONS.find((family) => family.platforms.includes(platform))
+    ?? VEHICLE_FAMILY_OPTIONS[0];
+}
+
+export function vehicleVariantKey(platform: VehiclePlatform, trim: string) {
+  return `${encodeURIComponent(platform)}::${encodeURIComponent(trim)}`;
+}
+
+export function getVehicleVariantOptions(familyValue: string) {
+  const family = VEHICLE_FAMILY_OPTIONS.find((candidate) => candidate.value === familyValue);
+  if (!family) return [];
+  return family.platforms.flatMap((platform) => getTrimOptions(platform).map((trim): VehicleVariantOption => {
+    const bodyLabel = family.value === "F32"
+      ? platform === "F33" ? `${trim.label} Convertible` : `${trim.label} Coupe`
+      : trim.label;
+    return {
+      value: vehicleVariantKey(platform, trim.value),
+      platform,
+      trim: trim.value,
+      label: bodyLabel,
+      yearStart: trim.yearStart,
+      yearEnd: trim.yearEnd,
+    };
+  }));
+}
+
+export function getVehicleVariant(familyValue: string, value: string) {
+  return getVehicleVariantOptions(familyValue).find((variant) => variant.value === value);
+}
+
 export function getPlatform(platform: VehicleProfile["platform"]) {
   return PLATFORM_OPTIONS.find((option) => option.value === platform) ?? PLATFORM_OPTIONS[0];
 }
@@ -250,6 +320,18 @@ export function getYearOptions(platform: VehicleProfile["platform"]) {
   const trimRanges = TRIM_OPTIONS.filter((trim) => trim.platform === platform);
   const ranges = [...variantRanges, ...trimRanges];
   if (!ranges.length) return Array.from({ length: option.yearEnd - option.yearStart + 1 }, (_, index) => option.yearEnd - index);
+  const years = new Set<number>();
+  for (const range of ranges) {
+    for (let year = range.yearStart; year <= range.yearEnd; year += 1) years.add(year);
+  }
+  return [...years].sort((left, right) => right - left);
+}
+
+export function getYearOptionsForTrim(platform: VehicleProfile["platform"], trim: string) {
+  const ranges = [
+    ...catalogVariants.filter((variant) => variant.platform === platform && variant.trim === trim),
+    ...TRIM_OPTIONS.filter((option) => option.platform === platform && option.value === trim),
+  ];
   const years = new Set<number>();
   for (const range of ranges) {
     for (let year = range.yearStart; year <= range.yearEnd; year += 1) years.add(year);

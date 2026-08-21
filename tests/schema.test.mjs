@@ -78,7 +78,7 @@ const testerCatalogMigrationUrl = new URL(
 );
 
 const catalogRegistryMigrationUrl = new URL(
-  "../supabase/migrations/20260820220000_validate_catalog_fitments.sql",
+  "../supabase/migrations/20260821213000_group_vehicle_families.sql",
   import.meta.url,
 );
 
@@ -246,7 +246,7 @@ test("tester catalog migration removes stale fitment checks without weakening ga
 test("generated catalog registry validates exact fitments while preserving owner-only RLS", async () => {
   const sql = await readFile(catalogRegistryMigrationUrl, "utf8");
   assert.match(sql, /keeper-catalog-manifest/i);
-  assert.match(sql, /keeper-catalog-count: 1701/i);
+  assert.match(sql, /keeper-catalog-count: 1707/i);
   assert.match(sql, /create table if not exists public\.vehicle_catalog_fitments/i);
   assert.match(sql, /alter table public\.vehicle_catalog_fitments enable row level security/i);
   assert.match(sql, /revoke all on public\.vehicle_catalog_fitments from public, anon, authenticated/i);

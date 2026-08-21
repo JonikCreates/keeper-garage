@@ -18,6 +18,23 @@ test("My Garage loads every owned vehicle and keeps add separate from edit", asy
   assert.match(app, /garage\.vehicles\.length > 1 && <label className="mobile-garage-switcher">/);
 });
 
+test("new vehicle picker requires explicit make, family, variant, and year choices in order", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+  const selection = await readFile(new URL("../src/vehicleSelection.ts", import.meta.url), "utf8");
+  const picker = app.match(/<div className="config-grid">([\s\S]*?)<\/div>/)?.[1] ?? "";
+
+  assert.ok(picker.indexOf("<label>Make") < picker.indexOf("<label>Model / Generation"));
+  assert.ok(picker.indexOf("<label>Model / Generation") < picker.indexOf("<label>Trim / Variant"));
+  assert.ok(picker.indexOf("<label>Trim / Variant") < picker.indexOf("<label>Year"));
+  assert.match(picker, /value=\{vehicleSelection\.brand \?\? ""\}/);
+  assert.match(picker, /Select make/);
+  assert.match(picker, /Select trim first/);
+  assert.match(app, /if \(!auth\.ready \|\| auth\.access\.kind !== "guest"\) return/);
+  assert.match(selection, /brand: null,[\s\S]*family: null,[\s\S]*variant: null,[\s\S]*year: null/);
+  assert.match(selection, /selectVehicleFamily[\s\S]*variant: null, year: null/);
+  assert.match(selection, /selectVehicleVariant[\s\S]*year: null/);
+});
+
 test("Garage prioritizes a personal vehicle dashboard using existing ownership state", async () => {
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
   const ownership = await readFile(new URL("../src/OwnershipDashboard.tsx", import.meta.url), "utf8");
@@ -35,7 +52,7 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
   assert.match(ownership, /Keeper Health/);
   assert.match(ownership, /What needs attention/);
   assert.match(ownership, /Upcoming maintenance/);
-  assert.match(ownership, /Estimated upcoming cost/);
+  assert.match(ownership, /Vehicle data/);
   assert.match(intelligence, /assessPriority/);
   assert.match(intelligence, /More data needed/);
   assert.match(app, /Vehicle Settings/);

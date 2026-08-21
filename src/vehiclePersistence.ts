@@ -49,11 +49,17 @@ export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
   if (!platform) {
     throw new Error(`Saved vehicle does not map to a Keeper platform: ${vehicle.brand} / ${vehicle.model}`);
   }
+  // Earlier Nissan imports exposed NISMO schedules under the generic Z trim.
+  // Their manual transmission label is unambiguous, so restore the richer trim
+  // without rewriting the saved row or guessing at ambiguous automatic cars.
+  const legacyNismoManual = ["Z33", "Z34"].includes(platform.value)
+    && ["350Z", "370Z"].includes(vehicle.trim)
+    && vehicle.transmission === "6-speed manual";
   return {
     brand: vehicle.brand,
     platform: platform.value,
     year: vehicle.model_year,
-    trim: vehicle.trim,
+    trim: legacyNismoManual ? "NISMO" : vehicle.trim,
     engineCode: vehicle.engine_code,
     drivetrain: vehicle.drivetrain,
     transmission: vehicle.transmission,

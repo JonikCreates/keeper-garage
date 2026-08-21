@@ -8,11 +8,13 @@ import {
   getDrivetrainOptions,
   getMaintenanceCatalog,
   getPlatform,
-  getPlatformOptions,
   getTransmissionOptions,
   getTrimOptions,
-  getYearOptions,
-  getYearOptionsForBrand,
+  getVehicleFamilyForPlatform,
+  getVehicleFamilyOptions,
+  getVehicleVariant,
+  getVehicleVariantOptions,
+  getYearOptionsForTrim,
   inferEngine,
   matchesApplicability,
   type MaintenanceCatalogItem,
@@ -45,6 +47,15 @@ import { useMaintenanceRecords } from "./useMaintenanceRecords";
 import { useTrackedMaintenance } from "./useTrackedMaintenance";
 import type { MaintenanceRecordRow, VehicleMaintenanceItemRow, VehicleRemovalSummary } from "./supabase";
 import { getPageFromLocation, pageHref, type AppPage } from "./routing";
+import {
+  EMPTY_VEHICLE_SELECTION,
+  selectVehicleBrand,
+  selectVehicleFamily,
+  selectVehicleVariant,
+  selectVehicleYear,
+  selectionFromProfile,
+  vehicleSelectionIsComplete,
+} from "./vehicleSelection";
 
 type LibraryView = "mine" | "all" | string;
 type Theme = "dark" | "light";
@@ -274,10 +285,9 @@ function initialConfiguredProfile(): VehicleProfile {
 
 export default function App() {
   const [profile, setProfile] = useState<VehicleProfile>(initialConfiguredProfile);
-  // A saved/complete VehicleProfile always has a year and platform, but a new
-  // garage configuration intentionally starts incomplete: Brand -> Year -> Model.
-  const [configurationYear, setConfigurationYear] = useState<number | null>(null);
-  const [configurationPlatform, setConfigurationPlatform] = useState<VehicleProfile["platform"] | null>(null);
+  // The draft stays independent from the last complete profile so a new garage
+  // entry can require explicit Make -> Family -> Variant -> Year choices.
+  const [vehicleSelection, setVehicleSelection] = useState(EMPTY_VEHICLE_SELECTION);
   const [libraryView, setLibraryView] = useState<LibraryView>("mine");
   const [libraryQuery, setLibraryQuery] = useState("");
   const [maintenanceFilter, setMaintenanceFilter] = useState<MaintenanceFilter>("all");
@@ -337,8 +347,7 @@ export default function App() {
   const auth = useKeeperAuth();
   const loadVehicle = useCallback((vehicle: VehicleProfile) => {
     setProfile(vehicle);
-    setConfigurationYear(vehicle.year);
-    setConfigurationPlatform(vehicle.platform);
+    setVehicleSelection(selectionFromProfile(vehicle));
     setLibraryView("mine");
     setWatchExpanded(false);
   }, []);
@@ -347,25 +356,30 @@ export default function App() {
   const trackedMaintenance = useTrackedMaintenance(auth.dataUser, garage.vehicleId);
 
   useEffect(() => {
-    if (auth.access.kind !== "guest") return;
+    if (!auth.ready || auth.access.kind !== "guest") return;
     queueMicrotask(() => {
       setProfile(DEFAULT_PROFILE);
-      setConfigurationYear(DEFAULT_PROFILE.year);
-      setConfigurationPlatform(DEFAULT_PROFILE.platform);
+      setVehicleSelection(selectionFromProfile(DEFAULT_PROFILE));
     });
-  }, [auth.access.kind]);
+  }, [auth.access.kind, auth.ready]);
 
   const platform = getPlatform(profile.platform);
-  const years = getYearOptionsForBrand(profile.brand);
-  const platformOptions = configurationYear ? getPlatformOptions(profile.brand, configurationYear) : [];
-  const configurationReady = configurationYear !== null && configurationPlatform !== null;
-  const trimOptions = configurationReady ? getTrimOptions(profile.platform, profile.year) : [];
+  const displayFamily = getVehicleFamilyForPlatform(profile.platform);
+  const displayVariant = getVehicleVariantOptions(displayFamily.value)
+    .find((variant) => variant.platform === profile.platform && variant.trim === profile.trim);
+  const familyOptions = vehicleSelection.brand ? getVehicleFamilyOptions(vehicleSelection.brand) : [];
+  const variantOptions = vehicleSelection.family ? getVehicleVariantOptions(vehicleSelection.family) : [];
+  const selectedVariant = vehicleSelection.family && vehicleSelection.variant
+    ? getVehicleVariant(vehicleSelection.family, vehicleSelection.variant)
+    : undefined;
+  const years = selectedVariant ? getYearOptionsForTrim(selectedVariant.platform, selectedVariant.trim) : [];
+  const configurationReady = vehicleSelectionIsComplete(vehicleSelection) && Boolean(selectedVariant);
   const libraryTrimOptions = getTrimOptions(profile.platform);
   const drivetrains = configurationReady ? getDrivetrainOptions(profile.platform, profile.trim, profile.year) : [];
   const transmissions = configurationReady ? getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain, profile.year) : [];
   const engines = configurationReady ? getEngineOptions(profile.platform, profile.trim, profile.year, profile.transmission) : [];
   const selectedEngineLabel = engineLabels[profile.engineCode] ?? getEngineLabel(profile);
-  const profileLabel = `${profile.year} ${profile.brand} ${profile.trim} · ${platform.label}`;
+  const profileLabel = `${profile.year} ${profile.brand} ${displayVariant?.label ?? profile.trim} · ${displayFamily.label}`;
 
   const maintenance = useMemo(() => getMaintenanceCatalog(profile), [profile]);
   const matchedIssues = useMemo(
@@ -507,39 +521,25 @@ export default function App() {
 
   function selectBrand(brand: VehicleBrand) {
     resetGenerationView();
-    setConfigurationYear(null);
-    setConfigurationPlatform(null);
+    setVehicleSelection(selectVehicleBrand(brand));
+  }
 
-    // Keep the completed profile structurally valid while the new configuration
-    // is incomplete. The downstream selectors stay blank/disabled until Year
-    // and Model are explicitly chosen.
-    const representative = getPlatformOptions(brand)[0];
-    if (!representative) return;
-    setProfile((current) =>
-      resolveProfile(representative.value, getYearOptions(representative.value)[0] ?? representative.yearEnd, undefined, { ...current, brand }),
-    );
+  function selectFamily(family: string) {
+    resetGenerationView();
+    setVehicleSelection((current) => selectVehicleFamily(current, family));
+  }
+
+  function selectVariant(variant: string) {
+    if (!vehicleSelection.family) return;
+    resetGenerationView();
+    setVehicleSelection((current) => selectVehicleVariant(current, variant));
   }
 
   function selectYear(year: number) {
+    if (!selectedVariant) return;
     resetGenerationView();
-    setConfigurationYear(year);
-    setConfigurationPlatform(null);
-
-    const representative = getPlatformOptions(profile.brand, year)[0];
-    if (!representative) return;
-    setProfile((current) => resolveProfile(representative.value, year, undefined, current));
-  }
-
-  function selectPlatform(nextPlatform: VehicleProfile["platform"]) {
-    if (configurationYear === null) return;
-    resetGenerationView();
-    setConfigurationPlatform(nextPlatform);
-    setProfile((current) => resolveProfile(nextPlatform, configurationYear, undefined, current));
-  }
-
-  function selectTrim(trim: string) {
-    if (!configurationReady) return;
-    setProfile((current) => resolveProfile(current.platform, current.year, trim, current));
+    setVehicleSelection((current) => selectVehicleYear(current, year));
+    setProfile((current) => resolveProfile(selectedVariant.platform, year, selectedVariant.trim, current));
   }
 
   function selectDrivetrain(drivetrain: string) {
@@ -568,8 +568,8 @@ export default function App() {
 
   const editing = Boolean(garage.vehicleId);
 
-  if (configurationYear === null || configurationPlatform === null) {
-    setSaveNotice("Choose a year and model before saving this vehicle.");
+  if (!configurationReady) {
+    setSaveNotice("Choose a make, model/generation, trim/variant, and year before saving this vehicle.");
     return;
   }
 
@@ -753,8 +753,7 @@ export default function App() {
               {auth.dataUser ? <>
                 <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") {
                     garage.startNewVehicle();
-                    setConfigurationYear(null);
-                    setConfigurationPlatform(null);
+                    setVehicleSelection(EMPTY_VEHICLE_SELECTION);
                   } else garage.selectVehicle(event.target.value); }}>
                   {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} {vehicle.trim}</option>)}
                   {auth.access.canSaveGarage && <option value="new">＋ Add another vehicle</option>}
@@ -764,18 +763,21 @@ export default function App() {
             </div>
             <p className="configuration-flow">{hasPersonalVehicle ? "Update the exact specification or ownership details below." : "Choose in order. Each selection narrows the choices that follow."}</p>
             <div className="config-grid">
-              <label>Brand<select value={profile.brand} onChange={(event) => selectBrand(event.target.value as VehicleBrand)}>{BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
-              <label>Year<select value={configurationYear ?? ""} onChange={(event) => selectYear(Number(event.target.value))}>
-                <option value="" disabled>Select year</option>
+              <label>Make<select value={vehicleSelection.brand ?? ""} onChange={(event) => selectBrand(event.target.value as VehicleBrand)}>
+                <option value="" disabled>Select make</option>
+                {BRAND_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select></label>
+              <label>Model / Generation<select value={vehicleSelection.family ?? ""} disabled={!vehicleSelection.brand} onChange={(event) => selectFamily(event.target.value)}>
+                <option value="" disabled>{vehicleSelection.brand ? "Select model / generation" : "Select make first"}</option>
+                {familyOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select></label>
+              <label>Trim / Variant<select value={vehicleSelection.variant ?? ""} disabled={!vehicleSelection.family} onChange={(event) => selectVariant(event.target.value)}>
+                <option value="" disabled>{vehicleSelection.family ? "Select trim / variant" : "Select model first"}</option>
+                {variantOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+              </select></label>
+              <label>Year<select value={vehicleSelection.year ?? ""} disabled={!selectedVariant} onChange={(event) => selectYear(Number(event.target.value))}>
+                <option value="" disabled>{selectedVariant ? "Select year" : "Select trim first"}</option>
                 {years.map((year) => <option value={year} key={year}>{year}</option>)}
-              </select></label>
-              <label>Model<select value={configurationPlatform ?? ""} disabled={configurationYear === null} onChange={(event) => selectPlatform(event.target.value as VehicleProfile["platform"])}>
-                <option value="" disabled>{configurationYear === null ? "Select year first" : "Select model"}</option>
-                {platformOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
-              </select></label>
-              <label>Type<select value={configurationReady ? profile.trim : ""} disabled={!configurationReady} onChange={(event) => selectTrim(event.target.value)}>
-                {!configurationReady && <option value="">Select model first</option>}
-                {trimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
               </select></label>
               <label>Engine<select value={configurationReady ? profile.engineCode : ""} disabled={!configurationReady || engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>
                 {!configurationReady && <option value="">Select model first</option>}
@@ -948,7 +950,7 @@ export default function App() {
 
         {page === "issues" && <>
         <section className="library-section" id="library">
-          <header className="section-heading"><div><p className="eyebrow">Stored research · {KNOWN_ISSUES.length} patterns</p><h2>{platform.label} issue library.</h2></div><p>Coverage follows the selected generation and its U.S.-market engine and transmission combinations. Each record keeps fitment, evidence type, symptoms, and next action visible.</p></header>
+          <header className="section-heading"><div><p className="eyebrow">Stored research · {KNOWN_ISSUES.length} patterns</p><h2>{displayFamily.label} issue library.</h2></div><p>Coverage follows the selected generation and its U.S.-market engine and transmission combinations. Each record keeps fitment, evidence type, symptoms, and next action visible.</p></header>
           <div className="library-toolbar">
             <label className="search-field"><span>⌕</span><input value={libraryQuery} onChange={(event) => setLibraryQuery(event.target.value)} placeholder="Search a part, symptom, issue, or common name…" aria-label="Search Known Issues" /></label>
             <label><span>Fitment view</span><select value={libraryView} disabled={Boolean(libraryQuery.trim())} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option><option value="all">All {profile.platform} research</option>{libraryTrimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
