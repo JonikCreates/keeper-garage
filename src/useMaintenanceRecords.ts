@@ -35,6 +35,12 @@ export type MaintenanceRecordInput = {
   costCents: number | null;
 };
 
+function compareMaintenanceRecordsNewestFirst(left: MaintenanceRecordRow, right: MaintenanceRecordRow) {
+  const completedAtOrder = right.completed_at.localeCompare(left.completed_at);
+  if (completedAtOrder !== 0) return completedAtOrder;
+  return right.created_at.localeCompare(left.created_at);
+}
+
 export function useMaintenanceRecords(user: User | null, vehicleId: string | null) {
   const [state, setState] = useState(initialState);
   const scope = user && vehicleId ? `${user.id}:${vehicleId}` : null;
@@ -82,6 +88,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
       existing.push(record);
       grouped.set(record.maintenance_slug, existing);
     }
+    for (const history of grouped.values()) history.sort(compareMaintenanceRecordsNewestFirst);
     return grouped;
   }, [scope, state.records, state.scope]);
 
@@ -117,7 +124,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
     }
     setState((current) => ({
       ...current,
-      records: [data, ...current.records],
+      records: [...current.records, data].sort(compareMaintenanceRecordsNewestFirst),
       savingSlug: null,
       error: null,
     }));
