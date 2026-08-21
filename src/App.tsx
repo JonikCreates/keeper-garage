@@ -726,7 +726,11 @@ export default function App() {
               <div><span>Recorded spending</span><strong>{formatUsdCents(totalSpentCents)}</strong></div>
               <div><span>Matched research</span><strong>{matchedIssues.length} patterns</strong></div>
             </div>
-            <OwnershipDashboard insights={ownershipInsights} currentMileage={currentVehicleMileage} maintenanceHref={pageHref("maintenance")} issuesHref={pageHref("issues")} />
+            <OwnershipDashboard
+  insights={ownershipInsights}
+  currentMileage={currentVehicleMileage}
+  maintenanceHref={pageHref("maintenance")}
+/>
           </section> : <div className="hero-copy">
             <p className="eyebrow">Multi-brand workshop archive · {BRAND_OPTIONS.length} enthusiast makes</p>
             <h1>Know what your car needs next.</h1>
