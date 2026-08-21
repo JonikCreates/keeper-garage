@@ -93,6 +93,16 @@ test("saved vehicles keep repeatable maintenance completion history", async () =
   assert.match(app, /auth\.access\.canSaveMaintenance/);
 });
 
+test("historical maintenance backfills cannot replace the most recent service", async () => {
+  const hook = await readFile(new URL("../src/useMaintenanceRecords.ts", import.meta.url), "utf8");
+
+  assert.match(hook, /right\.completed_at\.localeCompare\(left\.completed_at\)/);
+  assert.match(hook, /right\.created_at\.localeCompare\(left\.created_at\)/);
+  assert.match(hook, /for \(const history of grouped\.values\(\)\) history\.sort\(compareMaintenanceRecordsNewestFirst\)/);
+  assert.match(hook, /records: \[\.\.\.current\.records, data\]\.sort\(compareMaintenanceRecordsNewestFirst\)/);
+  assert.doesNotMatch(hook, /records: \[data, \.\.\.current\.records\]/);
+});
+
 test("maintenance is importance-sorted and accepts issue and custom work items", async () => {
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
   const tracked = await readFile(new URL("../src/useTrackedMaintenance.ts", import.meta.url), "utf8");
