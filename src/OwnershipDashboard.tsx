@@ -196,44 +196,46 @@ export function OwnershipDashboard({
           {visibleAttention.length ? (
             <div className="attention-list">
               {visibleAttention.map((item) => (
-                <article
-                  className={`attention-item ${item.priority}`}
+                <details
+                  className={`attention-item attention-collapsible ${item.priority}`}
                   key={item.slug}
                 >
-                  <div className="attention-item-heading">
-                    <span>{priorityLabels[item.priority]}</span>
-                    <small>
-                      {recommendationLabel(item.recommendationType)}
-                    </small>
-                  </div>
-
-                  <h4>{item.name}</h4>
-                  <strong>{item.reason}</strong>
-                  <p>{item.description}</p>
-
-                  <dl>
+                  <summary className="attention-summary">
                     <div>
-                      <dt>If delayed</dt>
-                      <dd>{item.consequence}</dd>
+                      <span>{priorityLabels[item.priority]}</span>
+                      <strong>{item.name}</strong>
                     </div>
+                    <small>{recommendationLabel(item.recommendationType)}</small>
+                  </summary>
 
-                    {item.dueLabel && (
+                  <div className="attention-expanded">
+                    <strong>{item.reason}</strong>
+                    <p>{item.description}</p>
+
+                    <dl>
                       <div>
-                        <dt>Plan point</dt>
-                        <dd>{item.dueLabel}</dd>
+                        <dt>If delayed</dt>
+                        <dd>{item.consequence}</dd>
                       </div>
-                    )}
 
-                    <div>
-                      <dt>Typical cost</dt>
-                      <dd>
-                        {item.cost
-                          ? `${range(item.cost.min, item.cost.max)} estimated`
-                          : "Not estimated from current data"}
-                      </dd>
-                    </div>
-                  </dl>
-                </article>
+                      {item.dueLabel && (
+                        <div>
+                          <dt>Plan point</dt>
+                          <dd>{item.dueLabel}</dd>
+                        </div>
+                      )}
+
+                      <div>
+                        <dt>Typical cost</dt>
+                        <dd>
+                          {item.cost
+                            ? `${range(item.cost.min, item.cost.max)} estimated`
+                            : "Not estimated from current data"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                </details>
               ))}
             </div>
           ) : (

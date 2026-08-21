@@ -687,11 +687,20 @@ export default function App() {
       <main id="top">
         {page === "garage" && <>
         <section className={`hero ${hasPersonalVehicle ? "personal-garage-layout" : ""}`}>
-          {hasPersonalVehicle && selectedSavedVehicle ? <section className="personal-garage-dashboard" aria-labelledby="personal-garage-title">
-            <header className="personal-garage-identity">
-              <p className="eyebrow">{garageTitle}</p>
-              <span>{selectedSavedVehicle.nickname}</span>
-              <h1 id="personal-garage-title">{selectedSavedVehicle.model_year} {selectedSavedVehicle.brand} {selectedSavedVehicle.trim}</h1>
+{hasPersonalVehicle && selectedSavedVehicle ? <section className="personal-garage-dashboard" aria-labelledby="personal-garage-title">
+  <header className="personal-garage-identity">
+    <p className="eyebrow">{garageTitle}</p>
+    <span>{selectedSavedVehicle.nickname}</span>
+
+    <div className="personal-garage-title-block">
+      <span className="personal-garage-year">
+        {selectedSavedVehicle.model_year}
+      </span>
+
+      <h1 id="personal-garage-title">
+        {selectedSavedVehicle.brand} {selectedSavedVehicle.trim}
+      </h1>
+    </div>
               <p><strong>{currentVehicleMileage === null ? "Mileage not entered" : `${currentVehicleMileage.toLocaleString()} miles`}</strong><i />{selectedSavedVehicle.model}</p>
 {garage.vehicles.length > 1 && <label className="mobile-garage-switcher">
   <span>Switch vehicle</span>
