@@ -12,6 +12,7 @@
 .home-theme-toggle:hover { color: var(--button-ink); border-color: var(--acid); background: var(--acid); }
 .home-main { max-width: 1260px; margin: 0 auto; padding: 26px 0 18px; }
 .home-hero { min-height: 510px; padding: 72px 64px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; border: 1px solid var(--line); border-top: 5px solid var(--acid); border-radius: 3px; background: var(--panel); box-shadow: 0 2px 5px var(--shadow); }
+.home-hero-logo { width: 88px; height: 88px; margin-bottom: 24px; }
 .home-kicker { margin: 0 0 18px; color: var(--acid); font: 900 11px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .17em; text-transform: uppercase; }
 .home-hero h1 { max-width: 900px; margin: 0; font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif; font-size: clamp(64px, 7.2vw, 104px); line-height: .92; font-weight: 900; letter-spacing: -.04em; text-transform: uppercase; }
 .home-hero h1 span { display: block; }

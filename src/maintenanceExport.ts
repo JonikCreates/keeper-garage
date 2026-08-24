@@ -1,8 +1,18 @@
 import type { MaintenanceRecordRow, VehicleRow } from "./supabase";
+import { KEEPER_LOGO_ASSETS } from "./KeeperBrand";
 
 export type ExportVehicle = Pick<VehicleRow, "brand" | "model" | "model_year" | "trim" | "engine_code" | "transmission">;
 
 const UNKNOWN_WORK = "completed service — details not recorded";
+
+function loadKeeperExportLogo() {
+  return new Promise<HTMLImageElement | null>((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = KEEPER_LOGO_ASSETS.onLight;
+  });
+}
 
 // REVIEW DECISION: aggregate integer cents and format only at the UI/export boundary so saved totals stay exact.
 export function maintenanceTotalCents(records: MaintenanceRecordRow[]) {
@@ -99,6 +109,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords: MaintenanceRecordRow[]) {
   const records = completedExportRecords(sourceRecords);
+  const keeperLogo = await loadKeeperExportLogo();
   const { jsPDF } = await import("jspdf");
   const document = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter", compress: true });
   const pageWidth = 612;
@@ -112,10 +123,11 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
   const totalSpent = maintenanceTotalCents(records);
 
   function drawHeader(continued: boolean) {
+    if (keeperLogo) document.addImage(keeperLogo, "PNG", margin, 31, 38, 38);
     document.setTextColor(20, 91, 151);
     document.setFont("helvetica", "bold");
     document.setFontSize(10);
-    document.text("KEEPER GARAGE", margin, 52);
+    document.text("KEEPER GARAGE", keeperLogo ? margin + 42 : margin, 52);
     document.setDrawColor(20, 91, 151);
     document.setLineWidth(2);
     document.line(margin, 62, pageWidth - margin, 62);
@@ -209,6 +221,7 @@ function wrappedCanvasLines(context: CanvasRenderingContext2D, text: string, max
 
 export async function createMaintenancePng(vehicle: ExportVehicle, sourceRecords: MaintenanceRecordRow[]) {
   const records = completedExportRecords(sourceRecords);
+  const keeperLogo = await loadKeeperExportLogo();
   const width = 1_200;
   const scale = 2;
   const margin = 72;
@@ -228,7 +241,8 @@ export async function createMaintenancePng(vehicle: ExportVehicle, sourceRecords
   context.fillRect(0, 0, width, logicalHeight);
   context.fillStyle = "#145b97";
   context.font = "700 18px Arial";
-  context.fillText("KEEPER GARAGE", margin, 64);
+  if (keeperLogo) context.drawImage(keeperLogo, margin - 8, 21, 68, 68);
+  context.fillText("KEEPER GARAGE", keeperLogo ? margin + 56 : margin, 64);
   context.fillRect(margin, 82, width - margin * 2, 4);
   context.fillStyle = "#141e2a";
   context.font = "700 42px Arial";

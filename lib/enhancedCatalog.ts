@@ -1,13 +1,15 @@
-import {
-  ENHANCED_INSIGHTS,
-  ENHANCED_ISSUES,
-  ENHANCED_SCHEDULE_PROFILES,
-  ENHANCED_SCHEDULE_ROWS,
-  ENHANCED_SCHEDULES,
-  type EnhancedIssueRecord,
-  type EnhancedScheduleProfileRecord,
-  type EnhancedScheduleRow,
+import type {
+  EnhancedIssueRecord,
+  EnhancedScheduleProfileRecord,
+  EnhancedScheduleRow,
 } from "./enhancedVehicleData";
+import {
+  RESEARCH_INSIGHTS,
+  RESEARCH_ISSUES,
+  RESEARCH_SCHEDULE_PROFILES,
+  RESEARCH_SCHEDULE_ROWS,
+  RESEARCH_SCHEDULES,
+} from "./researchVehicleData";
 import type {
   CatalogSource,
   KnownIssue,
@@ -122,11 +124,11 @@ function profileScore(profile: VehicleProfile, candidate: EnhancedScheduleProfil
 }
 
 function matchingProfiles(profile: VehicleProfile) {
-  const scored = ENHANCED_SCHEDULE_PROFILES
+  const scored = RESEARCH_SCHEDULE_PROFILES
     .map((candidate) => ({ candidate, score: profileScore(profile, candidate) }))
     .filter((match) => match.score >= 0)
     .sort((left, right) => right.score - left.score ||
-      (ENHANCED_SCHEDULES[right.candidate.scheduleId]?.length ?? 0) - (ENHANCED_SCHEDULES[left.candidate.scheduleId]?.length ?? 0));
+      (RESEARCH_SCHEDULES[right.candidate.scheduleId]?.length ?? 0) - (RESEARCH_SCHEDULES[left.candidate.scheduleId]?.length ?? 0));
   if (!scored.length) return [];
   const best = scored[0].score;
   return scored.filter((match) => match.score >= best - 1).map((match) => match.candidate);
@@ -179,7 +181,7 @@ function source(url: string, row: EnhancedScheduleRow, index: number): CatalogSo
   };
 }
 
-function toCatalogItem(row: EnhancedScheduleRow, profile: VehicleProfile, sourceWorkbook: string, scheduleId: string): MaintenanceCatalogItem {
+function toCatalogItem(row: EnhancedScheduleRow, profile: VehicleProfile, sourceWorkbook: string, scheduleId: string, rowKey: string): MaintenanceCatalogItem {
   const guidance = guidanceFor(row);
   const label = intervalLabel(row.mileage, row.months, row.trigger);
   const hasFactoryPosition = guidance === "factory" || guidance === "factory-and-preventive";
@@ -188,7 +190,7 @@ function toCatalogItem(row: EnhancedScheduleRow, profile: VehicleProfile, source
     .filter((url): url is string => Boolean(url))
     .map((url, index) => source(url, row, index));
   return {
-    slug: `${scheduleId}-${slug(row.name)}`,
+    slug: `${scheduleId}-${slug(row.name)}${/^research-r3[23]-/.test(scheduleId) ? `-${rowKey.slice(-8)}` : ""}`,
     name: row.name,
     shortName: row.name,
     category: row.category,
@@ -237,12 +239,12 @@ function toCatalogItem(row: EnhancedScheduleRow, profile: VehicleProfile, source
 }
 
 export function getEnhancedMaintenanceCatalog(profile: VehicleProfile) {
-  const match = matchingProfiles(profile).find((candidate) => ENHANCED_SCHEDULES[candidate.scheduleId]?.length);
+  const match = matchingProfiles(profile).find((candidate) => RESEARCH_SCHEDULES[candidate.scheduleId]?.length);
   if (!match) return [];
-  return ENHANCED_SCHEDULES[match.scheduleId]
-    .map((rowKey) => ENHANCED_SCHEDULE_ROWS[rowKey])
-    .filter((row): row is EnhancedScheduleRow => Boolean(row))
-    .map((row) => toCatalogItem(row, profile, match.sourceWorkbook, match.scheduleId));
+  return RESEARCH_SCHEDULES[match.scheduleId]
+    .map((rowKey) => ({ rowKey, row: RESEARCH_SCHEDULE_ROWS[rowKey] }))
+    .filter((entry): entry is { rowKey: string; row: EnhancedScheduleRow } => Boolean(entry.row))
+    .map(({ row, rowKey }) => toCatalogItem(row, profile, match.sourceWorkbook, match.scheduleId, rowKey));
 }
 
 function normalizedSourceType(value: string): SourceType {
@@ -276,8 +278,8 @@ function toKnownIssue(record: EnhancedIssueRecord): KnownIssue {
   };
 }
 
-export const ENHANCED_KNOWN_ISSUES: KnownIssue[] = ENHANCED_ISSUES.map(toKnownIssue);
+export const ENHANCED_KNOWN_ISSUES: KnownIssue[] = RESEARCH_ISSUES.map(toKnownIssue);
 
 export function getOwnershipInsights(profile: VehicleProfile): OwnershipInsight[] {
-  return ENHANCED_INSIGHTS.filter((insight) => insight.platform === profile.platform);
+  return RESEARCH_INSIGHTS.filter((insight) => insight.platform === profile.platform);
 }

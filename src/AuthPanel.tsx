@@ -3,6 +3,7 @@ import type { ReturnTypeKeeperAuth } from "./authTypes";
 import { PRIVACY_VERSION, TERMS_VERSION } from "./legal";
 import { useKeeperProfile } from "./useKeeperProfile";
 import { pageHref } from "./routing";
+import { KeeperLogo } from "./KeeperBrand";
 
 type SignedOutView = "login" | "signup" | "forgot" | "verify";
 type AccountTab = "profile" | "security";
@@ -120,7 +121,7 @@ export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanel
 
   return <div className="auth-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="auth-panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-      <header><div><p>Keeper Profile</p><h2 id="auth-title">{showAuthChoice ? "Your garage. Your profile." : auth.legacyClaim ? "Existing garage found." : showRecovery ? "Secure account update." : "Your Keeper Profile."}</h2><p>{showAuthChoice ? "Sign in to your garage or create a profile. Both paths are equally available." : auth.legacyClaim ? "Choose whether to import the garage previously stored on this device." : "Manage the identity that owns your garage records."}</p></div><button onClick={onClose} aria-label="Close account panel">×</button></header>
+      <header><div><KeeperLogo className="auth-brand-logo" context="auto" /><p>Keeper Profile</p><h2 id="auth-title">{showAuthChoice ? "Your garage. Your profile." : auth.legacyClaim ? "Existing garage found." : showRecovery ? "Secure account update." : "Your Keeper Profile."}</h2><p>{showAuthChoice ? "Sign in to your garage or create a profile. Both paths are equally available." : auth.legacyClaim ? "Choose whether to import the garage previously stored on this device." : "Manage the identity that owns your garage records."}</p></div><button onClick={onClose} aria-label="Close account panel">×</button></header>
 
       {!auth.configured && <div className="auth-notice">Authentication is not configured in this build. Guest Mode remains demo-only.</div>}
       {auth.configured && !auth.ready && <div className="auth-loading" role="status"><span className="auth-loading-mark" />Checking your Keeper session…</div>}
