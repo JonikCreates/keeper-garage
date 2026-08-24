@@ -81,3 +81,15 @@ test("upcoming maintenance, timeline, and costs come from real service baselines
   assert.equal(insights.timeline.length, 1);
   assert.deepEqual({ min: insights.costs.scheduled.min, max: insights.costs.scheduled.max }, { min: 80, max: 160 });
 });
+
+test("recent service uses completion date and mileage rather than entry order", async () => {
+  const { createOwnershipInsights } = await loadIntelligence();
+  const records = [
+    { name: "Older historical entry", completedAt: "2025-04-01", mileage: 40_000, costCents: null },
+    { name: "Same-day lower-mileage entry", completedAt: "2026-06-15", mileage: 51_000, costCents: null },
+    { name: "Actual latest service", completedAt: "2026-06-15", mileage: 52_000, costCents: null },
+  ];
+  const insights = createOwnershipInsights({ items: [baseline()], currentMileage: 54_000, records, now: Date.parse("2026-08-20T12:00:00Z") });
+
+  assert.equal(insights.recentService?.name, "Actual latest service");
+});

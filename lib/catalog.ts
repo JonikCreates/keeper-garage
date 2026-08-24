@@ -6,7 +6,7 @@ import {
   normalizeEnhancedDrivetrain,
   type MaintenanceResearch,
 } from "./enhancedCatalog";
-import { ENHANCED_PLATFORMS, ENHANCED_VARIANTS } from "./enhancedVehicleData";
+import { RESEARCH_PLATFORMS, RESEARCH_VARIANTS } from "./researchVehicleData";
 import { getExpandedMaintenanceCatalog } from "./expandedCatalog";
 import { EXPANDED_PLATFORMS, EXPANDED_VARIANTS } from "./expandedCatalogData";
 import { EXPANDED_KNOWN_ISSUES } from "./expandedKnownIssues";
@@ -126,7 +126,7 @@ const CORE_PLATFORM_OPTIONS: PlatformOption[] = [
 const existingPlatformIds = new Set(CORE_PLATFORM_OPTIONS.map((platform) => platform.value));
 export const PLATFORM_OPTIONS: PlatformOption[] = [
   ...CORE_PLATFORM_OPTIONS,
-  ...ENHANCED_PLATFORMS.filter((platform) => !existingPlatformIds.has(platform.value)) as PlatformOption[],
+  ...RESEARCH_PLATFORMS.filter((platform) => !existingPlatformIds.has(platform.value)) as PlatformOption[],
 ];
 
 const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
@@ -163,7 +163,7 @@ const newlySelectableExistingSchedules = new Set([
   "research-f30-f30-activehybrid-3",
 ]);
 
-const adaptedEnhancedVariants = ENHANCED_VARIANTS
+const adaptedEnhancedVariants = RESEARCH_VARIANTS
   .filter((variant) => !existingPlatformIds.has(variant.platform) || newlySelectableExistingSchedules.has(variant.scheduleId))
   .map((variant) => {
     const activeHybrid = variant.scheduleId === "research-f30-f30-activehybrid-3";

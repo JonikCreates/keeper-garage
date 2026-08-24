@@ -406,7 +406,9 @@ export function createOwnershipInsights(input: {
     .slice(0, 3);
   const scheduledTotal = sumForecast(scheduledForecastItems);
   const potentialTotal = sumForecast(potentialForecastItems);
-  const recentService = [...input.records].sort((left, right) => right.completedAt.localeCompare(left.completedAt))[0] ?? null;
+  const recentService = [...input.records].sort(
+    (left, right) => right.completedAt.localeCompare(left.completedAt) || right.mileage - left.mileage,
+  )[0] ?? null;
 
   return {
     health: buildHealth(input.items, input.currentMileage, input.records, now),

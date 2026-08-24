@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { pageHref } from "./routing";
+import { KeeperBrand, KeeperLogo } from "./KeeperBrand";
 
 type Theme = "dark" | "light";
 
@@ -56,7 +57,7 @@ export function HomePage() {
     </section>
 
     <header className="topbar">
-      <a className="brand-lockup" href={pageHref("home")}><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
+      <KeeperBrand href={pageHref("home")} />
       <nav aria-label="Primary navigation">
         <a className="active" aria-current="page" href={pageHref("home")}>Home</a>
         <a href={pageHref("garage")}>Garage</a>
@@ -69,6 +70,7 @@ export function HomePage() {
 
     <main className="home-main">
       <section className="home-hero">
+        <KeeperLogo className="home-hero-logo" context="hero" />
         <p className="home-kicker">Vehicle ownership, organized</p>
         <h1><span>Know your car.</span><span>Maintain it better.</span></h1>
         <p className="home-lede">Keeper brings maintenance planning, known-issue research, and your service history together around the exact vehicle you own.</p>

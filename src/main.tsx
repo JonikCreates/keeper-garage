@@ -4,6 +4,7 @@ import App from "./App";
 import { completeAuthCallback } from "./authCallback";
 import { HomePage } from "./HomePage";
 import { getPageFromLocation, isAuthCallbackLocation, pageHref } from "./routing";
+import { KEEPER_LOGO_ASSETS } from "./KeeperBrand";
 import "./styles.css";
 import "./mechanical.css";
 import "./home.css";
@@ -37,7 +38,7 @@ function PersistentHomeNavigation() {
 const root = document.getElementById("root")!;
 
 if (isAuthCallbackLocation()) {
-  root.innerHTML = '<main class="auth-callback-shell" aria-live="polite"><strong>Securing your Keeper session…</strong><span>Finishing sign-in and cleaning the return link.</span></main>';
+  root.innerHTML = `<main class="auth-callback-shell" aria-live="polite"><img src="${KEEPER_LOGO_ASSETS.onDark}" alt="Keeper"><strong>Securing your Keeper session…</strong><span>Finishing sign-in and cleaning the return link.</span></main>`;
   void completeAuthCallback();
 } else {
   const page = getPageFromLocation();

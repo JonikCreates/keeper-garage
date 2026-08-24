@@ -3,6 +3,7 @@ import {
   type OwnershipInsights,
   type OwnershipPriority,
 } from "./ownershipIntelligence";
+import { KeeperLogo } from "./KeeperBrand";
 
 type OwnershipDashboardProps = {
   insights: OwnershipInsights;
@@ -94,9 +95,12 @@ export function OwnershipDashboard({
       aria-labelledby="ownership-command-title"
     >
       <header className="ownership-command-heading">
-        <div>
-          <span>Ownership overview</span>
-          <h2 id="ownership-command-title">What matters right now</h2>
+        <div className="ownership-command-title">
+          <KeeperLogo className="ownership-command-logo" context="auto" decorative />
+          <div>
+            <span>Ownership overview</span>
+            <h2 id="ownership-command-title">What matters right now</h2>
+          </div>
         </div>
 
         <p>
@@ -204,8 +208,8 @@ export function OwnershipDashboard({
                     <div>
                       <span>{priorityLabels[item.priority]}</span>
                       <strong>{item.name}</strong>
+                      <small>{recommendationLabel(item.recommendationType)}</small>
                     </div>
-                    <small>{recommendationLabel(item.recommendationType)}</small>
                   </summary>
 
                   <div className="attention-expanded">
@@ -240,6 +244,7 @@ export function OwnershipDashboard({
             </div>
           ) : (
             <div className="ownership-empty">
+              <KeeperLogo className="ownership-empty-logo" context="auto" decorative />
               <strong>No immediate items found</strong>
               <p>
                 Nothing is overdue or marked as needing repair in the records
@@ -298,6 +303,7 @@ export function OwnershipDashboard({
             </div>
           ) : (
             <div className="ownership-empty">
+              <KeeperLogo className="ownership-empty-logo" context="auto" decorative />
               <strong>No reliable due points yet</strong>
               <p>
                 Log completed work with mileage and date. Keeper will build

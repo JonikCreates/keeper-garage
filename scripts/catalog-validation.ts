@@ -20,13 +20,13 @@ import {
   getOwnershipInsights,
 } from "../lib/enhancedCatalog";
 import {
-  ENHANCED_INSIGHTS,
-  ENHANCED_ISSUES,
-  ENHANCED_PLATFORMS,
-  ENHANCED_SCHEDULE_PROFILES,
-  ENHANCED_SCHEDULE_ROWS,
-  ENHANCED_SCHEDULES,
-} from "../lib/enhancedVehicleData";
+  RESEARCH_INSIGHTS,
+  RESEARCH_ISSUES,
+  RESEARCH_PLATFORMS,
+  RESEARCH_SCHEDULE_PROFILES,
+  RESEARCH_SCHEDULE_ROWS,
+  RESEARCH_SCHEDULES,
+} from "../lib/researchVehicleData";
 import type { VehicleRow } from "../src/supabase";
 import {
   vehicleInsertFromProfile,
@@ -257,9 +257,9 @@ function matchedKnownIssues(profile: VehicleProfile) {
 }
 
 function expectedEnhancedRows(profile: VehicleProfile) {
-  const scheduleId = getEnhancedScheduleIds(profile).find((candidate) => ENHANCED_SCHEDULES[candidate]?.length);
+  const scheduleId = getEnhancedScheduleIds(profile).find((candidate) => RESEARCH_SCHEDULES[candidate]?.length);
   return scheduleId
-    ? ENHANCED_SCHEDULES[scheduleId].map((key) => ENHANCED_SCHEDULE_ROWS[key]).filter(Boolean)
+    ? RESEARCH_SCHEDULES[scheduleId].map((key) => RESEARCH_SCHEDULE_ROWS[key]).filter(Boolean)
     : [];
 }
 
@@ -351,7 +351,7 @@ export async function auditCatalog(root = process.cwd()): Promise<CatalogAudit> 
       failures.push({ category: "data-leak", configuration, reason: `Known issue ${leakedIssue.slug} leaked from another platform.` });
     }
 
-    const expectedInsights = ENHANCED_INSIGHTS.filter((insight) => insight.platform === configuration.platform);
+    const expectedInsights = RESEARCH_INSIGHTS.filter((insight) => insight.platform === configuration.platform);
     const insights = getOwnershipInsights(configuration);
     if (expectedInsights.length && insights.length !== expectedInsights.length) {
       failures.push({ category: "missing-research", configuration, reason: `Platform has ${expectedInsights.length} ownership-research records, but Keeper returned ${insights.length}.` });
@@ -370,34 +370,34 @@ export async function auditCatalog(root = process.cwd()): Promise<CatalogAudit> 
   }
 
   const frontendPlatforms = new Set(PLATFORM_OPTIONS.map((platform) => platform.value));
-  for (const platform of ENHANCED_PLATFORMS) {
+  for (const platform of RESEARCH_PLATFORMS) {
     if (!frontendPlatforms.has(platform.value)) orphanedData.add(`Enhanced platform is not selectable: ${platform.value}`);
   }
 
-  const scheduleProfiles = new Set(ENHANCED_SCHEDULE_PROFILES.map((profile) => profile.scheduleId));
+  const scheduleProfiles = new Set(RESEARCH_SCHEDULE_PROFILES.map((profile) => profile.scheduleId));
   const scheduleRowsUsed = new Set<string>();
-  for (const [scheduleId, rowKeys] of Object.entries(ENHANCED_SCHEDULES)) {
+  for (const [scheduleId, rowKeys] of Object.entries(RESEARCH_SCHEDULES)) {
     if (!scheduleProfiles.has(scheduleId)) orphanedData.add(`Enhanced schedule has no fitment profile: ${scheduleId}`);
     if (!reachableSchedules.has(scheduleId)) orphanedData.add(`Enhanced schedule is unreachable from every UI configuration: ${scheduleId}`);
     for (const rowKey of rowKeys) {
       scheduleRowsUsed.add(rowKey);
-      if (!ENHANCED_SCHEDULE_ROWS[rowKey]) orphanedData.add(`Enhanced schedule ${scheduleId} references a missing row: ${rowKey}`);
+      if (!RESEARCH_SCHEDULE_ROWS[rowKey]) orphanedData.add(`Enhanced schedule ${scheduleId} references a missing row: ${rowKey}`);
     }
   }
-  for (const profile of ENHANCED_SCHEDULE_PROFILES) {
-    if (!ENHANCED_SCHEDULES[profile.scheduleId]?.length) orphanedData.add(`Enhanced fitment profile has no maintenance rows: ${profile.scheduleId}`);
+  for (const profile of RESEARCH_SCHEDULE_PROFILES) {
+    if (!RESEARCH_SCHEDULES[profile.scheduleId]?.length) orphanedData.add(`Enhanced fitment profile has no maintenance rows: ${profile.scheduleId}`);
   }
-  for (const rowKey of Object.keys(ENHANCED_SCHEDULE_ROWS)) {
+  for (const rowKey of Object.keys(RESEARCH_SCHEDULE_ROWS)) {
     if (!scheduleRowsUsed.has(rowKey)) orphanedData.add(`Normalized maintenance row is unused: ${rowKey}`);
   }
 
-  for (const issue of ENHANCED_ISSUES) {
+  for (const issue of RESEARCH_ISSUES) {
     if (!frontendPlatforms.has(issue.platform)) orphanedData.add(`Known issue belongs to a missing platform: ${issue.slug} / ${issue.platform}`);
     for (const scheduleId of issue.scheduleIds) {
       if (!scheduleProfiles.has(scheduleId)) orphanedData.add(`Known issue references a missing schedule profile: ${issue.slug} / ${scheduleId}`);
     }
   }
-  for (const insight of ENHANCED_INSIGHTS) {
+  for (const insight of RESEARCH_INSIGHTS) {
     if (!frontendPlatforms.has(insight.platform)) orphanedData.add(`Ownership insight belongs to a missing platform: ${insight.slug} / ${insight.platform}`);
   }
 

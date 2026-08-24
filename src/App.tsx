@@ -43,6 +43,7 @@ import { RemoveTrackedItemButton, TrackedIssueAction } from "./TrackedIssueActio
 import { VehicleRemovalDialog } from "./VehicleRemovalDialog";
 import { useGarage } from "./useGarage";
 import { useKeeperAuth } from "./useKeeperAuth";
+import { KeeperBrand, KeeperLogo } from "./KeeperBrand";
 import { useMaintenanceRecords } from "./useMaintenanceRecords";
 import { useTrackedMaintenance } from "./useTrackedMaintenance";
 import type { MaintenanceRecordRow, VehicleMaintenanceItemRow, VehicleRemovalSummary } from "./supabase";
@@ -673,7 +674,7 @@ export default function App() {
         <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
       </section>
       <header className="topbar">
-        <a className="brand-lockup" href={pageHref("garage")}><span>KEEPER</span><small>Owner&apos;s workshop log</small></a>
+        <KeeperBrand href={pageHref("garage")} />
         <nav aria-label="Primary navigation">{pageLinks.map((link) => <a className={page === link.page ? "active" : ""} aria-current={page === link.page ? "page" : undefined} href={pageHref(link.page)} key={link.page}>{link.label}</a>)}</nav>
         <div className="topbar-actions"><ThemeToggle theme={theme} onToggle={() => setTheme((value) => value === "dark" ? "light" : "dark")} /><button className={`account-button ${auth.access.kind === "account" ? "active" : ""} ${auth.access.kind}`} onClick={() => {
           if (auth.access.kind === "account") {
@@ -689,6 +690,7 @@ export default function App() {
         <section className={`hero ${hasPersonalVehicle ? "personal-garage-layout" : ""}`}>
 {hasPersonalVehicle && selectedSavedVehicle ? <section className="personal-garage-dashboard" aria-labelledby="personal-garage-title">
   <header className="personal-garage-identity">
+    <KeeperLogo className="personal-garage-logo" context="auto" />
     <p className="eyebrow">{garageTitle}</p>
     <span>{selectedSavedVehicle.nickname}</span>
 
