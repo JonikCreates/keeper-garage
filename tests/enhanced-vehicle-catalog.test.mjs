@@ -29,6 +29,10 @@ test("all Enhanced Vehicles workbooks produce catalog-driven platforms and exact
     assert.ok(variants.some((candidate) => candidate.platform === platform), `${platform} should have an exact variant`);
   }
 
+  assert.equal(platforms.find((candidate) => candidate.value === "ZN6_SCION")?.label, "FR-S");
+  assert.equal(platforms.find((candidate) => candidate.value === "ZN6_TOYOTA")?.label, "86");
+  assert.ok(variants.some((candidate) => candidate.platform === "ZN6_TOYOTA" && candidate.trim === "GT86"));
+
   for (const [scheduleId, rowKeys] of Object.entries(schedules)) {
     assert.ok(profiles.some((profile) => profile.scheduleId === scheduleId), `${scheduleId} should have fitment metadata`);
     assert.ok(rowKeys.length >= 25, `${scheduleId} should retain a useful maintenance baseline`);

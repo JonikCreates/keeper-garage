@@ -54,7 +54,7 @@ test("brand and model selectors cascade instead of staying BMW-locked", async ()
   assert.match(app, /variantOptions\.map/);
   assert.match(catalog, /getVehicleFamilyOptions\(brand: VehicleBrand\)/);
   assert.match(catalog, /5 Series \/ M5 \(F10\)/);
-  assert.match(catalog, /4 Series Coupe \/ Convertible \(F32\/F33\)/);
+  assert.match(catalog, /4 Series \/ M4 \(F32\/F33\/F82\/F83\)/);
   assert.match(garage, /vehicleInsertFromProfile\(profile/);
   assert.match(persistence, /brand: profile\.brand/);
   assert.doesNotMatch(`${garage}\n${persistence}`, /brand: "BMW" as const/);

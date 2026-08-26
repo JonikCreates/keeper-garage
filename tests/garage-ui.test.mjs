@@ -35,6 +35,14 @@ test("new vehicle picker requires explicit make, family, variant, and year choic
   assert.match(selection, /selectVehicleVariant[\s\S]*year: null/);
 });
 
+test("Known Issues exposes a PPI view when the selected platform has pre-purchase research", async () => {
+  const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+
+  assert.match(app, /ppiIssuesAvailable/);
+  assert.match(app, /<option value="ppi">PPI checklist<\/option>/);
+  assert.match(app, /Showing the PPI-tagged checks that match this exact configuration/);
+});
+
 test("Garage prioritizes a personal vehicle dashboard using existing ownership state", async () => {
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
   const ownership = await readFile(new URL("../src/OwnershipDashboard.tsx", import.meta.url), "utf8");

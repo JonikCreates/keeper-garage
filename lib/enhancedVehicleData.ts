@@ -264,7 +264,7 @@ export const ENHANCED_PLATFORMS: EnhancedPlatformRecord[] = [
   {
     "value": "ZN6_SCION",
     "brand": "Scion",
-    "label": "FR-S (first generation)",
+    "label": "FR-S",
     "yearStart": 2013,
     "yearEnd": 2016
   },
@@ -278,7 +278,7 @@ export const ENHANCED_PLATFORMS: EnhancedPlatformRecord[] = [
   {
     "value": "ZN6_TOYOTA",
     "brand": "Toyota",
-    "label": "86 (first generation)",
+    "label": "86",
     "yearStart": 2017,
     "yearEnd": 2020
   },
@@ -9023,8 +9023,8 @@ export const ENHANCED_VARIANTS: EnhancedVariantRecord[] = [
     "platform": "ZN6_TOYOTA",
     "scheduleId": "research-zn6-toyota-6mt",
     "tab": "6MT",
-    "trim": "86",
-    "label": "86",
+    "trim": "GT86",
+    "label": "GT86",
     "yearStart": 2017,
     "yearEnd": 2020,
     "engineCodes": [
@@ -9043,8 +9043,8 @@ export const ENHANCED_VARIANTS: EnhancedVariantRecord[] = [
     "platform": "ZN6_TOYOTA",
     "scheduleId": "research-zn6-toyota-6at",
     "tab": "6AT",
-    "trim": "86",
-    "label": "86",
+    "trim": "GT86",
+    "label": "GT86",
     "yearStart": 2017,
     "yearEnd": 2020,
     "engineCodes": [
@@ -16521,8 +16521,8 @@ export const ENHANCED_SCHEDULE_PROFILES: EnhancedScheduleProfileRecord[] = [
     "platform": "ZN6_TOYOTA",
     "scheduleId": "research-zn6-toyota-6mt",
     "tab": "6MT",
-    "trim": "86",
-    "label": "86",
+    "trim": "GT86",
+    "label": "GT86",
     "yearStart": 2017,
     "yearEnd": 2020,
     "engineCodes": [
@@ -16540,8 +16540,8 @@ export const ENHANCED_SCHEDULE_PROFILES: EnhancedScheduleProfileRecord[] = [
     "platform": "ZN6_TOYOTA",
     "scheduleId": "research-zn6-toyota-6at",
     "tab": "6AT",
-    "trim": "86",
-    "label": "86",
+    "trim": "GT86",
+    "label": "GT86",
     "yearStart": 2017,
     "yearEnd": 2020,
     "engineCodes": [

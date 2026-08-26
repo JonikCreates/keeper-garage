@@ -131,7 +131,12 @@ export const PLATFORM_OPTIONS: PlatformOption[] = [
 
 const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
   { value: "F10", brand: "BMW", label: "5 Series / M5 (F10)", platforms: ["F10", "F10M5"] },
-  { value: "F32", brand: "BMW", label: "4 Series Coupe / Convertible (F32/F33)", platforms: ["F32", "F33"] },
+  { value: "F22", brand: "BMW", label: "2 Series / M2 (F22/F87)", platforms: ["F22", "F87"] },
+  { value: "F30", brand: "BMW", label: "3 Series / M3 (F30/F80)", platforms: ["F30", "F80"] },
+  { value: "F32", brand: "BMW", label: "4 Series / M4 (F32/F33/F82/F83)", platforms: ["F32", "F33", "F82", "F83"] },
+  { value: "G20", brand: "BMW", label: "3 Series / M3 (G20/G80)", platforms: ["G20", "G80"] },
+  { value: "G22", brand: "BMW", label: "4 Series / M4 (G22/G82)", platforms: ["G22", "G82"] },
+  { value: "G42", brand: "BMW", label: "2 Series / M2 (G42/G87)", platforms: ["G42", "G87"] },
 ];
 
 const groupedFamilyByPlatform = new Map(GROUPED_VEHICLE_FAMILIES.flatMap((family) =>
@@ -165,6 +170,9 @@ const newlySelectableExistingSchedules = new Set([
 
 const adaptedEnhancedVariants = RESEARCH_VARIANTS
   .filter((variant) => !existingPlatformIds.has(variant.platform) || newlySelectableExistingSchedules.has(variant.scheduleId))
+  // North American F22 230i cars use the B46. The source workbook also carried
+  // B48 aliases, which created a duplicate engine choice for the same schedule.
+  .filter((variant) => !(variant.platform === "F22" && variant.trim === "230i" && variant.engineCode === "B48"))
   .map((variant) => {
     const activeHybrid = variant.scheduleId === "research-f30-f30-activehybrid-3";
     const nismo = ["Z33", "Z34"].includes(variant.platform) && variant.scheduleId.includes("-nismo-");
@@ -272,9 +280,8 @@ export function getVehicleVariantOptions(familyValue: string) {
   const family = VEHICLE_FAMILY_OPTIONS.find((candidate) => candidate.value === familyValue);
   if (!family) return [];
   return family.platforms.flatMap((platform) => getTrimOptions(platform).map((trim): VehicleVariantOption => {
-    const bodyLabel = family.value === "F32"
-      ? platform === "F33" ? `${trim.label} Convertible` : `${trim.label} Coupe`
-      : trim.label;
+    const bodyStyle = ({ F32: "Coupe", F33: "Convertible", F82: "Coupe", F83: "Convertible" } as Record<string, string>)[platform];
+    const bodyLabel = family.value === "F32" && bodyStyle ? `${trim.label} ${bodyStyle}` : trim.label;
     return {
       value: vehicleVariantKey(platform, trim.value),
       platform,
@@ -423,6 +430,19 @@ export function matchesApplicability(profile: VehicleProfile, rule: Applicabilit
     (!rule.drivetrains || rule.drivetrains.includes(profile.drivetrain)) &&
     (!rule.transmissions || rule.transmissions.includes(profile.transmission)) &&
     (!rule.scheduleIds || matchesEnhancedSchedule(profile, rule.scheduleIds));
+}
+
+export function isPrePurchaseIssue(issue: KnownIssue) {
+  return /\bPPI\b|pre-purchase/i.test([
+    issue.issue,
+    issue.description,
+    issue.typicalMileage,
+    issue.preventativeAction,
+    issue.inspectionReminder,
+    issue.evidenceLabel,
+    issue.verification,
+    issue.clarification,
+  ].filter(Boolean).join(" "));
 }
 
 const BMW_2016: CatalogSource = {

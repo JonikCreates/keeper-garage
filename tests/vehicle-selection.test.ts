@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   KNOWN_ISSUES,
+  getEngineOptions,
   getMaintenanceCatalog,
   getTransmissionOptions,
   getVehicleFamilyForPlatform,
   getVehicleFamilyOptions,
   getVehicleVariantOptions,
   getYearOptionsForTrim,
+  isPrePurchaseIssue,
   matchesApplicability,
   type VehicleProfile,
 } from "../lib/catalog";
@@ -56,25 +58,47 @@ function simulatedRow(vehicle: VehicleProfile): VehicleRow {
   };
 }
 
-test("BMW customer families group F10 M5 and F32/F33 without merging technical platforms", () => {
+test("BMW customer families group each regular and M chassis consistently without merging technical platforms", () => {
   const bmwFamilies = getVehicleFamilyOptions("BMW");
   const f10 = bmwFamilies.find((family) => family.value === "F10");
+  const f22 = bmwFamilies.find((family) => family.value === "F22");
+  const f30 = bmwFamilies.find((family) => family.value === "F30");
   const f32 = bmwFamilies.find((family) => family.value === "F32");
 
   assert.deepEqual(f10?.platforms, ["F10", "F10M5"]);
   assert.equal(f10?.label, "5 Series / M5 (F10)");
   assert.ok(!bmwFamilies.some((family) => family.value === "F10M5"));
-  assert.deepEqual(f32?.platforms, ["F32", "F33"]);
-  assert.equal(f32?.label, "4 Series Coupe / Convertible (F32/F33)");
-  assert.ok(!bmwFamilies.some((family) => family.value === "F33"));
+  assert.deepEqual(f22?.platforms, ["F22", "F87"]);
+  assert.deepEqual(f30?.platforms, ["F30", "F80"]);
+  assert.deepEqual(f32?.platforms, ["F32", "F33", "F82", "F83"]);
+  assert.equal(f32?.label, "4 Series / M4 (F32/F33/F82/F83)");
+  for (const groupedPlatform of ["F10M5", "F87", "F80", "F33", "F82", "F83", "G80", "G82", "G87"]) {
+    assert.ok(!bmwFamilies.some((family) => family.value === groupedPlatform));
+  }
 
   const f10Variants = getVehicleVariantOptions("F10");
   assert.ok(f10Variants.some((variant) => variant.label === "M5" && variant.platform === "F10M5"));
   const fourSeries = getVehicleVariantOptions("F32");
   assert.ok(fourSeries.some((variant) => variant.label === "435i Coupe" && variant.platform === "F32"));
   assert.ok(fourSeries.some((variant) => variant.label === "435i Convertible" && variant.platform === "F33"));
+  assert.ok(fourSeries.some((variant) => variant.label === "M4 Coupe" && variant.platform === "F82"));
+  assert.ok(fourSeries.some((variant) => variant.label === "M4 Convertible" && variant.platform === "F83"));
   assert.deepEqual(getYearOptionsForTrim("F10M5", "M5"), [2016, 2015, 2014, 2013]);
   assert.deepEqual(getYearOptionsForTrim("F33", "435i"), [2016, 2015, 2014]);
+});
+
+test("corrected public names and the F22 230i engine mapping stay unambiguous", () => {
+  const toyotaFamily = getVehicleFamilyOptions("Toyota").find((family) => family.value === "ZN6_TOYOTA");
+  const scionFamily = getVehicleFamilyOptions("Scion").find((family) => family.value === "ZN6_SCION");
+  assert.equal(toyotaFamily?.label, "86");
+  assert.equal(scionFamily?.label, "FR-S");
+  assert.ok(getVehicleVariantOptions("ZN6_TOYOTA").some((variant) => variant.trim === "GT86" && variant.label === "GT86"));
+  assert.deepEqual(getEngineOptions("F22", "230i", 2019, "8-speed automatic"), ["B46"]);
+});
+
+test("PPI-tagged research can be identified for older platforms", () => {
+  assert.ok(KNOWN_ISSUES.some((issue) => issue.appliesTo.platforms?.includes("R32") && isPrePurchaseIssue(issue)));
+  assert.ok(KNOWN_ISSUES.some((issue) => issue.appliesTo.platforms?.includes("R33") && isPrePurchaseIssue(issue)));
 });
 
 test("grouped BMW variants retain exact maintenance and known-issue fitment", () => {
@@ -158,4 +182,9 @@ test("existing grouped BMW and legacy Nissan garage rows still restore", () => {
 
   const legacy = simulatedRow(profile({ brand: "Nissan", platform: "Z34", year: 2018, trim: "370Z", engineCode: "VQ37VHR", transmission: "6-speed manual" }));
   assert.equal(vehicleProfileFromRow(legacy).trim, "NISMO");
+
+  const legacyToyota = simulatedRow(profile({ brand: "Toyota", platform: "ZN6_TOYOTA", year: 2019, trim: "GT86", engineCode: "FA20", transmission: "6-speed manual" }));
+  legacyToyota.model = "86 (first generation)";
+  legacyToyota.trim = "86";
+  assert.deepEqual(vehicleProfileFromRow(legacyToyota), profile({ brand: "Toyota", platform: "ZN6_TOYOTA", year: 2019, trim: "GT86", engineCode: "FA20", transmission: "6-speed manual" }));
 });

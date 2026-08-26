@@ -1,7 +1,7 @@
 .home-shell { min-height: 100vh; color: var(--paper); background: var(--canvas); }
 .home-forum-banner { min-height: 94px; }
 .home-topbar { min-height: 66px; height: 66px; padding: 0 max(24px, calc((100vw - 1260px) / 2)); position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; color: var(--header-text); border-bottom: 1px solid rgba(255,255,255,.12); background: var(--bar); box-shadow: 0 2px 7px rgba(0,0,0,.22); }
-.home-brand { display: flex; align-items: center; gap: 14px; color: var(--header-text); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.home-brand { display: flex; align-items: center; gap: 14px; color: var(--header-text); font-family: "Poppins", sans-serif; }
 .home-brand strong { padding: 5px 9px; border: 1px solid var(--header-text); font-size: 13px; letter-spacing: .18em; }
 .home-brand small { padding-left: 14px; color: var(--header-muted); border-left: 1px solid rgba(255,255,255,.22); font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .home-topbar nav { display: flex; align-items: center; gap: 10px; color: var(--header-muted); font: 800 12px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; letter-spacing: .035em; }
@@ -14,7 +14,7 @@
 .home-hero { min-height: 510px; padding: 72px 64px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; border: 1px solid var(--line); border-top: 5px solid var(--acid); border-radius: 3px; background: var(--panel); box-shadow: 0 2px 5px var(--shadow); }
 .home-hero-logo { width: 88px; height: 88px; margin-bottom: 24px; }
 .home-kicker { margin: 0 0 18px; color: var(--acid); font: 900 11px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .17em; text-transform: uppercase; }
-.home-hero h1 { max-width: 900px; margin: 0; font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif; font-size: clamp(64px, 7.2vw, 104px); line-height: .92; font-weight: 900; letter-spacing: -.04em; text-transform: uppercase; }
+.home-hero h1 { max-width: 900px; margin: 0; font-family: "Poppins", sans-serif; font-size: clamp(64px, 7.2vw, 104px); line-height: .92; font-weight: 900; letter-spacing: -.04em; text-transform: uppercase; }
 .home-hero h1 span { display: block; }
 .home-hero h1 span + span { margin-top: .18em; }
 .home-lede { max-width: 760px; margin: 28px 0 0; padding-left: 16px; color: var(--cream); border-left: 4px solid var(--acid); font-size: 17px; line-height: 1.7; }
@@ -23,7 +23,7 @@
 .home-highlights { margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .home-highlights article { min-height: 150px; padding: 24px; display: grid; grid-template-columns: 34px 1fr; gap: 16px; align-items: start; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); box-shadow: 0 2px 5px var(--shadow); }
 .home-highlights article > span { color: var(--acid); font: 900 10px ui-monospace, "Cascadia Mono", Consolas, monospace; }
-.home-highlights h2 { margin: 0 0 10px; font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif; font-size: 23px; line-height: 1.05; font-weight: 900; text-transform: uppercase; }
+.home-highlights h2 { margin: 0 0 10px; font-family: "Poppins", sans-serif; font-size: 23px; line-height: 1.05; font-weight: 900; text-transform: uppercase; }
 .home-highlights p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .home-footer { max-width: 1260px; margin: 0 auto; padding: 30px 4px 42px; display: grid; grid-template-columns: 150px minmax(0,1fr) auto; gap: 30px; align-items: center; color: var(--muted); font-size: 10px; line-height: 1.6; }
 .home-footer strong { color: var(--paper); letter-spacing: .17em; }

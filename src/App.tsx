@@ -16,6 +16,7 @@ import {
   getVehicleVariantOptions,
   getYearOptionsForTrim,
   inferEngine,
+  isPrePurchaseIssue,
   matchesApplicability,
   type MaintenanceCatalogItem,
   type KnownIssue,
@@ -505,10 +506,15 @@ export default function App() {
     return record ? [{ item, record, label: maintenanceRecordFluid(record) }] : [];
   }), [dashboardItems]);
 
+  const ppiIssuesAvailable = useMemo(() => KNOWN_ISSUES.some((issue) =>
+    (issue.appliesTo.platforms ?? ["F30"]).includes(profile.platform)
+      && isPrePurchaseIssue(issue)), [profile.platform]);
+
   const browseIssues = useMemo(() => KNOWN_ISSUES.filter((issue) => {
     const platformMatches = (issue.appliesTo.platforms ?? ["F30"]).includes(profile.platform);
     if (libraryView === "all") return platformMatches;
     if (libraryView === "mine") return matchesApplicability(profile, issue.appliesTo);
+    if (libraryView === "ppi") return matchesApplicability(profile, issue.appliesTo) && isPrePurchaseIssue(issue);
     return issueMatchesTrim(issue, profile.platform, libraryView);
   }), [libraryView, profile]);
   const issueSearchResults = useMemo(() => searchKnownIssues(libraryQuery, matchedIssues, profile), [libraryQuery, matchedIssues, profile]);
@@ -955,10 +961,10 @@ export default function App() {
           <header className="section-heading"><div><p className="eyebrow">Stored research · {KNOWN_ISSUES.length} patterns</p><h2>{displayFamily.label} issue library.</h2></div><p>Coverage follows the selected generation and its U.S.-market engine and transmission combinations. Each record keeps fitment, evidence type, symptoms, and next action visible.</p></header>
           <div className="library-toolbar">
             <label className="search-field"><span>⌕</span><input value={libraryQuery} onChange={(event) => setLibraryQuery(event.target.value)} placeholder="Search a part, symptom, issue, or common name…" aria-label="Search Known Issues" /></label>
-            <label><span>Fitment view</span><select value={libraryView} disabled={Boolean(libraryQuery.trim())} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option><option value="all">All {profile.platform} research</option>{libraryTrimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
+            <label><span>Fitment view</span><select value={libraryView} disabled={Boolean(libraryQuery.trim())} onChange={(event) => setLibraryView(event.target.value)}><option value="mine">My selected car</option>{ppiIssuesAvailable && <option value="ppi">PPI checklist</option>}<option value="all">All {profile.platform} research</option>{libraryTrimOptions.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
             <strong>{libraryIssues.length} shown</strong>
           </div>
-          <div className="known-issue-search-context"><span>Searching for</span><strong>{profileLabel} · {selectedEngineLabel} · {profile.drivetrain}</strong><p>{libraryQuery.trim() ? "Search results are limited to records that match this exact vehicle configuration." : "Choose a broader fitment view to browse the full generation library."}</p></div>
+          <div className="known-issue-search-context"><span>{libraryView === "ppi" ? "Pre-purchase inspection for" : "Searching for"}</span><strong>{profileLabel} · {selectedEngineLabel} · {profile.drivetrain}</strong><p>{libraryQuery.trim() ? "Search results are limited to records that match this exact vehicle configuration." : libraryView === "ppi" ? "Showing the PPI-tagged checks that match this exact configuration." : "Choose a broader fitment view to browse the full generation library."}</p></div>
           {libraryQuery.trim() && <div className={`issue-search-status ${issueSearchResults[0]?.matchLabel === "High match" ? "exact" : "closest"}`}><strong>{issueSearchResults[0]?.matchLabel === "High match" ? "Best matches" : "No exact match found"}</strong><p>{issueSearchResults.length ? issueSearchResults[0]?.matchLabel === "High match" ? "Ranked by terminology, symptoms, components, common names, and vehicle fitment." : "Here are the closest matches for your selected vehicle. Review the details, or add your own issue below." : "No strong library match was found for this vehicle. You can still add it as a custom issue below."}</p></div>}
           <div className="issue-library-list">
             {libraryIssues.map((issue) => {

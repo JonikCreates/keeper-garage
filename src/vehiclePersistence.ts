@@ -45,7 +45,12 @@ export function vehicleInsertFromProfile(profile: VehicleProfile, options: Vehic
 }
 
 export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
-  const platform = PLATFORM_OPTIONS.find((option) => option.label === vehicle.model && option.brand === vehicle.brand);
+  const migratedModel = vehicle.model === "86 (first generation)"
+    ? "86"
+    : vehicle.model === "FR-S (first generation)"
+      ? "FR-S"
+      : vehicle.model;
+  const platform = PLATFORM_OPTIONS.find((option) => option.label === migratedModel && option.brand === vehicle.brand);
   if (!platform) {
     throw new Error(`Saved vehicle does not map to a Keeper platform: ${vehicle.brand} / ${vehicle.model}`);
   }
@@ -55,11 +60,12 @@ export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
   const legacyNismoManual = ["Z33", "Z34"].includes(platform.value)
     && ["350Z", "370Z"].includes(vehicle.trim)
     && vehicle.transmission === "6-speed manual";
+  const migratedTrim = platform.value === "ZN6_TOYOTA" && vehicle.trim === "86" ? "GT86" : vehicle.trim;
   return {
     brand: vehicle.brand,
     platform: platform.value,
     year: vehicle.model_year,
-    trim: legacyNismoManual ? "NISMO" : vehicle.trim,
+    trim: legacyNismoManual ? "NISMO" : migratedTrim,
     engineCode: vehicle.engine_code,
     drivetrain: vehicle.drivetrain,
     transmission: vehicle.transmission,

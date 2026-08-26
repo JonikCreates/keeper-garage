@@ -28,7 +28,7 @@
   --keeper-watermark-position: 50% 34px;
   color: var(--paper);
   background: var(--canvas);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 :root[data-theme="light"] {
@@ -171,7 +171,7 @@ body::before {
   margin-top: 0;
 }
 
-.brand-lockup { color: var(--header-text); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.brand-lockup { color: var(--header-text); font-family: "Poppins", sans-serif; }
 .brand-lockup > span:not(.keeper-logo) { padding: 4px 7px; border: 1px solid var(--header-text); font-size: 12px; }
 .brand-lockup small { color: var(--header-muted); border-color: rgba(255, 255, 255, .22); }
 .keeper-mark { box-shadow: 0 1px 4px rgba(0, 0, 0, .28); }
@@ -182,7 +182,7 @@ body::before {
 .topbar-actions { gap: 8px; }
 .account-button, .button, .expand-button, .sign-out-button, .close-button, .provider-button {
   border-radius: 3px;
-  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-family: "Poppins", sans-serif;
   text-transform: uppercase;
 }
 .account-button { min-height: 34px; color: var(--header-text); border-color: rgba(255, 255, 255, .22); background: rgba(255, 255, 255, .06); }
@@ -258,9 +258,9 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   letter-spacing: .14em;
   background: var(--panel-2);
 }
-.eyebrow { color: var(--acid); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.eyebrow { color: var(--acid); font-family: "Poppins", sans-serif; }
 .hero-copy h1, .section-heading h2, .sources-section h2, .auth-panel h2 {
-  font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 900;
   letter-spacing: -.035em;
   text-transform: uppercase;
@@ -415,7 +415,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 }
 .configuration-panel::before, .configuration-panel::after { display: none; }
 .configuration-heading { padding: 16px 18px; border-bottom: 1px solid var(--line); background: var(--panel-2); }
-.configuration-heading span, .garage-picker, .configuration-flow, .config-grid label, .garage-save label, .session-note { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.configuration-heading span, .garage-picker, .configuration-flow, .config-grid label, .garage-save label, .session-note { font-family: "Poppins", sans-serif; }
 .configuration-heading strong { font-size: 16px; text-transform: uppercase; }
 .garage-picker { background: var(--panel-wash); }
 .garage-picker select, .config-grid select, .garage-save input, .account-form input {
@@ -517,7 +517,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .vehicle-band { margin-bottom: 12px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); box-shadow: 0 1px 3px var(--shadow); }
 .vehicle-band > div { min-height: 78px; position: relative; border-right: 1px solid var(--line); }
 .vehicle-band > div::after { position: absolute; right: 8px; bottom: 5px; color: var(--line); content: "■"; font-size: 5px; }
-.vehicle-band span, .vehicle-band strong { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.vehicle-band span, .vehicle-band strong { font-family: "Poppins", sans-serif; }
 
 .priorities-section, .maintenance-section, .library-section, .sources-section {
   margin-bottom: 12px;
@@ -532,8 +532,8 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .section-heading h2 { font-size: clamp(36px, 4.5vw, 58px); }
 .section-heading > p { padding: 11px 13px; border: 1px solid var(--line); border-radius: 2px; background: var(--panel-2); font: 10px/1.65 ui-monospace, "Cascadia Mono", Consolas, monospace; }
 .priority-lane { grid-template-columns: 220px minmax(0, 1fr); padding: 20px 0 28px; border-top: 1px solid var(--line); border-bottom: 0; }
-.lane-label h3 { font-family: "Arial Narrow", Arial, sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: .01em; }
-.lane-label > span, .lane-label > b { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.lane-label h3 { font-family: "Poppins", sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: .01em; }
+.lane-label > span, .lane-label > b { font-family: "Poppins", sans-serif; }
 .priority-card, .project-grid article, .maintenance-list details, .issue-library-list details, .evidence-grid article,
 .social-auth-block, .auth-choice, .account-form, .account-tab-panel, .security-section, .account-summary {
   border-color: var(--line);
@@ -543,7 +543,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .priority-card { min-height: 100px; grid-template-columns: 125px minmax(0, 1fr) auto; border-left-width: 4px; border-radius: 3px; }
 .priority-card:hover { background: var(--row-hover); }
 .emergency-card { border-color: color-mix(in srgb, var(--red), var(--line) 58%); background: color-mix(in srgb, var(--red) 6%, var(--panel)); }
-.priority-kind, .evidence-tag, .source-tag { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.priority-kind, .evidence-tag, .source-tag { font-family: "Poppins", sans-serif; }
 .expand-button { border-style: solid; border-color: var(--line); background: var(--panel-2); }
 .expand-button:hover { color: var(--button-ink); border-color: var(--acid); background: var(--acid); }
 .project-grid article { min-height: 145px; border-radius: 3px; background: var(--panel-2); }
@@ -558,7 +558,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .maintenance-list details[open], .issue-library-list details[open] { box-shadow: inset 4px 0 var(--acid); }
 .maintenance-list details.completed { box-shadow: inset 4px 0 var(--green); }
 .maintenance-list summary { min-height: 76px; }
-.maintenance-list summary h3, .issue-library-list summary h3 { font-family: Arial, Helvetica, sans-serif; text-transform: none; }
+.maintenance-list summary h3, .issue-library-list summary h3 { font-family: "Poppins", sans-serif; text-transform: none; }
 .maintenance-detail article, .issue-detail-grid article { border-radius: 2px; background: var(--panel-2); }
 .maintenance-detail footer a, .issue-library-list footer a { border-radius: 2px; background: var(--field); }
 .source-tag.completed { color: var(--green); }
@@ -689,7 +689,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .tracked-item-removal > div { display: grid; gap: 5px; }
 .tracked-item-removal strong { font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
 .tracked-item-removal p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
-.library-toolbar { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.library-toolbar { font-family: "Poppins", sans-serif; }
 .search-field, .library-toolbar > label:not(.search-field), .library-toolbar > strong { border-radius: 3px; background: var(--panel-2); }
 .search-field input, .library-toolbar select { color: var(--paper); background: var(--panel-2); }
 .library-toolbar select:disabled { cursor: not-allowed; opacity: .55; }
@@ -730,8 +730,8 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .evidence-grid { margin-top: 28px; border-color: var(--line); }
 .evidence-grid article { min-height: 190px; background: var(--panel-2); }
 .evidence-grid article:nth-child(2) { background: var(--panel); }
-.evidence-grid h3 { margin-top: 50px; font-family: "Arial Narrow", Arial, sans-serif; font-weight: 900; text-transform: uppercase; }
-.site-footer { max-width: 1260px; margin: 0 auto 24px; padding: 28px 30px; grid-template-columns: 130px 1fr 1.3fr auto auto; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; background: var(--panel); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; box-shadow: 0 1px 3px var(--shadow); }
+.evidence-grid h3 { margin-top: 50px; font-family: "Poppins", sans-serif; font-weight: 900; text-transform: uppercase; }
+.site-footer { max-width: 1260px; margin: 0 auto 24px; padding: 28px 30px; grid-template-columns: 130px 1fr 1.3fr auto auto; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; background: var(--panel); font-family: "Poppins", sans-serif; box-shadow: 0 1px 3px var(--shadow); }
 
 .auth-backdrop { background: rgba(3, 4, 5, .78); backdrop-filter: blur(3px); }
 .auth-panel { color: var(--paper); border-left: 1px solid var(--line); background: var(--panel); box-shadow: -12px 0 32px rgba(0, 0, 0, .34); }
