@@ -76,8 +76,8 @@ test("Skyline maintenance, issue fitment, and ownership research stay connected"
 test("the unified research adapter adds Skyline data without replacing existing IDs", async () => {
   const adapter = await readFile(new URL("../lib/researchVehicleData.ts", import.meta.url), "utf8");
   const catalog = await readFile(new URL("../lib/catalog.ts", import.meta.url), "utf8");
-  assert.match(adapter, /\[\.\.\.ENHANCED_PLATFORMS, \.\.\.SKYLINE_PLATFORMS\]/);
-  assert.match(adapter, /\{ \.\.\.ENHANCED_SCHEDULES, \.\.\.SKYLINE_SCHEDULES \}/);
+  assert.match(adapter, /\[\.\.\.ENHANCED_PLATFORMS, \.\.\.SKYLINE_PLATFORMS(?:, [^\]]+)?\]/);
+  assert.match(adapter, /\{ \.\.\.ENHANCED_SCHEDULES, \.\.\.SKYLINE_SCHEDULES(?:, [^}]+)? \}/);
   assert.match(catalog, /RESEARCH_PLATFORMS/);
   assert.match(catalog, /RESEARCH_VARIANTS/);
 });
