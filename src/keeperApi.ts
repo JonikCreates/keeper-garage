@@ -7,6 +7,13 @@ export async function getKeeperVehicleExport(vehicleId: string): Promise<KeeperE
   return data as KeeperExportPayload;
 }
 
+export async function getKeeperVehiclePdfExport(vehicleId: string): Promise<KeeperExportPayload> {
+  if (!supabase) throw new Error("Keeper account services are unavailable.");
+  const { data, error } = await supabase.rpc("get_keeper_vehicle_pdf_export", { p_vehicle_id: vehicleId });
+  if (error || !data) throw new Error("PDF export requires the Keeper lifetime upgrade and an owned vehicle.");
+  return data as KeeperExportPayload;
+}
+
 export function friendlyGarageError() {
   return "Keeper couldn't save that change. Check your connection and account access, then try again.";
 }

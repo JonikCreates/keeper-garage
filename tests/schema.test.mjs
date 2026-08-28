@@ -82,6 +82,11 @@ const catalogRegistryMigrationUrl = new URL(
   import.meta.url,
 );
 
+const keeperUpgradeMigrationUrl = new URL(
+  "../supabase/migrations/20260828120000_add_keeper_lifetime_upgrade.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -254,4 +259,19 @@ test("generated catalog registry validates exact fitments while preserving owner
   assert.match(sql, /raise exception using[\s\S]*errcode = '23514'/i);
   assert.match(sql, /create trigger vehicles_validate_catalog_fitment/i);
   assert.doesNotMatch(sql, /disable row level security|drop policy|delete from public\.vehicles|truncate public\.vehicles/i);
+});
+
+test("lifetime upgrade migration is non-destructive, server-granted, and idempotent", async () => {
+  const sql = await readFile(keeperUpgradeMigrationUrl, "utf8");
+  assert.match(sql, /create table if not exists public\.keeper_purchases/i);
+  assert.match(sql, /unique \(provider, provider_transaction_id\)/i);
+  assert.match(sql, /on conflict \(provider, provider_transaction_id\) do update/i);
+  assert.match(sql, /entitlement_key, status, source[\s\S]*'keeper_lifetime', 'active', 'purchase'/i);
+  assert.match(sql, /revoke all on function public\.record_keeper_purchase[\s\S]*from public, anon, authenticated/i);
+  assert.match(sql, /grant execute on function public\.record_keeper_purchase[\s\S]*to service_role/i);
+  assert.match(sql, /before insert on public\.vehicles/i);
+  assert.match(sql, /public\.keeper_max_vehicles\(\)/i);
+  assert.match(sql, /has_keeper_entitlement\('keeper_lifetime'\)/i);
+  assert.match(sql, /get_keeper_vehicle_pdf_export/i);
+  assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate|drop table/i);
 });

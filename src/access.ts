@@ -1,17 +1,16 @@
 import type { User } from "@supabase/supabase-js";
-import type { KeeperPlanId } from "./plans";
-import { getKeeperPlan } from "./plans";
+import {
+  getKeeperEntitlements,
+  type KeeperEntitlements,
+} from "./keeperEntitlements";
 
 export type AccountKind = "guest" | "legacy" | "setup" | "account";
 export type EntitlementKey =
   | "authenticated_account"
-  | "basic_traffic"
-  | "project_car"
-  | "collector";
+  | "keeper_lifetime";
 
 export type AccountAccess = {
-  planId: KeeperPlanId | null;
-  vehicleSlots: number;
+  keeper: KeeperEntitlements;
   kind: AccountKind;
   label: string;
   description: string;
@@ -49,30 +48,6 @@ const noPersistentAccess = {
   canDownloadPdf: false,
 };
 
-const keeperPlanIds: KeeperPlanId[] = [
-  "collector",
-  "project_car",
-  "basic_traffic",
-];
-
-function isKeeperPlanId(value: string | null): value is KeeperPlanId {
-  return value !== null && keeperPlanIds.includes(value as KeeperPlanId);
-}
-
-function activeKeeperPlan(entitlements: ReadonlySet<string>): KeeperPlanId | null {
-  if (import.meta.env.DEV) {
-    const devPlan = localStorage.getItem("keeper-dev-plan");
-    if (isKeeperPlanId(devPlan)) return devPlan;
-  }
-
-  return keeperPlanIds.find((planId) => entitlements.has(planId)) ?? null;
-}
-
-// Temporary public tester mode.
-// Keep this true until Stripe/subscription enforcement is ready.
-// Authenticated testers get full Keeper functionality without payment.
-const PUBLIC_TESTER_MODE = true;
-
 export function getAccountAccess(
   user: User | null,
   entitlements: ReadonlySet<string> = new Set(),
@@ -83,8 +58,7 @@ export function getAccountAccess(
       label: "Guest Mode · demo only",
       description:
         "Explore Keeper with a sample vehicle. Guest changes are not stored, synced, or exportable.",
-      planId: null,
-      vehicleSlots: 0,
+      keeper: { ...getKeeperEntitlements(), maxVehicles: 0 },
       canExploreDemo: true,
       ...noPersistentAccess,
     };
@@ -96,8 +70,7 @@ export function getAccountAccess(
       label: "Existing garage found · read only",
       description:
         "This older anonymous garage is preserved and read-only. Sign in or create a Profile, then choose whether to import it.",
-      planId: null,
-      vehicleSlots: 0,
+      keeper: { ...getKeeperEntitlements(), maxVehicles: 0 },
       canExploreDemo: true,
       ...noPersistentAccess,
     };
@@ -109,51 +82,28 @@ export function getAccountAccess(
       label: "Keeper Profile · setup required",
       description:
         "Review the current Terms and Privacy notice to activate account features.",
-      planId: null,
-      vehicleSlots: 0,
+      keeper: { ...getKeeperEntitlements(), maxVehicles: 0 },
       canExploreDemo: true,
       ...noPersistentAccess,
     };
   }
 
-  if (PUBLIC_TESTER_MODE) {
-    return {
-      kind: "account",
-      label: "Keeper Tester Access",
-      description:
-        "Tester access is active. Garage editing, mileage, maintenance, custom work, syncing, and exports are temporarily unlocked while Keeper is in testing.",
-      planId: "project_car",
-      vehicleSlots: 3,
-      canExploreDemo: true,
-      canSaveGarage: true,
-      canSaveMileage: true,
-      canSaveMaintenance: true,
-      canCustomize: true,
-      canSync: true,
-      canExport: true,
-      canDownloadPdf: true,
-    };
-  }
-
-  const planId = activeKeeperPlan(entitlements) ?? "basic_traffic";
-  const plan = getKeeperPlan(planId);
-  const isBasic = planId === "basic_traffic";
+  const keeper = getKeeperEntitlements(entitlements);
 
   return {
     kind: "account",
-    label: plan.name,
-    description: isBasic
-      ? "Save one vehicle and access Keeper's researched facts, known issues, and ownership intelligence."
-      : "Your garage is stored in Supabase and follows this Keeper Profile across devices.",
-    planId,
-    vehicleSlots: plan.vehicleSlots,
+    label: keeper.lifetimeUpgrade ? "Keeper Upgraded" : "Keeper Free",
+    description: keeper.lifetimeUpgrade
+      ? "Lifetime upgrade active. Three vehicle slots and PDF export are unlocked."
+      : "Track your first car free with full Keeper garage and maintenance functionality.",
+    keeper,
     canExploreDemo: true,
     canSaveGarage: true,
-    canSaveMileage: !isBasic,
-    canSaveMaintenance: !isBasic,
-    canCustomize: !isBasic,
+    canSaveMileage: true,
+    canSaveMaintenance: true,
+    canCustomize: true,
     canSync: true,
-    canExport: plan.canExport,
-    canDownloadPdf: plan.canExport,
+    canExport: true,
+    canDownloadPdf: keeper.canExportPdf,
   };
 }

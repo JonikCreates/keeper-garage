@@ -30,6 +30,8 @@ import { CustomIssueForm } from "./CustomIssueForm";
 import { CustomMaintenanceForm } from "./CustomMaintenanceForm";
 import { DEMO_MAINTENANCE_RECORDS, DEMO_TRACKED_ITEMS, DEMO_VEHICLE } from "./demoGarage";
 import { LegalPage } from "./LegalPage";
+import { canAddVehicle } from "./keeperEntitlements";
+import { KeeperUpgradeDialog, type UpgradePromptContext } from "./KeeperUpgradeDialog";
 import { MaintenanceExportMenu } from "./MaintenanceExportMenu";
 import { formatUsdCents, maintenanceTotalCents } from "./maintenanceExport";
 import { MaintenanceRecordPanel } from "./MaintenanceRecordPanel";
@@ -40,6 +42,7 @@ import {
   type RecommendationType,
 } from "./ownershipIntelligence";
 import { ProfilePage } from "./ProfilePage";
+import { createUpgradeCheckout } from "./payments";
 import { RemoveTrackedItemButton, TrackedIssueAction } from "./TrackedIssueAction";
 import { VehicleRemovalDialog } from "./VehicleRemovalDialog";
 import { useGarage } from "./useGarage";
@@ -302,6 +305,9 @@ export default function App() {
   const [vehicleRemovalTargetId, setVehicleRemovalTargetId] = useState<string | null>(null);
   const [vehicleRemovalSummary, setVehicleRemovalSummary] = useState<VehicleRemovalSummary | null>(null);
   const [vehicleRemovalLoading, setVehicleRemovalLoading] = useState(false);
+  const [upgradePrompt, setUpgradePrompt] = useState<UpgradePromptContext | null>(null);
+  const [upgradeCheckoutBusy, setUpgradeCheckoutBusy] = useState(false);
+  const [upgradeCheckoutMessage, setUpgradeCheckoutMessage] = useState<string | null>(null);
   // REVIEW DECISION: Cloudflare uses clean page paths while the fallback GitHub Pages build retains addressable hash routes.
   const [page, setPage] = useState<AppPage>(getPageFromLocation);
   // REVIEW DECISION: new visitors start in light mode, while a deliberate theme choice remains local to that browser.
@@ -580,14 +586,9 @@ export default function App() {
     return;
   }
 
-  if (!editing && garage.vehicles.length >= auth.access.vehicleSlots) {
-    setSaveNotice(
-      auth.access.planId === "collector"
-        ? "Collector supports up to 3 vehicles."
-        : auth.access.planId === "project_car"
-          ? "Tester access supports up to 3 vehicles."
-          : "Basic Traffic includes 1 saved vehicle. Upgrade to Project Car or Collector for full garage access.",
-    );
+  if (!editing && !canAddVehicle(auth.access.keeper, garage.vehicles.length)) {
+    setUpgradeCheckoutMessage(null);
+    setUpgradePrompt(auth.access.keeper.lifetimeUpgrade ? "limit" : "vehicle");
     return;
   }
 
@@ -668,6 +669,41 @@ export default function App() {
     auth.clearStatus();
     setAuthIntent(intent);
     setAuthOpen(true);
+  }
+
+  function openUpgrade(context: UpgradePromptContext) {
+    setUpgradeCheckoutMessage(null);
+    setUpgradePrompt(context);
+  }
+
+  function requestNewVehicle() {
+    setSaveNotice(null);
+    if (!canAddVehicle(auth.access.keeper, garage.vehicles.length)) {
+      openUpgrade(auth.access.keeper.lifetimeUpgrade ? "limit" : "vehicle");
+      return;
+    }
+    garage.startNewVehicle();
+    setVehicleSelection(EMPTY_VEHICLE_SELECTION);
+  }
+
+  async function beginUpgradeCheckout() {
+    setUpgradeCheckoutBusy(true);
+    setUpgradeCheckoutMessage(null);
+    try {
+      const result = await createUpgradeCheckout();
+      if (result.status === "redirect") {
+        window.location.assign(result.url);
+        return;
+      }
+      if (result.status === "already_owned") {
+        setUpgradeCheckoutMessage("This Keeper account already owns the lifetime upgrade. Refreshing access…");
+        window.location.reload();
+        return;
+      }
+      setUpgradeCheckoutMessage(result.message);
+    } finally {
+      setUpgradeCheckoutBusy(false);
+    }
   }
 
   const accountLabel = !auth.ready ? "Checking…" : auth.access.kind === "account" ? "My Profile" : auth.access.kind === "setup" ? "Finish setup" : "Sign In";
@@ -759,10 +795,7 @@ export default function App() {
             <div className="garage-picker">
               <div className="garage-picker-copy"><span>{garageTitle}</span><strong>{demoVehicleSelected ? "2014 BMW 328i · Demo Vehicle" : demoMode ? `${profileLabel} · Guest preview` : garage.loading ? "Loading saved vehicles…" : garage.vehicles.length ? `${garage.vehicles.length} saved vehicle${garage.vehicles.length === 1 ? "" : "s"}` : auth.access.kind === "setup" ? "Finish Profile setup to load your garage" : "No saved vehicles yet"}</strong></div>
               {auth.dataUser ? <>
-                <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") {
-                    garage.startNewVehicle();
-                    setVehicleSelection(EMPTY_VEHICLE_SELECTION);
-                  } else garage.selectVehicle(event.target.value); }}>
+                <label><span>Saved vehicles</span><select aria-label="Saved vehicles" value={garage.vehicleId ?? "new"} disabled={garage.loading || garage.saving} onChange={(event) => { setSaveNotice(null); if (event.target.value === "new") requestNewVehicle(); else garage.selectVehicle(event.target.value); }}>
                   {garage.vehicles.map((vehicle) => <option value={vehicle.id} key={vehicle.id}>{vehicle.nickname} · {vehicle.model_year} {vehicle.trim}</option>)}
                   {auth.access.canSaveGarage && <option value="new">＋ Add another vehicle</option>}
                 </select></label>
@@ -885,7 +918,7 @@ export default function App() {
             <div><span>Vehicle mileage</span><strong>{currentVehicleMileage === null ? "Not entered" : `${currentVehicleMileage.toLocaleString()} mi`}</strong></div>
             <div><span>Completed records</span><strong>{serviceRecords.loading && !demoMode ? "Loading…" : displayRecords.length}</strong></div>
             <div className="maintenance-total-spent"><span>Total spent</span><strong>{serviceRecords.loading && !demoMode ? "Loading…" : formatUsdCents(totalSpentCents)}</strong></div>
-            <MaintenanceExportMenu vehicle={selectedSavedVehicle} records={displayRecords} canExport={auth.access.canExport} onRequireAccount={() => openAccount("export")} />
+            <MaintenanceExportMenu vehicle={selectedSavedVehicle} records={displayRecords} canExport={auth.access.canExport} canExportPdf={auth.access.canDownloadPdf} onRequireAccount={() => openAccount("export")} onRequireUpgrade={() => openUpgrade("pdf")} />
             {!auth.user && <button className="button button-primary" onClick={() => openAccount("save")}>Create Profile to use My Garage</button>}
             {auth.access.kind === "account" && !garage.vehicleId && <a className="button button-primary" href={pageHref("garage")}>Save this vehicle</a>}
           </div>
@@ -1005,12 +1038,13 @@ export default function App() {
         </section>
         </>}
 
-        {page === "profile" && <ProfilePage auth={auth} vehicleCount={garage.vehicles.length} onOpenAccount={openAccount} />}
+        {page === "profile" && <ProfilePage auth={auth} vehicleCount={garage.vehicles.length} onOpenAccount={openAccount} onUpgrade={() => openUpgrade("profile")} />}
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
       <footer className="site-footer"><div><strong>KEEPER</strong></div><p>Independent, multi-brand vehicle ownership research built for enthusiasts. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav></footer>
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
+      <KeeperUpgradeDialog open={upgradePrompt !== null} context={upgradePrompt ?? "profile"} upgraded={auth.access.keeper.lifetimeUpgrade} busy={upgradeCheckoutBusy} message={upgradeCheckoutMessage} onClose={() => setUpgradePrompt(null)} onCheckout={() => void beginUpgradeCheckout()} />
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>
   );

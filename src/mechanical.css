@@ -807,7 +807,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .profile-guest-card ul { margin: 0; padding: 0; display: grid; align-content: start; gap: 9px; list-style: none; }
 .profile-guest-card li::before { margin-right: 8px; color: var(--blue); content: "■"; }
 .profile-actions { grid-column: 1 / -1; display: flex; gap: 10px; }
-.profile-dashboard { margin-top: 16px; display: grid; grid-template-columns: 1.2fr .8fr 1fr; gap: 12px; }
+.profile-dashboard { margin-top: 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
 .profile-dashboard section { padding: 25px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; border: 1px solid var(--line); background: var(--panel); }
 .profile-dashboard section > strong { color: var(--green); font: 900 9px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
 .profile-dashboard section > small { color: var(--muted); font-size: 9px; line-height: 1.5; }
@@ -1160,199 +1160,48 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
   }
 }
 
-/* Keeper membership preview */
-.profile-plan-lab {
-  grid-column: 1 / -1;
-  padding: 0 !important;
-  display: block !important;
-  overflow: hidden;
-  border-top: 5px solid var(--acid) !important;
-}
-.profile-plan-heading {
-  padding: 24px 26px;
-  display: grid;
-  grid-template-columns: minmax(0, .8fr) minmax(320px, 1.2fr);
-  align-items: end;
-  gap: 24px;
-  border-bottom: 1px solid var(--line);
-  background: var(--panel-2);
-}
-.profile-plan-heading > div > span {
-  color: var(--acid);
-  font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.profile-plan-heading h2 {
-  margin: 7px 0 0 !important;
-  font: 900 34px/.95 "Arial Narrow", Arial, sans-serif;
-  letter-spacing: -.025em;
-  text-transform: uppercase;
-}
-.profile-plan-heading p {
-  margin: 0 !important;
-  max-width: 610px;
-  justify-self: end;
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.65;
-}
-.profile-plan-grid {
-  padding: 18px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  background: var(--field);
-}
-.profile-plan-card {
-  min-width: 0;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 17px;
-  position: relative;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  box-shadow: 0 1px 3px var(--shadow);
-}
-.profile-plan-card.featured {
-  border-color: var(--acid);
-  box-shadow: inset 0 4px var(--acid), 0 2px 7px var(--shadow);
-}
-.profile-plan-card.current {
-  outline: 1px solid color-mix(in srgb, var(--green) 75%, transparent);
-  outline-offset: -4px;
-}
-.profile-plan-card > header {
-  min-height: 48px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-}
-.profile-plan-card > header > div {
-  min-width: 0;
-}
-.profile-plan-card > header span {
-  display: block;
-  color: var(--blue);
-  font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-}
-.profile-plan-card.featured > header span {
-  color: var(--acid);
-}
-.profile-plan-card h3 {
-  margin: 7px 0 0;
-  font: 900 29px/.95 "Arial Narrow", Arial, sans-serif;
-  letter-spacing: -.025em;
-  text-transform: uppercase;
-}
-.profile-plan-card > header b {
-  flex: 0 0 auto;
-  padding: 5px 7px;
-  color: var(--green);
-  border: 1px solid color-mix(in srgb, var(--green) 55%, var(--line));
-  background: color-mix(in srgb, var(--green) 8%, var(--panel));
-  font: 900 6px ui-monospace, "Cascadia Mono", Consolas, monospace;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-}
-.profile-plan-price {
-  min-height: 54px;
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-}
-.profile-plan-price strong {
-  color: var(--paper);
-  font: 900 38px/.9 "Arial Narrow", Arial, sans-serif;
-  letter-spacing: -.035em;
-  text-transform: uppercase;
-}
-.profile-plan-card.featured .profile-plan-price strong {
-  color: var(--acid);
-}
-.profile-plan-price small {
-  color: var(--muted);
-  font: 800 8px ui-monospace, "Cascadia Mono", Consolas, monospace;
-  text-transform: uppercase;
-}
-.profile-plan-card > p {
-  min-height: 50px;
-  margin: 0 !important;
-  color: var(--muted);
-  font-size: 9px;
-  line-height: 1.6;
-}
-.profile-plan-card ul {
-  margin: 0;
-  padding: 14px 0 0;
-  display: grid;
-  gap: 9px;
-  border-top: 1px solid var(--line);
-  list-style: none;
-}
-.profile-plan-card li {
-  padding-left: 15px;
-  position: relative;
-  color: var(--cream);
-  font-size: 9px;
-  line-height: 1.45;
-}
-.profile-plan-card li::before {
-  position: absolute;
-  left: 0;
-  color: var(--green);
-  content: "■";
-  font-size: 6px;
-}
-.profile-plan-card li strong {
-  color: var(--paper);
-}
-.profile-plan-card > .button {
-  width: 100%;
-  margin-top: auto;
-}
-.profile-plan-card > .button:disabled {
-  color: var(--green);
-  border-color: color-mix(in srgb, var(--green) 55%, var(--line));
-  background: color-mix(in srgb, var(--green) 7%, var(--panel));
-  cursor: default;
-  opacity: 1;
-}
+/* Keeper account access */
+.profile-account-card, .profile-keeper-card { display: grid !important; gap: 20px !important; }
+.profile-account-card > header, .profile-keeper-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.profile-account-card header span, .profile-keeper-card header span, .profile-upgrade-offer > div > span, .profile-keeper-usage span { color: var(--blue); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .13em; text-transform: uppercase; }
+.profile-account-card header strong { padding: 5px 8px; color: var(--green); border: 1px solid color-mix(in srgb, var(--green) 55%, var(--line)); font: 900 7px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.profile-account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.profile-account-actions button { padding: 9px 11px; color: var(--blue); border: 1px solid var(--line); background: var(--field); cursor: pointer; font: 800 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.profile-keeper-card { padding: 0 !important; overflow: hidden; border-top: 5px solid var(--blue) !important; }
+.profile-keeper-card.upgraded { border-top-color: var(--green) !important; }
+.profile-keeper-card > header { padding: 25px 25px 0; }
+.profile-keeper-card > header b { color: var(--green); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.profile-keeper-usage { margin: 0 25px; padding: 15px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); background: var(--field); }
+.profile-keeper-usage > div { display: grid; gap: 6px; }
+.profile-keeper-usage strong { font-size: 15px; }
+.profile-keeper-features, .profile-upgrade-offer ul, .keeper-upgrade-dialog ul { margin: 0; padding: 0; display: grid; gap: 9px; list-style: none; }
+.profile-keeper-features { padding: 0 25px 25px; grid-template-columns: repeat(3, 1fr); }
+.profile-keeper-features li, .profile-upgrade-offer li, .keeper-upgrade-dialog li { padding-left: 16px; position: relative; font-size: 9px; }
+.profile-keeper-features li::before, .profile-upgrade-offer li::before, .keeper-upgrade-dialog li::before { position: absolute; left: 0; color: var(--green); content: "✓"; font-weight: 900; }
+.profile-upgrade-offer { padding: clamp(22px, 4vw, 38px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(230px, .45fr); gap: 28px; border-top: 1px solid var(--line); background: var(--panel-2); }
+.profile-upgrade-offer h3 { margin: 8px 0 18px; font-size: clamp(25px, 4vw, 40px); text-transform: uppercase; }
+.profile-upgrade-cta { display: grid; align-content: start; gap: 8px; padding-left: 26px; border-left: 1px solid var(--line); }
+.profile-upgrade-cta > strong { color: var(--acid); font: 900 48px/.9 "Arial Narrow", Arial, sans-serif; }
+.profile-upgrade-cta > span, .profile-upgrade-cta > b { color: var(--muted); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.profile-upgrade-cta > b { color: var(--paper); }
+.profile-upgrade-cta .button { margin-top: 10px; }
 
-@media (max-width: 900px) {
-  .profile-plan-heading {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-  .profile-plan-heading p {
-    justify-self: start;
-  }
-  .profile-plan-grid {
-    grid-template-columns: 1fr;
-  }
-  .profile-plan-card > p {
-    min-height: 0;
-  }
-}
+.keeper-upgrade-backdrop { padding: 18px; display: grid; place-items: center; position: fixed; inset: 0; z-index: 80; background: rgba(3, 4, 5, .78); backdrop-filter: blur(4px); }
+.keeper-upgrade-dialog { max-width: 520px; width: 100%; padding: clamp(25px, 5vw, 42px); display: grid; gap: 17px; position: relative; color: var(--paper); border: 1px solid var(--line); border-top: 5px solid var(--acid); background: var(--panel); box-shadow: 0 18px 60px rgba(0, 0, 0, .36); }
+.keeper-upgrade-close { width: 34px; height: 34px; position: absolute; top: 12px; right: 12px; color: var(--muted); border: 1px solid var(--line); background: transparent; cursor: pointer; font-size: 22px; }
+.keeper-upgrade-dialog > span { color: var(--acid); font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; }
+.keeper-upgrade-dialog h2 { margin: 0; padding-right: 32px; font-size: clamp(32px, 7vw, 52px); line-height: .95; text-transform: uppercase; }
+.keeper-upgrade-dialog > p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.65; }
+.keeper-upgrade-price { display: flex; align-items: baseline; gap: 10px; }
+.keeper-upgrade-price strong { color: var(--acid); font: 900 46px/.9 "Arial Narrow", Arial, sans-serif; }
+.keeper-upgrade-price span, .keeper-upgrade-once { font: 900 8px ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: uppercase; }
+.keeper-upgrade-once { padding: 10px 12px; color: var(--paper); border: 1px solid var(--acid); background: color-mix(in srgb, var(--acid) 9%, var(--panel)); text-align: center; }
+.keeper-upgrade-message { padding: 11px; border-left: 4px solid var(--blue); background: var(--field); }
 
 @media (max-width: 640px) {
-  .profile-plan-heading {
-    padding: 20px;
-  }
-  .profile-plan-grid {
-    padding: 10px;
-  }
-  .profile-plan-card {
-    padding: 19px;
-  }
-  .profile-plan-card h3 {
-    font-size: 26px;
-  }
-  .profile-plan-price strong {
-    font-size: 34px;
-  }
+  .profile-account-card > header, .profile-keeper-card > header, .profile-keeper-usage { align-items: flex-start; flex-direction: column; }
+  .profile-keeper-usage .button { width: 100%; }
+  .profile-keeper-features, .profile-upgrade-offer { grid-template-columns: 1fr; }
+  .profile-upgrade-cta { padding: 20px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+  .profile-upgrade-cta .button { width: 100%; }
 }

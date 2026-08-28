@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import type { MaintenanceRecordRow, VehicleRow } from "./supabase";
 import { completedExportRecords, downloadMaintenanceHistory } from "./maintenanceExport";
-import { getKeeperVehicleExport } from "./keeperApi";
+import { getKeeperVehicleExport, getKeeperVehiclePdfExport } from "./keeperApi";
 
 type MaintenanceExportMenuProps = {
   vehicle: VehicleRow | null;
   records: MaintenanceRecordRow[];
   canExport: boolean;
+  canExportPdf: boolean;
   onRequireAccount: () => void;
+  onRequireUpgrade: () => void;
 };
 
-export function MaintenanceExportMenu({ vehicle, records, canExport, onRequireAccount }: MaintenanceExportMenuProps) {
+export function MaintenanceExportMenu({ vehicle, records, canExport, canExportPdf, onRequireAccount, onRequireUpgrade }: MaintenanceExportMenuProps) {
   const [open, setOpen] = useState(false);
   const [exporting, setExporting] = useState<"pdf" | "png" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,13 +32,20 @@ export function MaintenanceExportMenu({ vehicle, records, canExport, onRequireAc
       onRequireAccount();
       return;
     }
+    if (format === "pdf" && !canExportPdf) {
+      setOpen(false);
+      onRequireUpgrade();
+      return;
+    }
     if (!vehicle || exportableCount === 0) return;
     setOpen(false);
     setError(null);
     setExporting(format);
     try {
       // REVIEW DECISION: export data is fetched again through an owner-checking RPC so a forged vehicle ID or modified React state cannot authorize a report.
-      const payload = await getKeeperVehicleExport(vehicle.id);
+      const payload = format === "pdf"
+        ? await getKeeperVehiclePdfExport(vehicle.id)
+        : await getKeeperVehicleExport(vehicle.id);
       await downloadMaintenanceHistory(format, payload.vehicle, payload.records);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The service history could not be exported.");
@@ -51,10 +60,11 @@ export function MaintenanceExportMenu({ vehicle, records, canExport, onRequireAc
       {exporting ? `Creating ${exporting.toUpperCase()}…` : "Export ▾"}
     </button>
     {open && <div className="maintenance-export-menu" role="menu">
-      <button type="button" role="menuitem" onClick={() => void exportHistory("pdf")}><strong>Export as PDF</strong><span>Print-ready service record</span></button>
+      <button type="button" role="menuitem" onClick={() => void exportHistory("pdf")}><strong>Export as PDF{canExportPdf ? "" : " · Upgrade"}</strong><span>{canExportPdf ? "Print-ready service record" : "$0.99 one-time Keeper upgrade"}</span></button>
       <button type="button" role="menuitem" onClick={() => void exportHistory("png")}><strong>Export as image</strong><span>High-resolution PNG</span></button>
     </div>}
     {!canExport && vehicle && <small>A Keeper Profile is required to export</small>}
+    {canExport && !canExportPdf && vehicle && <small>PDF export unlocks with Keeper Upgrade</small>}
     {vehicle && exportableCount === 0 && <small>Log completed work to export</small>}
     {error && <small className="maintenance-export-error">{error}</small>}
   </div>;

@@ -55,11 +55,11 @@ test("enhanced known issues retain exact fitment, evidence, symptoms, actions, a
   assert.ok(issues.some((issue) => /not .*fixed|not .*interval|condition/i.test(`${issue.verification} ${issue.clarification}`)));
 });
 
-test("Keeper surfaces richer research without changing temporary tester access", async () => {
+test("Keeper surfaces richer research alongside the centralized lifetime entitlement", async () => {
   const catalog = await readFile(new URL("../lib/catalog.ts", import.meta.url), "utf8");
   const enhanced = await readFile(new URL("../lib/enhancedCatalog.ts", import.meta.url), "utf8");
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
-  const plans = await readFile(new URL("../src/plans.ts", import.meta.url), "utf8");
+  const entitlements = await readFile(new URL("../src/keeperEntitlements.ts", import.meta.url), "utf8");
   const access = await readFile(new URL("../src/access.ts", import.meta.url), "utf8");
 
   for (const brand of ["Volkswagen", "Audi", "Ford", "Honda", "Lexus", "Nissan", "Toyota", "Scion", "Mercedes-Benz"]) {
@@ -73,7 +73,7 @@ test("Keeper surfaces richer research without changing temporary tester access",
   assert.match(app, /Ownership intelligence/);
   assert.match(app, /CONFIGURED_PROFILE_KEY = "keeper-configured-vehicle"/);
   assert.match(app, /sessionStorage\.setItem\(CONFIGURED_PROFILE_KEY, JSON\.stringify\(profile\)\)/);
-  assert.match(plans, /name: "Collector",[\s\S]*monthlyPrice: 3\.99/);
-  assert.match(access, /const PUBLIC_TESTER_MODE = true/);
-  assert.match(access, /Tester access is active/);
+  assert.match(entitlements, /KEEPER_LIFETIME_ENTITLEMENT = "keeper_lifetime"/);
+  assert.match(entitlements, /maxVehicles: 3/);
+  assert.match(access, /label: keeper\.lifetimeUpgrade \? "Keeper Upgraded" : "Keeper Free"/);
 });

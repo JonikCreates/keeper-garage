@@ -30,10 +30,10 @@ The platform library covers BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford,
 - Vehicle-specific work lists for researched known issues and owner-added repairs, restoration, or cosmetic jobs
 - Vehicle-specific Known Issues search with aliases, symptoms, partial-word and typo matching, ranked explanations, and a custom-observation fallback
 - Reversible owner-tracked issues with date found, mileage found, and Watching, Needs Repair, or Repaired status; removing an active item never deletes completed service records
-- Member exports of every completed record for the selected vehicle as a paginated PDF or high-resolution PNG
+- High-resolution PNG exports for Keeper accounts, with paginated PDF export included in the lifetime upgrade
 - Email/password accounts, verification and recovery flows, plus optional Supabase OAuth sign-in with Google
 - Profile and security controls for display name, email, password, and linked identities
-- Demo-only Guest Mode, read-only legacy garage upgrades, and server-issued account entitlements ready for future subscriptions
+- Demo-only Guest Mode, read-only legacy garage upgrades, and server-issued lifetime account entitlements
 
 Keeper is a React + Vite static site. Supabase Auth uses a dedicated PKCE callback and owner-isolated database policies to provide persistent Keeper Profiles. Signed-out visitors explore a static Demo Garage; they do not receive a Supabase user or permanent storage. The complete issue library remains public.
 
@@ -58,9 +58,9 @@ Google sign-in activates automatically after the provider is enabled in Supabase
 
 Keeper no longer creates anonymous accounts. Older anonymous garages are preserved as read-only. Before authentication, Keeper creates an expiring server claim; after authentication, the person explicitly chooses whether to transfer the preserved vehicles and related records into that Profile. The claim is single-use and repeat attempts cannot duplicate records.
 
-Future paid access must be decided by trusted entitlement rows and enforced by RLS or protected server functions. The frontend access resolver is only the presentation layer; it is not the authority for a paywall or export entitlement.
+Keeper Free includes one vehicle and full normal garage functionality. A $0.99 one-time Keeper Upgrade unlocks three total vehicle slots and PDF export permanently for that account. Paid access is decided by trusted entitlement rows and enforced by database triggers or protected server functions; the frontend is only the presentation layer and cannot grant paid access.
 
-Database changes live in `supabase/migrations`. Vehicles, tracked maintenance items, and maintenance records use Row Level Security so each signed-in identity can read only rows owned by its `auth.uid()`. Existing anonymous identities are read-only; permanent writes additionally require a current server-controlled account entitlement. Maintenance records are append-only events, and protected export requests verify both entitlement and selected-vehicle ownership.
+Database changes live in `supabase/migrations`. Vehicles, tracked maintenance items, and maintenance records use Row Level Security so each signed-in identity can read only rows owned by its `auth.uid()`. Existing anonymous identities are read-only; permanent writes additionally require a current server-controlled account entitlement. Maintenance records are append-only events. New vehicle inserts are limited server-side, while existing over-limit garages remain intact, and the paid PDF export function verifies both the lifetime entitlement and selected-vehicle ownership.
 
 ## Data policy
 

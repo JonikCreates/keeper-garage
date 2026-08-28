@@ -1,249 +1,60 @@
 import type { ReturnTypeKeeperAuth } from "./authTypes";
 import type { AuthIntent } from "./AuthPanel";
-import type { KeeperPlanId } from "./plans";
-import { KEEPER_PLANS } from "./plans";
 import { pageHref } from "./routing";
 
 type ProfilePageProps = {
   auth: ReturnTypeKeeperAuth;
   vehicleCount: number;
   onOpenAccount: (intent?: AuthIntent) => void;
+  onUpgrade: () => void;
 };
 
-const planOptions: KeeperPlanId[] = [
-  "basic_traffic",
-  "project_car",
-  "collector",
-];
-
-export function ProfilePage({ auth, vehicleCount, onOpenAccount }: ProfilePageProps) {
-  const name =
-    auth.user?.user_metadata?.display_name
+export function ProfilePage({ auth, vehicleCount, onOpenAccount, onUpgrade }: ProfilePageProps) {
+  const name = auth.user?.user_metadata?.display_name
     || auth.user?.user_metadata?.full_name
     || auth.user?.email
     || "Keeper driver";
 
-  function setDevPlan(planId: KeeperPlanId) {
-    localStorage.setItem("keeper-dev-plan", planId);
-    window.location.reload();
-  }
-
   if (!auth.ready) {
-    return (
-      <section className="profile-page profile-loading" aria-live="polite">
-        <div>
-          <span className="auth-loading-mark" />
-          <strong>Checking your Keeper session…</strong>
-        </div>
-      </section>
-    );
+    return <section className="profile-page profile-loading" aria-live="polite"><div><span className="auth-loading-mark" /><strong>Checking your Keeper session…</strong></div></section>;
   }
 
-  return (
-    <section className="profile-page" aria-labelledby="profile-page-title">
-      <header className="profile-hero">
-        <p className="eyebrow">Keeper Profile</p>
-        <h1 id="profile-page-title">
-          {auth.access.kind === "account" ? name : "Your garage. Your profile."}
-        </h1>
-        <p>{auth.access.description}</p>
+  return <section className="profile-page" aria-labelledby="profile-page-title">
+    <header className="profile-hero">
+      <p className="eyebrow">Profile</p>
+      <h1 id="profile-page-title">{auth.access.kind === "account" ? name : "Your garage. Your profile."}</h1>
+      <p>{auth.access.description}</p>
+      {(auth.access.kind === "guest" || auth.access.kind === "legacy") && <div className="profile-auth-priority"><button className="button button-primary" onClick={() => onOpenAccount("signin")}>Sign In</button><button className="button button-quiet" onClick={() => onOpenAccount("signup")}>Create Account</button></div>}
+    </header>
 
-        {(auth.access.kind === "guest" || auth.access.kind === "legacy") && (
-          <div className="profile-auth-priority">
-            <button className="button button-primary" onClick={() => onOpenAccount("signin")}>
-              Sign In
-            </button>
-            <button className="button button-quiet" onClick={() => onOpenAccount("signup")}>
-              Create Account
-            </button>
-          </div>
-        )}
-      </header>
+    {auth.access.kind === "guest" && <section className="profile-guest-card">
+      <div><span>Guest Mode</span><h2>Demo access, clearly separated.</h2><p>You&apos;re exploring Keeper without an account. The sample garage shows maintenance schedules, history, fluids, and reports, but Guest Mode does not permanently save or sync personal records.</p></div>
+      <ul><li>Build your own garage</li><li>Save maintenance and mileage</li><li>Track fluids and repairs</li><li>Sync across devices</li></ul>
+      <div className="profile-actions"><button className="button button-primary" onClick={() => onOpenAccount("signin")}>Sign In</button><button className="button button-quiet" onClick={() => onOpenAccount("signup")}>Create Account</button><a className="text-button" href={pageHref("garage")}>Continue in Demo Mode</a></div>
+    </section>}
 
-      {auth.access.kind === "guest" && (
-        <section className="profile-guest-card">
-          <div>
-            <span>Guest Mode</span>
-            <h2>Demo access, clearly separated.</h2>
-            <p>
-              You&apos;re exploring Keeper without an account. The sample garage shows maintenance
-              schedules, history, fluids, and reports, but Guest Mode does not permanently save or
-              sync personal records.
-            </p>
-          </div>
+    {auth.access.kind === "legacy" && <section className="profile-legacy-card"><span>Existing garage found</span><h2>Your records are preserved.</h2><p>Keeper found {vehicleCount} vehicle{vehicleCount === 1 ? "" : "s"} attached to an older anonymous garage. Sign in or create an account; Keeper will ask before importing any records.</p><div className="profile-actions"><button className="button button-primary" onClick={() => onOpenAccount("signin")}>Sign In</button><button className="button button-quiet" onClick={() => onOpenAccount("signup")}>Create Account</button></div></section>}
 
-          <ul>
-            <li>Build your own garage</li>
-            <li>Save maintenance and mileage</li>
-            <li>Track fluids and repairs</li>
-            <li>Sync across devices</li>
-            <li>Export account records</li>
-          </ul>
+    {auth.access.kind === "setup" && <section className="profile-legacy-card"><span>Finish setup</span><h2>Activate account access</h2><p>This identity is signed in, but Keeper has not recorded acceptance of the current Terms and Privacy notice. Garage writes remain blocked by the database until setup is complete.</p><button className="button button-primary" onClick={() => onOpenAccount("account")}>Finish Keeper Profile</button></section>}
 
-          <div className="profile-actions">
-            <button className="button button-primary" onClick={() => onOpenAccount("signin")}>
-              Sign In
-            </button>
-            <button className="button button-quiet" onClick={() => onOpenAccount("signup")}>
-              Create Account
-            </button>
-            <a className="text-button" href={pageHref("garage")}>
-              Continue in Demo Mode
-            </a>
-          </div>
-        </section>
-      )}
+    {auth.access.kind === "account" && <div className="profile-dashboard">
+      <section className="profile-account-card">
+        <header><div><span>Account</span><h2>{name}</h2><p>{auth.user?.email}</p></div><strong>Synced</strong></header>
+        <p>Your vehicles, maintenance history, ownership records, and Keeper access follow this account across devices.</p>
+        <div className="profile-account-actions"><button onClick={() => onOpenAccount("account")}>Edit Profile</button><button onClick={() => onOpenAccount("account")}>Security &amp; Password</button><button onClick={() => onOpenAccount("account")}>Log Out</button></div>
+      </section>
 
-      {auth.access.kind === "legacy" && (
-        <section className="profile-legacy-card">
-          <span>Existing garage found</span>
-          <h2>Your records are preserved.</h2>
-          <p>
-            Keeper found {vehicleCount} vehicle{vehicleCount === 1 ? "" : "s"} attached to an older
-            anonymous garage. Sign in or create an account; Keeper will ask before importing any
-            records.
-          </p>
+      <section className={`profile-keeper-card ${auth.access.keeper.lifetimeUpgrade ? "upgraded" : "free"}`}>
+        <header><div><span>Your Keeper</span><h2>{auth.access.keeper.lifetimeUpgrade ? "Keeper Upgraded" : "Keeper Free"}</h2></div>{auth.access.keeper.lifetimeUpgrade && <b>✓ Lifetime upgrade active</b>}</header>
+        <div className="profile-keeper-usage"><div><span>Your garage</span><strong>{vehicleCount} of {auth.access.keeper.maxVehicles} vehicle slots used</strong></div><a className="button button-quiet" href={pageHref("garage")}>View Garage</a></div>
 
-          <div className="profile-actions">
-            <button className="button button-primary" onClick={() => onOpenAccount("signin")}>
-              Sign In
-            </button>
-            <button className="button button-quiet" onClick={() => onOpenAccount("signup")}>
-              Create Account
-            </button>
-          </div>
-        </section>
-      )}
+        {auth.access.keeper.lifetimeUpgrade ? <ul className="profile-keeper-features"><li>3 vehicle slots</li><li>PDF export unlocked</li><li>Lifetime account access</li></ul> : <div className="profile-upgrade-offer">
+          <div><span>Upgrade Keeper</span><h3>Unlock more of your garage.</h3><ul><li>2 additional vehicle slots</li><li>3 total vehicle slots</li><li>PDF maintenance &amp; ownership exports</li></ul></div>
+          <div className="profile-upgrade-cta"><strong>$0.99</strong><span>One-time purchase</span><button className="button button-primary" type="button" onClick={onUpgrade}>Upgrade for $0.99</button><b>One-time purchase. No subscription.</b></div>
+        </div>}
+      </section>
+    </div>}
 
-      {auth.access.kind === "setup" && (
-        <section className="profile-legacy-card">
-          <span>Finish setup</span>
-          <h2>Activate account access</h2>
-          <p>
-            This identity is signed in, but Keeper has not recorded acceptance of the current Terms
-            and Privacy notice. Garage writes remain blocked by the database until setup is complete.
-          </p>
-
-          <button className="button button-primary" onClick={() => onOpenAccount("account")}>
-            Finish Keeper Profile
-          </button>
-        </section>
-      )}
-
-      {auth.access.kind === "account" && (
-        <div className="profile-dashboard">
-          <section>
-            <span>Keeper Profile</span>
-            <h2>{name}</h2>
-            <p>{auth.user?.email}</p>
-            <strong>Keeper Account</strong>
-            <small>Your garage is synced to this Keeper Profile.</small>
-          </section>
-
-          <section>
-            <span>Garage</span>
-            <h2>
-              {vehicleCount} vehicle{vehicleCount === 1 ? "" : "s"}
-            </h2>
-            <a className="button button-quiet" href={pageHref("garage")}>
-              View Garage
-            </a>
-          </section>
-
-          <section>
-            <span>Account</span>
-            <button onClick={() => onOpenAccount("account")}>Edit Profile</button>
-            <button onClick={() => onOpenAccount("account")}>Change Password</button>
-            <button onClick={() => onOpenAccount("account")}>Log Out</button>
-          </section>
-
-          <section className="profile-plan-lab">
-              <div className="profile-plan-heading">
-                <div>
-                  <span>Keeper memberships</span>
-                  <h2>Choose your Keeper</h2>
-                </div>
-                <p>
-                  Basic Traffic keeps the research free. Project Car unlocks the full Keeper
-                  experience for one vehicle, while Collector expands it to a three-car garage.
-                </p>
-              </div>
-
-              <div className="profile-plan-grid">
-                {planOptions.map((planId) => {
-                  const plan = KEEPER_PLANS[planId];
-                  const isCurrent = auth.access.planId === planId;
-                  const isFeatured = planId === "project_car";
-
-                  return (
-                    <article
-                      className={`profile-plan-card${isFeatured ? " featured" : ""}${isCurrent ? " current" : ""}`}
-                      key={planId}
-                    >
-                      <header>
-                        <div>
-                          <span>{isFeatured ? "Enthusiast pick" : planId === "collector" ? "Multi-car garage" : "Research access"}</span>
-                          <h3>{plan.name}</h3>
-                        </div>
-                        {isCurrent && <b>Current plan</b>}
-                      </header>
-
-                      <div className="profile-plan-price">
-                        {plan.monthlyPrice === 0 ? (
-                          <>
-                            <strong>Free</strong>
-                            <small>forever</small>
-                          </>
-                        ) : (
-                          <>
-                            <strong>${plan.monthlyPrice.toFixed(2)}</strong>
-                            <small>/ month</small>
-                          </>
-                        )}
-                      </div>
-
-                      <p>{plan.description}</p>
-
-                      <ul>
-                        <li>
-                          <strong>{plan.vehicleSlots}</strong> vehicle slot
-                          {plan.vehicleSlots === 1 ? "" : "s"}
-                        </li>
-                        <li>{plan.canTrackMaintenance ? "Full maintenance tracking" : "Research, facts & known issues"}</li>
-                        <li>{plan.canModifyVehicle ? "Repairs, modifications & custom work" : "No owner modifications or service logging"}</li>
-                        <li>{plan.canExport ? "PDF and ownership exports included" : "Exports not included"}</li>
-                        {planId === "collector" && <li>Track multiple builds in one garage</li>}
-                      </ul>
-
-                      <button
-                        className={isFeatured ? "button button-primary" : "button button-quiet"}
-                        type="button"
-                        disabled={isCurrent || !import.meta.env.DEV}
-                        onClick={() => {
-                          if (import.meta.env.DEV) setDevPlan(planId);
-                        }}
-                      >
-                        {isCurrent
-                          ? "Current plan"
-                          : import.meta.env.DEV
-                            ? plan.monthlyPrice === 0
-                              ? "Choose Basic"
-                              : `Choose ${plan.name}`
-                            : "Coming soon"}
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-          </section>
-        </div>
-      )}
-
-      <nav className="profile-legal-nav" aria-label="Profile legal links">
-        <a href={pageHref("terms")}>Terms of Service</a>
-        <a href={pageHref("privacy")}>Privacy Policy</a>
-        <a href={pageHref("contact")}>Contact</a>
-      </nav>
-    </section>
-  );
+    <nav className="profile-legal-nav" aria-label="Profile legal links"><a href={pageHref("terms")}>Terms of Service</a><a href={pageHref("privacy")}>Privacy Policy</a><a href={pageHref("contact")}>Contact</a></nav>
+  </section>;
 }

@@ -201,7 +201,10 @@ test("completed work exports from the full selected-vehicle record set", async (
   assert.match(menu, /Export as PDF/);
   assert.match(menu, /Export as image/);
   assert.match(menu, /getKeeperVehicleExport\(vehicle\.id\)/);
+  assert.match(menu, /getKeeperVehiclePdfExport\(vehicle\.id\)/);
+  assert.match(menu, /format === "pdf" && !canExportPdf/);
   assert.match(api, /rpc\("get_keeper_vehicle_export"/);
+  assert.match(api, /rpc\("get_keeper_vehicle_pdf_export"/);
   assert.match(exporter, /does not independently verify service completion/);
 });
 

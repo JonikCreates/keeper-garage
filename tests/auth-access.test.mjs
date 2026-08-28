@@ -33,7 +33,8 @@ test("Supabase password login and centralized account entitlements are explicit"
   assert.match(auth, /getUser\(\)/);
   assert.match(access, /canSaveGarage: false/);
   assert.match(access, /entitlements\.has\("authenticated_account"\)/);
-  assert.match(access, /kind: "account"[\s\S]*canExport: plan\.canExport/);
+  assert.match(access, /kind: "account"[\s\S]*keeper,[\s\S]*canDownloadPdf: keeper\.canExportPdf/);
+  assert.doesNotMatch(access, /localStorage|PUBLIC_TESTER_MODE|monthlyPrice/);
   assert.match(panel, /Forgot Password\?/);
   assert.match(panel, /Confirm Password/);
   assert.match(panel, /Welcome back/);
