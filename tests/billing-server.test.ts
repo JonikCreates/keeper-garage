@@ -13,13 +13,17 @@ test("server transition map fixes amount and resulting entitlement", () => {
 
 test("checkout trusts only authenticated identity and one productCode", async () => {
   const source = await readFile(new URL("../supabase/functions/create-keeper-checkout/index.ts", import.meta.url), "utf8");
+  const config = await readFile(new URL("../supabase/config.toml", import.meta.url), "utf8");
   assert.match(source, /withSupabase\(\{ auth: "user" \}/);
+  assert.match(config, /\[functions\.create-keeper-checkout\][\s\S]*verify_jwt = false/);
   assert.match(source, /Object\.keys\(body\)\.length !== 1/);
-  assert.match(source, /ctx\.userClaims\?\.sub/);
+  assert.match(source, /ctx\.userClaims\?\.id/);
+  assert.doesNotMatch(source, /ctx\.userClaims\?\.sub/);
   assert.match(source, /account_active/);
   assert.match(source, /mode: "payment"/);
   assert.match(source, /KEEPER_STRIPE_LIVE_ENABLED/);
   assert.match(source, /line_items: \[\{ price: priceId, quantity: 1 \}\]/);
+  assert.match(source, /checkoutIdempotencyVersion = "v2"/);
   assert.doesNotMatch(source, /body\.(userId|amount|priceId)|body\["userId"\]/);
 });
 

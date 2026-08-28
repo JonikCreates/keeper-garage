@@ -4,7 +4,7 @@ Keeper has three account states. Free allows one vehicle and no PDF export. Keep
 
 ## Trust boundaries
 
-The browser sends only `{ productCode }` to the authenticated `create-keeper-checkout` Edge Function. The server gets the user from verified Supabase authentication, resolves the current plan, validates the transition, selects a server-only Stripe Price ID, fixes the amount/resulting plan, and creates a hosted Checkout Session in `payment` mode.
+The browser sends only `{ productCode }` to the authenticated `create-keeper-checkout` Edge Function. The legacy gateway JWT check is disabled for compatibility with current Supabase publishable keys; `@supabase/server` still requires and verifies a real user session inside the function. The server gets the user from those verified claims, resolves the current plan, validates the transition, selects a server-only Stripe Price ID, fixes the amount/resulting plan, and creates a hosted Checkout Session in `payment` mode.
 
 The success route polls `get_keeper_billing_status()` and reloads account entitlements. It does not write purchases or grant access. Only `stripe-webhook`, after checking `Stripe-Signature` against the raw body, can call the service-role-only transactional event processor.
 

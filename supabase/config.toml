@@ -1,5 +1,7 @@
 [functions.create-keeper-checkout]
-verify_jwt = true
+# The project uses Supabase's current publishable keys. The legacy gateway JWT
+# check rejects those sessions, so @supabase/server performs user auth in-code.
+verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false

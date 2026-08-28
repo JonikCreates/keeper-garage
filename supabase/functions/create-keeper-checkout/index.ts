@@ -4,6 +4,7 @@ import { isProductCode, productForTransition, type KeeperPlanCode } from "../_sh
 
 const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY");
 const stripe = stripeSecret ? new Stripe(stripeSecret) : null;
+const checkoutIdempotencyVersion = "v2";
 
 function response(body: Record<string, unknown>, status = 200) {
   return Response.json(body, { status });
@@ -29,7 +30,7 @@ export default {
       return response({ message: "Only a valid productCode may be supplied" }, 400);
     }
 
-    const userId = String(ctx.userClaims?.sub ?? "");
+    const userId = String(ctx.userClaims?.id ?? "");
     if (!userId) return response({ message: "Authentication required" }, 401);
 
     const { data: context, error: contextError } = await ctx.supabaseAdmin.rpc("get_keeper_checkout_context", { p_user_id: userId });
@@ -71,7 +72,7 @@ export default {
       metadata,
       payment_intent_data: { metadata },
       allow_promotion_codes: false,
-    }, { idempotencyKey: `keeper-checkout-${userId}-${planCode}-${productCode}` });
+    }, { idempotencyKey: `keeper-checkout-${checkoutIdempotencyVersion}-${userId}-${planCode}-${productCode}` });
 
     if (!session.url) return response({ message: "Stripe did not return a hosted checkout" }, 502);
     const { error: registerError } = await ctx.supabaseAdmin.rpc("register_keeper_checkout", {
