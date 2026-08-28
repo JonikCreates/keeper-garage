@@ -87,6 +87,11 @@ const keeperUpgradeMigrationUrl = new URL(
   import.meta.url,
 );
 
+const keeperBillingMigrationUrl = new URL(
+  "../supabase/migrations/20260828230000_add_keeper_stripe_billing.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -273,5 +278,22 @@ test("lifetime upgrade migration is non-destructive, server-granted, and idempot
   assert.match(sql, /public\.keeper_max_vehicles\(\)/i);
   assert.match(sql, /has_keeper_entitlement\('keeper_lifetime'\)/i);
   assert.match(sql, /get_keeper_vehicle_pdf_export/i);
+  assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate|drop table/i);
+});
+
+test("versioned Stripe billing is exact, webhook-idempotent, server-granted, and non-destructive", async () => {
+  const sql = await readFile(keeperBillingMigrationUrl, "utf8");
+  assert.match(sql, /create table if not exists public\.keeper_billing_purchases/i);
+  assert.match(sql, /create table if not exists public\.keeper_stripe_webhook_events/i);
+  assert.match(sql, /stripe_event_id text primary key/i);
+  assert.match(sql, /keeper_unlock_v1'[\s\S]*amount_cents = 199/i);
+  assert.match(sql, /keeper_unlimited_v1'[\s\S]*amount_cents = 499/i);
+  assert.match(sql, /keeper_unlimited_upgrade_v1'[\s\S]*amount_cents = 300/i);
+  assert.match(sql, /process_keeper_stripe_event/i);
+  assert.match(sql, /on conflict \(stripe_event_id\) do nothing/i);
+  assert.match(sql, /source = 'purchase'/i);
+  assert.match(sql, /vehicle_limit is not null/i);
+  assert.match(sql, /Keeper Unlock or Unlimited required for PDF export/i);
+  assert.match(sql, /status = 'refunded'/i);
   assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate|drop table/i);
 });

@@ -30,7 +30,7 @@ import { CustomIssueForm } from "./CustomIssueForm";
 import { CustomMaintenanceForm } from "./CustomMaintenanceForm";
 import { DEMO_MAINTENANCE_RECORDS, DEMO_TRACKED_ITEMS, DEMO_VEHICLE } from "./demoGarage";
 import { LegalPage } from "./LegalPage";
-import { canAddVehicle } from "./keeperEntitlements";
+import { canAddVehicle, type KeeperProductCode } from "./keeperEntitlements";
 import { KeeperUpgradeDialog, type UpgradePromptContext } from "./KeeperUpgradeDialog";
 import { MaintenanceExportMenu } from "./MaintenanceExportMenu";
 import { formatUsdCents, maintenanceTotalCents } from "./maintenanceExport";
@@ -42,7 +42,8 @@ import {
   type RecommendationType,
 } from "./ownershipIntelligence";
 import { ProfilePage } from "./ProfilePage";
-import { createUpgradeCheckout } from "./payments";
+import { PaymentResultPage } from "./PaymentResultPage";
+import { createCheckout } from "./payments";
 import { RemoveTrackedItemButton, TrackedIssueAction } from "./TrackedIssueAction";
 import { VehicleRemovalDialog } from "./VehicleRemovalDialog";
 import { useGarage } from "./useGarage";
@@ -588,7 +589,7 @@ export default function App() {
 
   if (!editing && !canAddVehicle(auth.access.keeper, garage.vehicles.length)) {
     setUpgradeCheckoutMessage(null);
-    setUpgradePrompt(auth.access.keeper.lifetimeUpgrade ? "limit" : "vehicle");
+    setUpgradePrompt("limit");
     return;
   }
 
@@ -679,25 +680,30 @@ export default function App() {
   function requestNewVehicle() {
     setSaveNotice(null);
     if (!canAddVehicle(auth.access.keeper, garage.vehicles.length)) {
-      openUpgrade(auth.access.keeper.lifetimeUpgrade ? "limit" : "vehicle");
+      openUpgrade("limit");
       return;
     }
     garage.startNewVehicle();
     setVehicleSelection(EMPTY_VEHICLE_SELECTION);
   }
 
-  async function beginUpgradeCheckout() {
+  async function beginUpgradeCheckout(productCode: KeeperProductCode) {
     setUpgradeCheckoutBusy(true);
     setUpgradeCheckoutMessage(null);
     try {
-      const result = await createUpgradeCheckout();
+      const result = await createCheckout(productCode);
       if (result.status === "redirect") {
         window.location.assign(result.url);
         return;
       }
       if (result.status === "already_owned") {
-        setUpgradeCheckoutMessage("This Keeper account already owns the lifetime upgrade. Refreshing access…");
-        window.location.reload();
+        setUpgradeCheckoutMessage("This Keeper plan is already active. Refreshing account access…");
+        await auth.refreshAccountState();
+        return;
+      }
+      if (result.status === "invalid_transition") {
+        setUpgradeCheckoutMessage(result.message);
+        await auth.refreshAccountState();
         return;
       }
       setUpgradeCheckoutMessage(result.message);
@@ -1039,12 +1045,14 @@ export default function App() {
         </>}
 
         {page === "profile" && <ProfilePage auth={auth} vehicleCount={garage.vehicles.length} onOpenAccount={openAccount} onUpgrade={() => openUpgrade("profile")} />}
+        {page === "payment-success" && <PaymentResultPage kind="success" auth={auth} />}
+        {page === "payment-cancelled" && <PaymentResultPage kind="cancelled" auth={auth} />}
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
       <footer className="site-footer"><div><strong>KEEPER</strong></div><p>Independent, multi-brand vehicle ownership research built for enthusiasts. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav></footer>
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
-      <KeeperUpgradeDialog open={upgradePrompt !== null} context={upgradePrompt ?? "profile"} upgraded={auth.access.keeper.lifetimeUpgrade} busy={upgradeCheckoutBusy} message={upgradeCheckoutMessage} onClose={() => setUpgradePrompt(null)} onCheckout={() => void beginUpgradeCheckout()} />
+      <KeeperUpgradeDialog open={upgradePrompt !== null} context={upgradePrompt ?? "profile"} planCode={auth.access.keeper.planCode} busy={upgradeCheckoutBusy} message={upgradeCheckoutMessage} onClose={() => setUpgradePrompt(null)} onCheckout={(productCode) => void beginUpgradeCheckout(productCode)} />
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />
     </div>
   );

@@ -1,0 +1,5 @@
+[functions.create-keeper-checkout]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false

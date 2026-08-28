@@ -7,7 +7,8 @@ import {
 export type AccountKind = "guest" | "legacy" | "setup" | "account";
 export type EntitlementKey =
   | "authenticated_account"
-  | "keeper_lifetime";
+  | "keeper_unlock_v1"
+  | "keeper_unlimited_v1";
 
 export type AccountAccess = {
   keeper: KeeperEntitlements;
@@ -92,10 +93,12 @@ export function getAccountAccess(
 
   return {
     kind: "account",
-    label: keeper.lifetimeUpgrade ? "Keeper Upgraded" : "Keeper Free",
-    description: keeper.lifetimeUpgrade
-      ? "Lifetime upgrade active. Three vehicle slots and PDF export are unlocked."
-      : "Track your first car free with full Keeper garage and maintenance functionality.",
+    label: keeper.planCode === "keeper_unlimited_v1" ? "Keeper Unlimited" : keeper.planCode === "keeper_unlock_v1" ? "Keeper Unlock" : "Keeper Free",
+    description: keeper.planCode === "keeper_unlimited_v1"
+      ? "Unlimited vehicle slots and PDF export are permanently unlocked."
+      : keeper.planCode === "keeper_unlock_v1"
+        ? "Three vehicle slots and PDF export are permanently unlocked."
+        : "Track your first car free with full Keeper garage and maintenance functionality.",
     keeper,
     canExploreDemo: true,
     canSaveGarage: true,

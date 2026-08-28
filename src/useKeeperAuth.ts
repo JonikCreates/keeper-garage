@@ -491,6 +491,10 @@ export function useKeeperAuth() {
       ? user
       : null;
 
+  const refreshAccountState = useCallback(async () => {
+    await loadAccountState(session);
+  }, [loadAccountState, session]);
+
   return useMemo(() => ({
     configured: hasSupabaseConfig,
     devAuth: Boolean(devUser),
@@ -523,10 +527,11 @@ export function useKeeperAuth() {
     requestAccountDeletion,
     claimLegacyGarage,
     dismissLegacyClaim,
+    refreshAccountState,
     signOut,
     clearStatus: () => {
       setMessage(null);
       setError(null);
     },
-  }), [session, user, dataUser, isLegacyGuest, access, entitlements, legacyClaim, dataVersion, ready, accountStateReady, busy, message, error, capabilities, capabilitiesReady, recoveryMode, signIn, signUp, signInWithProvider, linkProvider, acceptLegal, requestPasswordReset, resendVerification, updatePassword, changeEmail, requestAccountDeletion, claimLegacyGarage, dismissLegacyClaim, signOut]);
+  }), [session, user, dataUser, isLegacyGuest, access, entitlements, legacyClaim, dataVersion, ready, accountStateReady, busy, message, error, capabilities, capabilitiesReady, recoveryMode, signIn, signUp, signInWithProvider, linkProvider, acceptLegal, requestPasswordReset, resendVerification, updatePassword, changeEmail, requestAccountDeletion, claimLegacyGarage, dismissLegacyClaim, refreshAccountState, signOut]);
 }

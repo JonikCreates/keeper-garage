@@ -1,22 +1,51 @@
-# Keeper lifetime purchase integration
+# Keeper one-time billing
 
-Keeper sells one product: `keeper_lifetime`, a $0.99 USD one-time account upgrade. Free accounts have one vehicle slot and normal garage functionality; upgraded accounts have three total vehicle slots and PDF export.
+Keeper has three account states. Free allows one vehicle and no PDF export. `keeper_unlock_v1` is $1.99 USD once for three total vehicles and PDF export. `keeper_unlimited_v1` is $4.99 USD once for unlimited vehicles and PDF export. An Unlock owner uses the internal `keeper_unlimited_upgrade_v1` transaction for exactly $3.00 and receives Unlimited. None of these products is a subscription.
 
-## What is implemented
+## Trust boundaries
 
-- The browser can request a hosted checkout through the provider-neutral `create-keeper-upgrade-checkout` Supabase Edge Function contract.
-- Checkout is disabled by default with `VITE_KEEPER_CHECKOUT_ENABLED=false`. The UI shows “Purchase system coming online” and never grants access locally.
-- `keeper_purchases` stores provider transaction IDs, amount, currency, status, and completion time. Browser roles can read only their own rows and cannot insert or update purchases.
-- `record_keeper_purchase(...)` is callable only by the Supabase service role. It is idempotent on `(provider, provider_transaction_id)` and grants `keeper_lifetime` only when a trusted server callback records a completed $0.99 USD payment.
-- Vehicle additions and PDF export are independently enforced in Postgres. Existing vehicles are never removed if an account is already above its allowance.
+The browser sends only `{ productCode }` to the authenticated `create-keeper-checkout` Edge Function. The server gets the user from verified Supabase authentication, resolves the current plan, validates the transition, selects a server-only Stripe Price ID, fixes the amount/resulting plan, and creates a hosted Checkout Session in `payment` mode.
 
-## Required before accepting money
+The success route polls `get_keeper_billing_status()` and reloads account entitlements. It does not write purchases or grant access. Only `stripe-webhook`, after checking `Stripe-Signature` against the raw body, can call the service-role-only transactional event processor.
 
-1. Select a hosted-checkout provider.
-2. Deploy `create-keeper-upgrade-checkout` as a trusted server function. It must authenticate the Keeper user, reject already-owned purchases, create the provider checkout for exactly 99 cents USD, and associate the checkout with that user ID.
-3. Add a server-only webhook handler. Verify the provider signature using a secret stored only in the server environment, normalize the event status, and call `record_keeper_purchase(...)` with the Supabase service role.
-4. Handle provider success and cancellation return URLs. The success page should refresh `get_keeper_account_state()`; it must not grant access based on query parameters.
-5. Set `VITE_KEEPER_CHECKOUT_ENABLED=true` only after checkout and verified webhooks are deployed and tested.
-6. Run sandbox tests for success, failure, cancellation, duplicate delivery, already-owned accounts, incorrect amounts, and a provider transaction replayed against another user.
+`keeper_billing_purchases` is the audit ledger. Money is integer cents. Checkout Session and PaymentIntent IDs are unique. `keeper_stripe_webhook_events.stripe_event_id` is the event idempotency key, so duplicate delivery returns without applying the event twice. Browser roles can read only their own ledger rows and cannot insert or update them.
 
-Never place provider secret keys, webhook secrets, or the Supabase service-role key in Vite variables or browser code.
+## Entitlements and data preservation
+
+`account_entitlements` remains the current-access source. The resolver gives Unlimited precedence over Unlock and maps active historical `keeper_lifetime`, `project_car`, and `collector` access to Unlock. The migration adds `keeper_unlock_v1` for those users without removing the old audit rows.
+
+Vehicle limits are enforced by the existing database insert trigger, now resolved as `1`, `3`, or `NULL`. `NULL` means unlimited. A refund or other downgrade never deletes or hides vehicles, maintenance history, mileage, custom work, or exports. An over-limit account keeps all existing data but cannot add another vehicle until it is under its current allowance or purchases access again.
+
+PDF data is fetched through `get_keeper_vehicle_pdf_export()`, which requires Unlock or Unlimited and verifies vehicle ownership before the client renders the file.
+
+Full `charge.refunded` events mark the purchase refunded and recompute paid entitlements from the remaining ledger. Refunding the $3 upgrade falls back to Unlock when the underlying Unlock purchase remains paid. Partial refunds are recorded as ignored webhook events and require an explicit policy before production.
+
+## Server-only configuration
+
+These values belong in Supabase Edge Function secrets, never in `VITE_` variables or the repository:
+
+```text
+KEEPER_SITE_URL
+KEEPER_STRIPE_LIVE_ENABLED=false
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+STRIPE_PRICE_KEEPER_UNLOCK_199
+STRIPE_PRICE_KEEPER_UNLIMITED_499
+STRIPE_PRICE_KEEPER_UNLIMITED_UPGRADE_300
+```
+
+`VITE_KEEPER_CHECKOUT_ENABLED` stays `false` until the test-mode products, prices, webhook, migration, and Edge Functions are configured and verified.
+`KEEPER_STRIPE_LIVE_ENABLED` is a separate server-only kill switch and stays `false`; both Edge Functions reject live-mode billing until an explicitly approved production rollout changes it.
+
+## Required test-mode checks
+
+1. Free → Unlock charges 199 cents, records a paid ledger row, grants Unlock, allows three vehicles, and enables PDF.
+2. Unlock → Unlimited charges 300 cents and grants Unlimited; it does not offer another $1.99 or a new $4.99 payment.
+3. Free → Unlimited charges 499 cents and grants Unlimited.
+4. A repeated Stripe event is a no-op after the first transaction.
+5. Invalid signatures return HTTP 400 without a database mutation.
+6. Cancelled and failed payments grant nothing; expired Checkout Sessions close their pending ledger row.
+7. A full refund recalculates access without deleting garage data.
+8. Direct vehicle inserts fail at the Free/Unlock limits and succeed without a cap for Unlimited.
+
+Do not enable live mode or merge billing to production until all test-mode checks and the debug UI review pass.

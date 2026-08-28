@@ -44,6 +44,10 @@ The fallback command `pnpm build:github-pages` retains `/keeper-garage/` asset p
 
 ## Supabase rollout
 
+Apply database migrations and deploy Edge Functions to an isolated/test Supabase environment before enabling checkout on the debug site. `create-keeper-checkout` requires a signed-in Keeper user; `stripe-webhook` disables the Supabase JWT gateway check because Stripe authenticates with its signature, then verifies the raw request body before any mutation.
+
+Stripe secret keys, webhook signing secrets, and Price IDs belong only in Supabase Edge Function Secrets. Never add them to Cloudflare build variables or any `VITE_` variable. See [`docs/keeper-payments.md`](docs/keeper-payments.md) for the exact secret names and test matrix.
+
 In **Supabase > Authentication > URL Configuration**:
 
 1. Keep **Site URL** on the currently trusted production site until cutover.
@@ -85,6 +89,9 @@ Before merging `debug` into `main`, test the stable debug preview on desktop and
 - User A cannot read, change, delete, or export User B's data
 - Garage saves, maintenance records, tracked issues, vehicle removal, and exports
 - No tokens, callback codes, source maps, private keys, or service-role values in output or URLs
+- Checkout remains in Stripe test mode; exact $1.99, $4.99, and $3.00 transitions pass and duplicate webhooks are harmless
+- Success/cancel routes refresh correctly and the success route never grants access without the verified webhook
+- Free/Unlock vehicle limits and paid PDF permission remain enforced when the browser UI is bypassed
 
 Do not attach the custom domain or disable GitHub Pages when any authentication, routing, logout, cross-account, or data-save check fails.
 

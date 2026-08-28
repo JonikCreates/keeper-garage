@@ -60,11 +60,11 @@ export function MaintenanceExportMenu({ vehicle, records, canExport, canExportPd
       {exporting ? `Creating ${exporting.toUpperCase()}…` : "Export ▾"}
     </button>
     {open && <div className="maintenance-export-menu" role="menu">
-      <button type="button" role="menuitem" onClick={() => void exportHistory("pdf")}><strong>Export as PDF{canExportPdf ? "" : " · Upgrade"}</strong><span>{canExportPdf ? "Print-ready service record" : "$0.99 one-time Keeper upgrade"}</span></button>
+      <button type="button" role="menuitem" onClick={() => void exportHistory("pdf")}><strong>Export as PDF{canExportPdf ? "" : " · Upgrade"}</strong><span>{canExportPdf ? "Print-ready service record" : "From $1.99 one-time · no subscription"}</span></button>
       <button type="button" role="menuitem" onClick={() => void exportHistory("png")}><strong>Export as image</strong><span>High-resolution PNG</span></button>
     </div>}
     {!canExport && vehicle && <small>A Keeper Profile is required to export</small>}
-    {canExport && !canExportPdf && vehicle && <small>PDF export unlocks with Keeper Upgrade</small>}
+    {canExport && !canExportPdf && vehicle && <small>PDF export unlocks with Keeper Unlock or Unlimited</small>}
     {vehicle && exportableCount === 0 && <small>Log completed work to export</small>}
     {error && <small className="maintenance-export-error">{error}</small>}
   </div>;

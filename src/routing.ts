@@ -1,8 +1,13 @@
 import type { LegalPageKind } from "./legal";
 
-export type AppPage = "home" | "garage" | "maintenance" | "issues" | "profile" | LegalPageKind;
+export type AppPage = "home" | "garage" | "maintenance" | "issues" | "profile" | "payment-success" | "payment-cancelled" | LegalPageKind;
 
-const pages: AppPage[] = ["home", "garage", "maintenance", "issues", "profile", "terms", "privacy", "contact"];
+const pagePaths: Record<AppPage, string> = {
+  home: "", garage: "garage", maintenance: "maintenance", issues: "issues", profile: "profile",
+  "payment-success": "account/payment/success", "payment-cancelled": "account/payment/cancelled",
+  terms: "terms", privacy: "privacy", contact: "contact",
+};
+const pages = Object.keys(pagePaths) as AppPage[];
 const githubPagesBuild = import.meta.env.MODE === "github-pages";
 
 function baseUrl() {
@@ -12,24 +17,24 @@ function baseUrl() {
 export function pageHref(page: AppPage) {
   const base = baseUrl();
   if (githubPagesBuild) {
-    base.hash = page === "home" ? "" : page;
+    base.hash = pagePaths[page];
     return `${base.pathname}${base.search}${base.hash}`;
   }
-  base.pathname = `${base.pathname}${page === "home" ? "" : page}`;
+  base.pathname = `${base.pathname}${pagePaths[page]}`;
   return `${base.pathname}${base.search}`;
 }
 
 export function getPageFromLocation(): AppPage {
-  const hashPage = window.location.hash.replace(/^#/, "").split(/[?&]/, 1)[0];
-  if (pages.includes(hashPage as AppPage)) return hashPage as AppPage;
+  const hashPath = window.location.hash.replace(/^#/, "").split(/[?&]/, 1)[0].replace(/^\/+|\/+$/g, "");
+  const hashPage = hashPath ? pages.find((page) => pagePaths[page] === hashPath) : undefined;
+  if (hashPage) return hashPage;
 
   const basePath = baseUrl().pathname.replace(/\/$/, "");
   const relativePath = window.location.pathname.startsWith(basePath)
     ? window.location.pathname.slice(basePath.length)
     : window.location.pathname;
-  const pathPage = relativePath.replace(/^\/+|\/+$/g, "").split("/", 1)[0];
-  if (!pathPage) return "home";
-  return pages.includes(pathPage as AppPage) ? pathPage as AppPage : "home";
+  const path = relativePath.replace(/^\/+|\/+$/g, "");
+  return pages.find((page) => pagePaths[page] === path) ?? "home";
 }
 
 export function authCallbackUrl(accountView: "profile" | "verify" | "recovery" = "profile") {
