@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { pageHref } from "./routing";
 import { KeeperBrand, KeeperLogo } from "./KeeperBrand";
+import { SiteFooter } from "./SiteFooter";
 
 type Theme = "dark" | "light";
 
@@ -93,6 +94,6 @@ export function HomePage() {
       </section>
     </main>
 
-    <footer className="home-footer"><strong>KEEPER</strong><p>Independent vehicle ownership research and workshop records. Verify safety-critical decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav></footer>
+    <SiteFooter home />
   </div>;
 }

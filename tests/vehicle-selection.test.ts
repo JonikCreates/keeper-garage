@@ -90,10 +90,29 @@ test("BMW customer families group each regular and M chassis consistently withou
 test("corrected public names and the F22 230i engine mapping stay unambiguous", () => {
   const toyotaFamily = getVehicleFamilyOptions("Toyota").find((family) => family.value === "ZN6_TOYOTA");
   const scionFamily = getVehicleFamilyOptions("Scion").find((family) => family.value === "ZN6_SCION");
-  assert.equal(toyotaFamily?.label, "86");
+  assert.equal(toyotaFamily?.label, "GT86 (First gen ZN6)");
   assert.equal(scionFamily?.label, "FR-S");
   assert.ok(getVehicleVariantOptions("ZN6_TOYOTA").some((variant) => variant.trim === "GT86" && variant.label === "GT86"));
   assert.deepEqual(getEngineOptions("F22", "230i", 2019, "8-speed automatic"), ["B46"]);
+});
+
+test("BRZ generations share one customer family while retaining exact chassis schedules", () => {
+  const family = getVehicleFamilyOptions("Subaru").find((candidate) => candidate.value === "BRZ");
+  assert.deepEqual(family?.platforms, ["ZC6", "ZD8"]);
+  assert.equal(getVehicleFamilyForPlatform("ZC6").value, "BRZ");
+  assert.equal(getVehicleFamilyForPlatform("ZD8").value, "BRZ");
+
+  const variants = getVehicleVariantOptions("BRZ");
+  assert.ok(variants.some((variant) => variant.platform === "ZC6" && variant.label === "First gen"));
+  assert.ok(variants.some((variant) => variant.platform === "ZD8" && variant.label === "Second gen"));
+  assert.deepEqual(getYearOptionsForTrim("ZC6", "First gen"), [2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013]);
+  assert.deepEqual(getYearOptionsForTrim("ZD8", "Second gen"), [2026, 2025, 2024, 2023, 2022]);
+
+  const brz = profile({ brand: "Subaru", platform: "ZD8", year: 2024, trim: "Second gen", engineCode: "FA24D", transmission: "6-speed manual" });
+  const gr86 = profile({ brand: "Toyota", platform: "ZN8", year: 2024, trim: "Second gen", engineCode: "FA24D", transmission: "6-speed manual" });
+  assert.equal(getMaintenanceCatalog(brz).find((item) => item.name === "Engine oil & filter")?.oem.mileage, 6000);
+  assert.equal(getMaintenanceCatalog(gr86).find((item) => item.name === "Engine oil & filter")?.oem.mileage, 7500);
+  assert.notEqual(getEnhancedScheduleIds(brz)[0], getEnhancedScheduleIds(gr86)[0]);
 });
 
 test("PPI-tagged research can be identified for older platforms", () => {
@@ -187,4 +206,9 @@ test("existing grouped BMW and legacy Nissan garage rows still restore", () => {
   legacyToyota.model = "86 (first generation)";
   legacyToyota.trim = "86";
   assert.deepEqual(vehicleProfileFromRow(legacyToyota), profile({ brand: "Toyota", platform: "ZN6_TOYOTA", year: 2019, trim: "GT86", engineCode: "FA20", transmission: "6-speed manual" }));
+
+  const legacyBrz = simulatedRow(profile({ brand: "Subaru", platform: "ZC6", year: 2019, trim: "First gen", engineCode: "FA20", transmission: "6-speed manual" }));
+  legacyBrz.model = "BRZ (first generation ZC6)";
+  legacyBrz.trim = "BRZ";
+  assert.deepEqual(vehicleProfileFromRow(legacyBrz), profile({ brand: "Subaru", platform: "ZC6", year: 2019, trim: "First gen", engineCode: "FA20", transmission: "6-speed manual" }));
 });

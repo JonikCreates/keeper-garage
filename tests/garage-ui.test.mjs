@@ -47,6 +47,7 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
   const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
   const ownership = await readFile(new URL("../src/OwnershipDashboard.tsx", import.meta.url), "utf8");
   const intelligence = await readFile(new URL("../src/ownershipIntelligence.ts", import.meta.url), "utf8");
+  const footer = await readFile(new URL("../src/SiteFooter.tsx", import.meta.url), "utf8");
   const css = await readFile(new URL("../src/mechanical.css", import.meta.url), "utf8");
   const topbarActions = app.match(/<div className="topbar-actions">([\s\S]*?)<\/div>/)?.[1] ?? "";
 
@@ -65,7 +66,7 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
   assert.match(intelligence, /More data needed/);
   assert.match(app, /Vehicle Settings/);
   assert.doesNotMatch(topbarActions, /GitHub|github/);
-  assert.match(app, /Independent, multi-brand vehicle ownership research/);
+  assert.match(footer, /Independent vehicle ownership research and workshop records/);
   assert.match(css, /\.ownership-command-center/);
   assert.match(css, /grid-template-columns: repeat\(5, 1fr\)/);
   assert.match(css, /@media \(max-width: 430px\)[\s\S]*\.personal-garage-specs, \.personal-garage-stats/);

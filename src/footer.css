@@ -8,13 +8,26 @@
   padding-top: 58px;
   padding-bottom: 58px;
   gap: 34px;
+  grid-template-columns: minmax(160px, .65fr) minmax(220px, 1fr) minmax(240px, 1.15fr) auto;
 }
 
-.site-footer > div,
-.home-footer > strong {
+.footer-brand {
+  display: grid !important;
+  align-content: start;
+  justify-items: start;
+  gap: 5px !important;
+}
+
+.footer-brand strong {
   font-size: 16px;
   font-weight: 900;
   letter-spacing: .16em;
+}
+
+.footer-brand span {
+  color: var(--muted);
+  font: 700 9px ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .04em;
 }
 
 .site-footer p,
@@ -25,6 +38,9 @@
 
 .site-footer nav,
 .home-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
   gap: 22px;
   font-size: 11px;
   font-weight: 800;
@@ -39,6 +55,14 @@
   padding-top: 38px;
   padding-bottom: 52px;
   gap: 34px;
+  grid-template-columns: minmax(160px, .65fr) minmax(220px, 1fr) minmax(240px, 1.15fr) auto;
+}
+
+@media (max-width: 1050px) {
+  .site-footer,
+  .home-footer {
+    grid-template-columns: minmax(180px, .65fr) 1fr;
+  }
 }
 
 @media (max-width: 760px) {
@@ -53,8 +77,12 @@
     padding-bottom: 40px;
   }
 
-  .site-footer > div,
-  .home-footer > strong {
+  .site-footer,
+  .home-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-brand strong {
     font-size: 15px;
   }
 }

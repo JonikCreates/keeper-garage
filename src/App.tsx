@@ -44,6 +44,7 @@ import {
 } from "./ownershipIntelligence";
 import { ProfilePage } from "./ProfilePage";
 import { PaymentResultPage } from "./PaymentResultPage";
+import { SiteFooter } from "./SiteFooter";
 import { createCheckout } from "./payments";
 import { RemoveTrackedItemButton, TrackedIssueAction } from "./TrackedIssueAction";
 import { VehicleRemovalDialog } from "./VehicleRemovalDialog";
@@ -340,14 +341,14 @@ export default function App() {
 
   useEffect(() => {
     document.title = page === "garage"
-      ? "Keeper Auto"
+      ? "Keeper | Garage"
       : page === "maintenance"
-        ? `Keeper Auto — ${profile.year} ${profile.trim} Maintenance`
+        ? `Keeper | ${profile.year} ${profile.trim} Maintenance`
         : page === "issues"
-          ? `Keeper Auto — ${profile.year} ${profile.trim} Known Issues`
+          ? `Keeper | ${profile.year} ${profile.trim} Known Issues`
           : page === "profile"
-            ? "Keeper Auto — Profile"
-            : `Keeper Auto — ${page === "terms" ? "Terms" : page === "privacy" ? "Privacy" : "Contact"}`;
+            ? "Keeper | Profile"
+            : `Keeper | ${page === "terms" ? "Terms of Service" : page === "privacy" ? "Privacy Policy" : "Contact"}`;
   }, [page, profile.trim, profile.year]);
 
   useEffect(() => {
@@ -1052,7 +1053,7 @@ export default function App() {
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}
       </main>
 
-      <footer className="site-footer"><div><strong>KEEPER</strong></div><p>Independent, multi-brand vehicle ownership research built for enthusiasts. Not affiliated with or endorsed by any vehicle manufacturer.</p><p>This site cannot inspect or diagnose a vehicle. Verify important decisions with VIN-specific manufacturer information and qualified repair professionals.</p><nav aria-label="Legal"><a href={pageHref("terms")}>Terms</a><a href={pageHref("privacy")}>Privacy</a><a href={pageHref("contact")}>Contact</a></nav></footer>
+      <SiteFooter />
       {vehicleRemovalTarget && <VehicleRemovalDialog vehicle={vehicleRemovalTarget} summary={vehicleRemovalSummary} loading={vehicleRemovalLoading} removing={garage.removing} onCancel={closeVehicleRemoval} onConfirm={confirmVehicleRemoval} />}
       <KeeperUpgradeDialog open={upgradePrompt !== null} context={upgradePrompt ?? "profile"} planCode={auth.access.keeper.planCode} busy={upgradeCheckoutBusy} message={upgradeCheckoutMessage} onClose={() => setUpgradePrompt(null)} onCheckout={(productCode) => void beginUpgradeCheckout(productCode)} />
       <AuthPanel key={`${authOpen}-${authIntent}-${auth.user?.id ?? "guest"}`} auth={auth} open={authOpen} intent={authIntent} onClose={closeAuth} />

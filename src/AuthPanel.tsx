@@ -180,7 +180,7 @@ export function AuthPanel({ auth, open, intent = "account", onClose }: AuthPanel
 
       {auth.user && auth.access.kind === "setup" && !showRecovery && <div className="account-center">
         <div className="account-summary"><div className="account-avatar">{accountName.slice(0, 1).toUpperCase()}</div><div><span>Keeper Profile</span><strong>{accountName}</strong><small>Account activation required</small></div></div>
-        <section className="account-form legal-activation"><span>Current legal documents</span><h3>Finish setting up Keeper</h3><p>Review the current pre-launch Terms and Privacy notice. Acceptance is stored with document versions and a server timestamp.</p><LegalAgreement checked={acceptedLegal} onChange={setAcceptedLegal} /><button className="button button-primary" disabled={!acceptedLegal || auth.busy} onClick={() => void auth.acceptLegal()}>Activate Keeper Profile</button><small>Terms {TERMS_VERSION} · Privacy {PRIVACY_VERSION}</small></section>
+        <section className="account-form legal-activation"><span>Current legal documents</span><h3>Finish setting up Keeper</h3><p>Review the current Terms and Privacy Policy. Acceptance is stored with document versions and a server timestamp.</p><LegalAgreement checked={acceptedLegal} onChange={setAcceptedLegal} /><button className="button button-primary" disabled={!acceptedLegal || auth.busy} onClick={() => void auth.acceptLegal()}>Activate Keeper Profile</button><small>Terms {TERMS_VERSION} · Privacy {PRIVACY_VERSION}</small></section>
         <button className="sign-out-button" disabled={auth.busy} onClick={() => void auth.signOut()}>Log Out</button>
       </div>}
 

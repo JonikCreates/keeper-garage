@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
+import packageJson from "./package.json";
 
 function normalizeSiteUrl(value: string) {
   const url = new URL(value);
@@ -34,6 +35,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: githubPages ? "/keeper-garage/" : "/",
     plugins: [react(), keeperMetadata(siteUrl)],
+    define: {
+      __KEEPER_VERSION__: JSON.stringify(packageJson.version),
+    },
     publicDir: "public",
     build: {
       outDir: "dist",

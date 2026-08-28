@@ -1,10 +1,12 @@
-export const TERMS_VERSION = "2026-08-16-prelaunch";
-export const PRIVACY_VERSION = "2026-08-16-prelaunch";
+export const TERMS_VERSION = "2026-08-28";
+export const PRIVACY_VERSION = "2026-08-28";
+export const LEGAL_LAST_UPDATED = "August 28, 2026";
+export const KEEPER_SUPPORT_EMAIL = "support@keeperauto.com";
 
 export const keeperLegalConfig = {
   legalName: null as string | null,
-  supportEmail: null as string | null,
-  privacyEmail: null as string | null,
+  supportEmail: KEEPER_SUPPORT_EMAIL,
+  privacyEmail: KEEPER_SUPPORT_EMAIL,
   mailingAddress: null as string | null,
   governingJurisdiction: null as string | null,
 };

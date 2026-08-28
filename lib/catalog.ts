@@ -124,10 +124,16 @@ const CORE_PLATFORM_OPTIONS: PlatformOption[] = [
 ];
 
 const existingPlatformIds = new Set(CORE_PLATFORM_OPTIONS.map((platform) => platform.value));
+const CUSTOMER_PLATFORM_LABELS: Record<string, string> = {
+  E82: "1 Series (E82 and E88)",
+  ZC6: "BRZ",
+  ZD8: "BRZ",
+  ZN6_TOYOTA: "GT86 (First gen ZN6)",
+};
 export const PLATFORM_OPTIONS: PlatformOption[] = [
   ...CORE_PLATFORM_OPTIONS,
   ...RESEARCH_PLATFORMS.filter((platform) => !existingPlatformIds.has(platform.value)) as PlatformOption[],
-];
+].map((platform) => ({ ...platform, label: CUSTOMER_PLATFORM_LABELS[platform.value] ?? platform.label }));
 
 const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
   { value: "F10", brand: "BMW", label: "5 Series / M5 (F10)", platforms: ["F10", "F10M5"] },
@@ -137,6 +143,7 @@ const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
   { value: "G20", brand: "BMW", label: "3 Series / M3 (G20/G80)", platforms: ["G20", "G80"] },
   { value: "G22", brand: "BMW", label: "4 Series / M4 (G22/G82)", platforms: ["G22", "G82"] },
   { value: "G42", brand: "BMW", label: "2 Series / M2 (G42/G87)", platforms: ["G42", "G87"] },
+  { value: "BRZ", brand: "Subaru", label: "BRZ", platforms: ["ZC6", "ZD8"] },
 ];
 
 const groupedFamilyByPlatform = new Map(GROUPED_VEHICLE_FAMILIES.flatMap((family) =>
@@ -176,10 +183,11 @@ const adaptedEnhancedVariants = RESEARCH_VARIANTS
   .map((variant) => {
     const activeHybrid = variant.scheduleId === "research-f30-f30-activehybrid-3";
     const nismo = ["Z33", "Z34"].includes(variant.platform) && variant.scheduleId.includes("-nismo-");
+    const firstGenerationBrz = variant.platform === "ZC6";
     return {
       ...variant,
-      trim: activeHybrid ? "ActiveHybrid 3" : nismo ? "NISMO" : variant.trim,
-      label: activeHybrid ? "ActiveHybrid 3" : nismo ? "NISMO" : variant.label,
+      trim: activeHybrid ? "ActiveHybrid 3" : nismo ? "NISMO" : firstGenerationBrz ? "First gen" : variant.trim,
+      label: activeHybrid ? "ActiveHybrid 3" : nismo ? "NISMO" : firstGenerationBrz ? "First gen" : variant.label,
       drivetrain: normalizeEnhancedDrivetrain(variant.platform, variant.drivetrain),
     };
   });
