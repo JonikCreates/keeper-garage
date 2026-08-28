@@ -11,7 +11,16 @@ function LaunchOffer({ offer, busyKey, onClaim, onPurchase }: { offer: KeeperPro
   const title = infinite ? "Keeper Infinite" : "Keeper Upgrade";
   const normalPrice = infinite ? "$4.99" : "$1.99";
   const benefit = infinite ? "Unlimited garage + PDF exports" : "3 car garage + PDF exports";
-  const soldOut = !offer.active || offer.remaining <= 0;
+  const soldOut = offer.claim_status === "sold_out" || offer.remaining <= 0;
+  const unavailableLabel = offer.claim_status === "email_unverified"
+    ? "Verify Email to Claim"
+    : offer.claim_status === "account_inactive"
+      ? "Finish Profile to Claim"
+      : offer.claim_status === "already_claimed"
+        ? "Launch Offer Already Used"
+        : offer.claim_status === "already_owned"
+          ? "Included in Your Keeper Plan"
+          : null;
   return <article className={infinite ? "recommended" : undefined}>
     <span>{title}</span><strong>{offer.claimed_by_user ? "CLAIMED" : "FREE"}</strong><p>{normalPrice} normally · one time</p>
     <ul><li>{benefit}</li><li>{offer.remaining} of {offer.max_redemptions} launch spots remaining</li><li>Permanent access</li></ul>
@@ -19,7 +28,9 @@ function LaunchOffer({ offer, busyKey, onClaim, onPurchase }: { offer: KeeperPro
       ? <b className="profile-launch-claimed">✓ Founder Launch Access</b>
       : offer.claim_available
         ? <button className={`button ${infinite ? "button-primary" : "button-quiet"}`} type="button" disabled={busyKey !== null} onClick={() => void onClaim(offer.promotion_key)}>{busyKey === offer.promotion_key ? "Claiming securely…" : `Claim ${title} Free`}</button>
-        : <button className={`button ${infinite ? "button-primary" : "button-quiet"}`} type="button" onClick={onPurchase}>{soldOut ? `Purchase ${title} — ${normalPrice}` : `View ${title} — ${normalPrice}`}</button>}
+        : unavailableLabel
+          ? <button className={`button ${infinite ? "button-primary" : "button-quiet"}`} type="button" disabled>{unavailableLabel}</button>
+          : <button className={`button ${infinite ? "button-primary" : "button-quiet"}`} type="button" onClick={onPurchase}>{soldOut ? `Purchase ${title} — ${normalPrice}` : `View ${title} — ${normalPrice}`}</button>}
   </article>;
 }
 
@@ -53,7 +64,7 @@ export function ProfilePage({ auth, vehicleCount, promotions, onOpenAccount, onU
         </div>}
 
         {promotions.offers.length > 0 && <section className="profile-launch-offers" aria-labelledby="profile-launch-title">
-          <header><div><span>Launch Offer</span><h3 id="profile-launch-title">Founder access is claimed deliberately.</h3></div><p>Availability comes directly from Keeper&apos;s server. One verified Google identity may claim one launch offer.</p></header>
+          <header><div><span>Launch Offer</span><h3 id="profile-launch-title">Choose one free founder offer.</h3></div><p>Availability comes directly from Keeper&apos;s server. Any verified Keeper account may claim one launch offer while spots remain; Stripe checkout is not required.</p></header>
           <div className="profile-plan-grid">{promotions.offers.map((offer) => <LaunchOffer offer={offer} busyKey={promotions.busyKey} onClaim={promotions.claim} onPurchase={onUpgrade} key={offer.promotion_key} />)}</div>
           {promotions.message && <p className="profile-launch-message" role="status">{promotions.message}</p>}
         </section>}

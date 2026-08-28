@@ -3,6 +3,7 @@ import type { KeeperPlanCode } from "./keeperEntitlements";
 import { supabase } from "./supabase";
 
 export type KeeperPromotionKey = "launch_upgrade_50" | "launch_infinite_10";
+export type KeeperPromotionClaimStatus = "available" | "account_inactive" | "email_unverified" | "already_claimed" | "already_owned" | "unavailable" | "sold_out";
 
 export type KeeperPromotionOffer = {
   promotion_key: KeeperPromotionKey;
@@ -13,6 +14,7 @@ export type KeeperPromotionOffer = {
   active: boolean;
   claimed_by_user: boolean;
   claim_available: boolean;
+  claim_status?: KeeperPromotionClaimStatus;
 };
 
 type PromotionListResponse = { promotions?: KeeperPromotionOffer[] };
@@ -21,6 +23,9 @@ type PromotionClaimResponse = {
   message?: string;
   plan_code?: KeeperPlanCode;
   remaining?: number;
+  vehicle_limit?: number | null;
+  pdf_export_enabled?: boolean;
+  entitlement_source?: "launch_promo";
 };
 
 export async function getKeeperLaunchPromotions() {
@@ -44,6 +49,16 @@ function resultMessage(result: PromotionClaimResponse) {
     ? "Keeper Infinite Founder Launch Access is active permanently."
     : "Keeper Upgrade Founder Launch Access is active permanently.";
   return result.message ?? "That launch offer is not available for this account.";
+}
+
+async function refreshAuthoritativeAccountState(refreshAccountState: () => Promise<unknown>) {
+  let lastError: unknown;
+  for (const delay of [0, 250, 750]) {
+    if (delay) await new Promise((resolve) => window.setTimeout(resolve, delay));
+    try { return await refreshAccountState(); }
+    catch (error) { lastError = error; }
+  }
+  throw lastError;
 }
 
 export function useKeeperPromotions(enabled: boolean, refreshAccountState: () => Promise<unknown>) {
@@ -75,8 +90,16 @@ export function useKeeperPromotions(enabled: boolean, refreshAccountState: () =>
     setMessage(null);
     try {
       const result = await claimKeeperLaunchPromotion(promotionKey);
-      setMessage(resultMessage(result));
-      if (result.status === "claimed" || result.status === "already_owned") await refreshAccountState();
+      let nextMessage = resultMessage(result);
+      if (result.status === "claimed" || result.status === "already_owned") {
+        try { await refreshAuthoritativeAccountState(refreshAccountState); }
+        catch {
+          nextMessage = result.status === "claimed"
+            ? `${nextMessage} The claim succeeded; Keeper is still refreshing the account display.`
+            : `${nextMessage} Keeper is still refreshing the account display.`;
+        }
+      }
+      setMessage(nextMessage);
       await refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Keeper couldn't complete the launch claim.");

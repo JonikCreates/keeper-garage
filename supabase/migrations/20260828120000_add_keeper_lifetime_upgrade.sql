@@ -6,7 +6,10 @@ alter table public.account_entitlements
 
 alter table public.account_entitlements
   add constraint account_entitlements_source_check
-  check (source in ('account', 'subscription', 'support', 'purchase', 'legacy_migration'));
+  -- `launch_promo` is included for safe reconciliation when a database had
+  -- the later promotion SQL applied manually before migration history caught
+  -- up. The later launch migration keeps the same complete source set.
+  check (source in ('account', 'subscription', 'support', 'purchase', 'legacy_migration', 'launch_promo'));
 
 create table if not exists public.keeper_purchases (
   id uuid primary key default gen_random_uuid(),

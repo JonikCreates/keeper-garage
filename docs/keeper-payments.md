@@ -22,7 +22,9 @@ Full `charge.refunded` events mark the purchase refunded and recompute paid enti
 
 ## Launch promotions
 
-`launch_infinite_10` and `launch_upgrade_50` are independent rows in `keeper_promotions`. The database locks the requested row, verifies an active account, confirmed email, and Google identity, checks capacity, records one identity-bound redemption, increments only that promotion, and grants the same entitlement as a paid purchase in one transaction. A unique user ID and privacy-preserving Google identity hash prevent claiming either pool again from the same verified identity. Claim attempts are server-rate-limited and logged without browser fingerprints.
+`launch_infinite_10` and `launch_upgrade_50` are independent rows in `keeper_promotions`. The database locks the requested row, verifies an active account and confirmed email, checks capacity, records one identity-bound redemption, increments only that promotion, verifies the resulting entitlement, and commits all of it in one transaction. Keeper supports both verified email/password and Google-authenticated accounts. A unique user ID and privacy-preserving hash of the confirmed account email prevent the same Keeper identity from claiming either pool again. Claim attempts are server-rate-limited and logged without browser fingerprints.
+
+The original launch function incorrectly required a linked Google identity. That rule did not match Keeper's supported sign-in methods and rejected otherwise eligible verified email/password users. `20260828235500_fix_keeper_launch_promotion_claims.sql` removes that mismatch without resetting promotion rows, counters, redemptions, purchases, or garage data.
 
 Set either promotion's `active` field to `false` to disable it without a code deploy. The profile reads exact remaining quantities from `get_keeper_launch_promotions()`; it never maintains a browser counter.
 
@@ -53,6 +55,7 @@ STRIPE_PRICE_KEEPER_UNLIMITED_499
 7. A full refund recalculates access without deleting garage data.
 8. Direct vehicle inserts fail at the Free/Upgrade limits and succeed without a cap for Infinite.
 9. The first 10 Infinite claims and first 50 Upgrade claims succeed independently; claims 11 and 51 fall back to paid pricing.
-10. One user/verified Google identity cannot claim twice or claim both pools, and concurrent final-slot requests cannot both win.
+10. One verified Keeper account cannot claim twice or claim both pools, and concurrent final-slot requests cannot both win.
+11. Free claims call the database RPC directly and remain available when `VITE_KEEPER_CHECKOUT_ENABLED=false`; that switch controls paid Stripe checkout only.
 
 Do not enable live mode or merge billing to production until all test-mode checks and the debug UI review pass.

@@ -97,6 +97,11 @@ const keeperLaunchMigrationUrl = new URL(
   import.meta.url,
 );
 
+const keeperLaunchFixMigrationUrl = new URL(
+  "../supabase/migrations/20260828235500_fix_keeper_launch_promotion_claims.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -303,8 +308,9 @@ test("versioned Stripe billing is exact, webhook-idempotent, server-granted, and
   assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate|drop table/i);
 });
 
-test("launch promotions are separate, atomic, identity-bound, and non-destructive", async () => {
-  const sql = await readFile(keeperLaunchMigrationUrl, "utf8");
+test("launch promotions are separate, atomic, verified-account bound, and non-destructive", async () => {
+  const sql = `${await readFile(keeperLaunchMigrationUrl, "utf8")}\n${await readFile(keeperLaunchFixMigrationUrl, "utf8")}`;
+  const fixSql = await readFile(keeperLaunchFixMigrationUrl, "utf8");
   assert.match(sql, /create table if not exists public\.keeper_promotions/i);
   assert.match(sql, /create table if not exists public\.keeper_promotion_redemptions/i);
   assert.match(sql, /create table if not exists public\.keeper_promotion_claim_attempts/i);
@@ -313,7 +319,8 @@ test("launch promotions are separate, atomic, identity-bound, and non-destructiv
   assert.match(sql, /unique \(user_id\)/i);
   assert.match(sql, /unique \(identity_hash\)/i);
   assert.match(sql, /email_confirmed_at is null/i);
-  assert.match(sql, /identity\.provider = 'google'/i);
+  assert.match(fixSql, /'email:' \|\| pg_catalog\.lower/i);
+  assert.doesNotMatch(fixSql, /provider_required|Connect a verified Google identity/i);
   assert.match(sql, /for update/i);
   assert.match(sql, /pg_advisory_xact_lock/i);
   assert.match(sql, /redemption_count = redemption_count \+ 1/i);
