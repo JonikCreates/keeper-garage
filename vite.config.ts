@@ -25,16 +25,15 @@ export default defineConfig(({ mode }) => {
   const githubPages = mode === "github-pages";
   const env = loadEnv(mode, process.cwd(), "");
   const configuredSiteUrl = env.VITE_SITE_URL?.trim();
+  const canonicalSiteUrl = normalizeSiteUrl(env.VITE_CANONICAL_SITE_URL?.trim() || "https://keeperauto.com/");
 
   if (process.env.CF_PAGES === "1" && !configuredSiteUrl) {
     throw new Error("Cloudflare Pages requires VITE_SITE_URL for canonical and social URLs.");
   }
 
-  const siteUrl = normalizeSiteUrl(configuredSiteUrl || "https://keeperauto.com/");
-
   return {
     base: githubPages ? "/keeper-garage/" : "/",
-    plugins: [react(), keeperMetadata(siteUrl)],
+    plugins: [react(), keeperMetadata(canonicalSiteUrl)],
     define: {
       __KEEPER_VERSION__: JSON.stringify(packageJson.version),
     },
