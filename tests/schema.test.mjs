@@ -92,6 +92,11 @@ const keeperBillingMigrationUrl = new URL(
   import.meta.url,
 );
 
+const keeperLaunchMigrationUrl = new URL(
+  "../supabase/migrations/20260828234000_add_keeper_launch_promotions.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -295,5 +300,26 @@ test("versioned Stripe billing is exact, webhook-idempotent, server-granted, and
   assert.match(sql, /vehicle_limit is not null/i);
   assert.match(sql, /Keeper Unlock or Unlimited required for PDF export/i);
   assert.match(sql, /status = 'refunded'/i);
+  assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate|drop table/i);
+});
+
+test("launch promotions are separate, atomic, identity-bound, and non-destructive", async () => {
+  const sql = await readFile(keeperLaunchMigrationUrl, "utf8");
+  assert.match(sql, /create table if not exists public\.keeper_promotions/i);
+  assert.match(sql, /create table if not exists public\.keeper_promotion_redemptions/i);
+  assert.match(sql, /create table if not exists public\.keeper_promotion_claim_attempts/i);
+  assert.match(sql, /'launch_upgrade_50', 'keeper_unlock_v1', 50, true/i);
+  assert.match(sql, /'launch_infinite_10', 'keeper_unlimited_v1', 10, true/i);
+  assert.match(sql, /unique \(user_id\)/i);
+  assert.match(sql, /unique \(identity_hash\)/i);
+  assert.match(sql, /email_confirmed_at is null/i);
+  assert.match(sql, /identity\.provider = 'google'/i);
+  assert.match(sql, /for update/i);
+  assert.match(sql, /pg_advisory_xact_lock/i);
+  assert.match(sql, /redemption_count = redemption_count \+ 1/i);
+  assert.match(sql, /promotion\.redemption_count >= promotion\.max_redemptions/i);
+  assert.match(sql, /source = 'launch_promo'|, 'launch_promo', null/i);
+  assert.match(sql, /recent_attempts >= 5/i);
+  assert.match(sql, /grant execute on function public\.claim_keeper_launch_promotion\(text\) to authenticated/i);
   assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate|drop table/i);
 });

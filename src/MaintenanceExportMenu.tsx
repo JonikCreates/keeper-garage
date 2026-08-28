@@ -64,7 +64,7 @@ export function MaintenanceExportMenu({ vehicle, records, canExport, canExportPd
       <button type="button" role="menuitem" onClick={() => void exportHistory("png")}><strong>Export as image</strong><span>High-resolution PNG</span></button>
     </div>}
     {!canExport && vehicle && <small>A Keeper Profile is required to export</small>}
-    {canExport && !canExportPdf && vehicle && <small>PDF export unlocks with Keeper Unlock or Unlimited</small>}
+    {canExport && !canExportPdf && vehicle && <small>PDF export is included with Keeper Upgrade or Infinite</small>}
     {vehicle && exportableCount === 0 && <small>Log completed work to export</small>}
     {error && <small className="maintenance-export-error">{error}</small>}
   </div>;

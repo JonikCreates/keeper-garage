@@ -13,7 +13,9 @@ export type KeeperBillingStatus = {
   vehicle_count: number;
   pdf_export_enabled: boolean;
   latest_status: "pending" | "paid" | "failed" | "cancelled" | "refunded" | null;
-  latest_product_code: KeeperProductCode | null;
+  latest_product_code: KeeperProductCode | "keeper_unlimited_upgrade_v1" | null;
+  entitlement_source: "purchase" | "launch_promo" | "legacy_migration" | "support" | null;
+  promotion_key: "launch_upgrade_50" | "launch_infinite_10" | null;
 };
 
 type CheckoutFunctionResponse = { status?: "created" | "already_owned" | "invalid_transition"; checkoutUrl?: string; planCode?: KeeperPlanCode; message?: string };

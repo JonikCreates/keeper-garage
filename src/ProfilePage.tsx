@@ -1,14 +1,33 @@
 import type { ReturnTypeKeeperAuth } from "./authTypes";
 import type { AuthIntent } from "./AuthPanel";
 import { vehicleSlotLabel } from "./keeperEntitlements";
+import type { KeeperPromotionKey, KeeperPromotionOffer, useKeeperPromotions } from "./keeperPromotions";
 import { pageHref } from "./routing";
 
-type ProfilePageProps = { auth: ReturnTypeKeeperAuth; vehicleCount: number; onOpenAccount: (intent?: AuthIntent) => void; onUpgrade: () => void };
+type ProfilePageProps = { auth: ReturnTypeKeeperAuth; vehicleCount: number; promotions: ReturnType<typeof useKeeperPromotions>; onOpenAccount: (intent?: AuthIntent) => void; onUpgrade: () => void };
 
-export function ProfilePage({ auth, vehicleCount, onOpenAccount, onUpgrade }: ProfilePageProps) {
+function LaunchOffer({ offer, busyKey, onClaim, onPurchase }: { offer: KeeperPromotionOffer; busyKey: KeeperPromotionKey | null; onClaim: (key: KeeperPromotionKey) => Promise<void>; onPurchase: () => void }) {
+  const infinite = offer.promotion_key === "launch_infinite_10";
+  const title = infinite ? "Keeper Infinite" : "Keeper Upgrade";
+  const normalPrice = infinite ? "$4.99" : "$1.99";
+  const benefit = infinite ? "Unlimited garage + PDF exports" : "3 car garage + PDF exports";
+  const soldOut = !offer.active || offer.remaining <= 0;
+  return <article className={infinite ? "recommended" : undefined}>
+    <span>{title}</span><strong>{offer.claimed_by_user ? "CLAIMED" : "FREE"}</strong><p>{normalPrice} normally · one time</p>
+    <ul><li>{benefit}</li><li>{offer.remaining} of {offer.max_redemptions} launch spots remaining</li><li>Permanent access</li></ul>
+    {offer.claimed_by_user
+      ? <b className="profile-launch-claimed">✓ Founder Launch Access</b>
+      : offer.claim_available
+        ? <button className={`button ${infinite ? "button-primary" : "button-quiet"}`} type="button" disabled={busyKey !== null} onClick={() => void onClaim(offer.promotion_key)}>{busyKey === offer.promotion_key ? "Claiming securely…" : `Claim ${title} Free`}</button>
+        : <button className={`button ${infinite ? "button-primary" : "button-quiet"}`} type="button" onClick={onPurchase}>{soldOut ? `Purchase ${title} — ${normalPrice}` : `View ${title} — ${normalPrice}`}</button>}
+  </article>;
+}
+
+export function ProfilePage({ auth, vehicleCount, promotions, onOpenAccount, onUpgrade }: ProfilePageProps) {
   const name = auth.user?.user_metadata?.display_name || auth.user?.user_metadata?.full_name || auth.user?.email || "Keeper driver";
   const plan = auth.access.keeper.planCode;
-  const planName = plan === "keeper_unlimited_v1" ? "Keeper Unlimited" : plan === "keeper_unlock_v1" ? "Keeper Unlocked" : "Keeper Free";
+  const planName = plan === "keeper_unlimited_v1" ? "Keeper Infinite" : plan === "keeper_unlock_v1" ? "Keeper Upgrade" : "Keeper Free";
+  const claimedLaunchOffer = promotions.offers.find((offer) => offer.claimed_by_user);
 
   if (!auth.ready) return <section className="profile-page profile-loading" aria-live="polite"><div><span className="auth-loading-mark" /><strong>Checking your Keeper session…</strong></div></section>;
 
@@ -23,15 +42,22 @@ export function ProfilePage({ auth, vehicleCount, onOpenAccount, onUpgrade }: Pr
       <section className="profile-account-card"><header><div><span>Account</span><h2>{name}</h2><p>{auth.user?.email}</p></div><strong>Synced</strong></header><p>Your vehicles, maintenance history, ownership records, and Keeper access follow this account across devices.</p><div className="profile-account-actions"><button onClick={() => onOpenAccount("account")}>Edit Profile</button><button onClick={() => onOpenAccount("account")}>Security &amp; Password</button><button onClick={() => onOpenAccount("account")}>Log Out</button></div></section>
 
       <section className={`profile-keeper-card ${plan === "free" ? "free" : "upgraded"}`}>
-        <header><div><span>Your Keeper</span><h2>{planName}</h2></div>{plan !== "free" && <b>✓ Lifetime access active</b>}</header>
+        <header><div><span>Your Keeper</span><h2>{planName}</h2></div>{plan !== "free" && <b>✓ {claimedLaunchOffer ? "Founder Launch Access" : "Permanent access active"}</b>}</header>
         <div className="profile-keeper-usage"><div><span>Your garage</span><strong>{vehicleSlotLabel(auth.access.keeper, vehicleCount)}</strong></div><a className="button button-quiet" href={pageHref("garage")}>View Garage</a></div>
 
-        {plan === "keeper_unlimited_v1" && <ul className="profile-keeper-features"><li>Unlimited vehicle slots</li><li>PDF export unlocked</li><li>One-time purchase · no subscription</li></ul>}
-        {plan === "keeper_unlock_v1" && <div className="profile-upgrade-offer"><div><span>Current plan</span><h3>Keeper Unlocked</h3><ul><li>3 total vehicle slots</li><li>PDF maintenance &amp; ownership exports</li><li>Lifetime account access</li></ul></div><div className="profile-upgrade-cta"><strong>$3.00</strong><span>Upgrade difference · one time</span><p>You&apos;ve already paid $1.99. Go unlimited for the remaining $3.00.</p><button className="button button-primary" type="button" onClick={onUpgrade}>Upgrade to Unlimited — $3.00</button><b>Pay only the difference. No subscription.</b></div></div>}
+        {plan === "keeper_unlimited_v1" && <ul className="profile-keeper-features"><li>Unlimited vehicle slots</li><li>PDF exports</li><li>Permanent Keeper access</li></ul>}
+        {plan === "keeper_unlock_v1" && <div className="profile-upgrade-offer"><div><span>Current plan</span><h3>Keeper Upgrade</h3><ul><li>3 total vehicle slots</li><li>PDF maintenance &amp; ownership exports</li><li>Permanent Keeper access</li></ul></div><div className="profile-upgrade-cta"><strong>$4.99</strong><span>Keeper Infinite · one time</span><p>Move to an unlimited garage while preserving every vehicle and record.</p><button className="button button-primary" type="button" onClick={onUpgrade}>Get Keeper Infinite — $4.99</button><b>One payment · permanent access.</b></div></div>}
         {plan === "free" && <div className="profile-plan-grid">
-          <article><span>Keeper Unlock</span><strong>$1.99</strong><p>One-time purchase</p><ul><li>3 total vehicle slots</li><li>PDF export</li><li>No subscription</li></ul><button className="button button-quiet" type="button" onClick={onUpgrade}>Unlock Keeper — $1.99</button></article>
-          <article className="recommended"><span>Keeper Unlimited</span><strong>$4.99</strong><p>One-time purchase</p><ul><li>Unlimited vehicle slots</li><li>PDF export</li><li>No subscription</li></ul><button className="button button-primary" type="button" onClick={onUpgrade}>Go Unlimited — $4.99</button></article>
+          <article><span>Keeper Upgrade</span><strong>$1.99</strong><p>One time</p><ul><li>3 car garage</li><li>PDF exports</li><li>Permanent access</li></ul><button className="button button-quiet" type="button" onClick={onUpgrade}>Get Keeper Upgrade — $1.99</button></article>
+          <article className="recommended"><span>Keeper Infinite</span><strong>$4.99</strong><p>One time</p><ul><li>Unlimited garage</li><li>PDF exports</li><li>Permanent access</li></ul><button className="button button-primary" type="button" onClick={onUpgrade}>Get Keeper Infinite — $4.99</button></article>
         </div>}
+
+        {promotions.offers.length > 0 && <section className="profile-launch-offers" aria-labelledby="profile-launch-title">
+          <header><div><span>Launch Offer</span><h3 id="profile-launch-title">Founder access is claimed deliberately.</h3></div><p>Availability comes directly from Keeper&apos;s server. One verified Google identity may claim one launch offer.</p></header>
+          <div className="profile-plan-grid">{promotions.offers.map((offer) => <LaunchOffer offer={offer} busyKey={promotions.busyKey} onClaim={promotions.claim} onPurchase={onUpgrade} key={offer.promotion_key} />)}</div>
+          {promotions.message && <p className="profile-launch-message" role="status">{promotions.message}</p>}
+        </section>}
+        {promotions.loading && <p className="profile-launch-message" role="status">Checking live launch availability…</p>}
       </section>
     </div>}
     <nav className="profile-legal-nav" aria-label="Profile legal links"><a href={pageHref("terms")}>Terms of Service</a><a href={pageHref("privacy")}>Privacy Policy</a><a href={pageHref("contact")}>Contact</a></nav>

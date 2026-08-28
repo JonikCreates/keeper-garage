@@ -93,11 +93,11 @@ export function getAccountAccess(
 
   return {
     kind: "account",
-    label: keeper.planCode === "keeper_unlimited_v1" ? "Keeper Unlimited" : keeper.planCode === "keeper_unlock_v1" ? "Keeper Unlock" : "Keeper Free",
+    label: keeper.planCode === "keeper_unlimited_v1" ? "Keeper Infinite" : keeper.planCode === "keeper_unlock_v1" ? "Keeper Upgrade" : "Keeper Free",
     description: keeper.planCode === "keeper_unlimited_v1"
-      ? "Unlimited vehicle slots and PDF export are permanently unlocked."
+      ? "Unlimited vehicle slots and PDF export are permanently active."
       : keeper.planCode === "keeper_unlock_v1"
-        ? "Three vehicle slots and PDF export are permanently unlocked."
+        ? "Three vehicle slots and PDF export are permanently active."
         : "Track your first car free with full Keeper garage and maintenance functionality.",
     keeper,
     canExploreDemo: true,

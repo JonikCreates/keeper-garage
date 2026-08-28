@@ -73,8 +73,8 @@ test("Keeper surfaces richer research alongside the centralized lifetime entitle
   assert.match(app, /Ownership intelligence/);
   assert.match(app, /CONFIGURED_PROFILE_KEY = "keeper-configured-vehicle"/);
   assert.match(app, /sessionStorage\.setItem\(CONFIGURED_PROFILE_KEY, JSON\.stringify\(profile\)\)/);
-  assert.match(entitlements, /KEEPER_UNLOCK_ENTITLEMENT = "keeper_unlock_v1"/);
-  assert.match(entitlements, /KEEPER_UNLIMITED_ENTITLEMENT = "keeper_unlimited_v1"/);
+  assert.match(entitlements, /KEEPER_UPGRADE_ENTITLEMENT = "keeper_unlock_v1"/);
+  assert.match(entitlements, /KEEPER_INFINITE_ENTITLEMENT = "keeper_unlimited_v1"/);
   assert.match(entitlements, /maxVehicles: 3/);
-  assert.match(access, /"Keeper Unlimited"[\s\S]*"Keeper Unlock"[\s\S]*"Keeper Free"/);
+  assert.match(access, /"Keeper Infinite"[\s\S]*"Keeper Upgrade"[\s\S]*"Keeper Free"/);
 });

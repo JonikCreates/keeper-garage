@@ -31,6 +31,7 @@ import { CustomMaintenanceForm } from "./CustomMaintenanceForm";
 import { DEMO_MAINTENANCE_RECORDS, DEMO_TRACKED_ITEMS, DEMO_VEHICLE } from "./demoGarage";
 import { LegalPage } from "./LegalPage";
 import { canAddVehicle, type KeeperProductCode } from "./keeperEntitlements";
+import { useKeeperPromotions } from "./keeperPromotions";
 import { KeeperUpgradeDialog, type UpgradePromptContext } from "./KeeperUpgradeDialog";
 import { MaintenanceExportMenu } from "./MaintenanceExportMenu";
 import { formatUsdCents, maintenanceTotalCents } from "./maintenanceExport";
@@ -354,6 +355,7 @@ export default function App() {
   }, [page]);
 
   const auth = useKeeperAuth();
+  const promotions = useKeeperPromotions(auth.access.kind === "account", auth.refreshAccountState);
   const loadVehicle = useCallback((vehicle: VehicleProfile) => {
     setProfile(vehicle);
     setVehicleSelection(selectionFromProfile(vehicle));
@@ -1044,7 +1046,7 @@ export default function App() {
         </section>
         </>}
 
-        {page === "profile" && <ProfilePage auth={auth} vehicleCount={garage.vehicles.length} onOpenAccount={openAccount} onUpgrade={() => openUpgrade("profile")} />}
+        {page === "profile" && <ProfilePage auth={auth} vehicleCount={garage.vehicles.length} promotions={promotions} onOpenAccount={openAccount} onUpgrade={() => openUpgrade("profile")} />}
         {page === "payment-success" && <PaymentResultPage kind="success" auth={auth} />}
         {page === "payment-cancelled" && <PaymentResultPage kind="cancelled" auth={auth} />}
         {(page === "terms" || page === "privacy" || page === "contact") && <LegalPage page={page} onOpenAccount={() => openAccount("account")} />}

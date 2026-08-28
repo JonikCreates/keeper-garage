@@ -6,10 +6,9 @@ import { PRODUCTS, productForTransition } from "../supabase/functions/_shared/bi
 test("server transition map fixes amount and resulting entitlement", () => {
   assert.deepEqual(productForTransition("free", "keeper_unlock_v1"), PRODUCTS.keeper_unlock_v1);
   assert.deepEqual(productForTransition("free", "keeper_unlimited_v1"), PRODUCTS.keeper_unlimited_v1);
-  assert.deepEqual(productForTransition("keeper_unlock_v1", "keeper_unlimited_upgrade_v1"), PRODUCTS.keeper_unlimited_upgrade_v1);
-  assert.equal(productForTransition("free", "keeper_unlimited_upgrade_v1"), null);
-  assert.equal(productForTransition("keeper_unlock_v1", "keeper_unlimited_v1"), null);
+  assert.deepEqual(productForTransition("keeper_unlock_v1", "keeper_unlimited_v1"), PRODUCTS.keeper_unlimited_v1);
   assert.equal(productForTransition("keeper_unlimited_v1", "keeper_unlock_v1"), null);
+  assert.equal(productForTransition("keeper_unlimited_v1", "keeper_unlimited_v1"), null);
 });
 
 test("checkout trusts only authenticated identity and one productCode", async () => {

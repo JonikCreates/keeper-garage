@@ -58,7 +58,7 @@ export default {
     const metadata = {
       keeper_user_id: userId,
       keeper_product_code: productCode,
-      keeper_previous_plan_code: product.previousPlan,
+      keeper_previous_plan_code: planCode,
       keeper_resulting_plan_code: product.resultingPlan,
     };
     const session = await stripe.checkout.sessions.create({
@@ -81,7 +81,7 @@ export default {
       p_customer_id: customerId,
       p_amount_cents: product.amountCents,
       p_currency: "USD",
-      p_previous_plan_code: product.previousPlan,
+      p_previous_plan_code: planCode,
       p_resulting_plan_code: product.resultingPlan,
     });
     if (registerError) {

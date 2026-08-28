@@ -36,7 +36,7 @@ export function PaymentResultPage({ kind, auth }: Props) {
     return () => { active = false; };
   }, [accessKind, devAuth, kind, refreshAccountState]);
 
-  const planName = status?.plan_code === "keeper_unlimited_v1" ? "Keeper Unlimited" : status?.plan_code === "keeper_unlock_v1" ? "Keeper Unlock" : null;
+  const planName = status?.plan_code === "keeper_unlimited_v1" ? "Keeper Infinite" : status?.plan_code === "keeper_unlock_v1" ? "Keeper Upgrade" : null;
   return <section className="payment-result-page" aria-live="polite">
     <span>{kind === "success" ? "Secure checkout returned" : "Checkout cancelled"}</span>
     <h1>{kind === "cancelled" ? "No charge was made." : planName ? `${planName} is active.` : "Confirming your purchase…"}</h1>

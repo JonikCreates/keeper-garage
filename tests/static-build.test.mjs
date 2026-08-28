@@ -68,11 +68,12 @@ test("production build contains the Keeper application", async () => {
   assert.match(bundle, /Guest Mode · demo only/);
   assert.match(bundle, /Existing garage found · read only/);
   assert.match(bundle, /Keeper Free/);
-  assert.match(bundle, /Keeper Unlock/);
-  assert.match(bundle, /Keeper Unlimited/);
+  assert.match(bundle, /Keeper Upgrade/);
+  assert.match(bundle, /Keeper Infinite/);
   assert.match(bundle, /\$1\.99/);
   assert.match(bundle, /\$4\.99/);
-  assert.match(bundle, /One-time purchase\. No subscription\./);
+  assert.match(bundle, /One-time purchase · permanent access/);
+  assert.doesNotMatch(bundle, /\$3\.00/);
   assert.doesNotMatch(bundle, /Basic Traffic|Project Car|Keeper memberships/);
   assert.match(bundle, /Save maintenance/);
   assert.match(bundle, /Maintenance history/);

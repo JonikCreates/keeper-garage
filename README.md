@@ -30,7 +30,7 @@ The platform library covers BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford,
 - Vehicle-specific work lists for researched known issues and owner-added repairs, restoration, or cosmetic jobs
 - Vehicle-specific Known Issues search with aliases, symptoms, partial-word and typo matching, ranked explanations, and a custom-observation fallback
 - Reversible owner-tracked issues with date found, mileage found, and Watching, Needs Repair, or Repaired status; removing an active item never deletes completed service records
-- High-resolution PNG exports for Keeper accounts, with paginated PDF export included in Keeper Unlock and Unlimited
+- High-resolution PNG exports for Keeper accounts, with paginated PDF export included in Keeper Upgrade and Infinite
 - Email/password accounts, verification and recovery flows, plus optional Supabase OAuth sign-in with Google
 - Profile and security controls for display name, email, password, and linked identities
 - Demo-only Guest Mode, read-only legacy garage upgrades, and server-issued versioned Keeper entitlements
@@ -58,7 +58,7 @@ Google sign-in activates automatically after the provider is enabled in Supabase
 
 Keeper no longer creates anonymous accounts. Older anonymous garages are preserved as read-only. Before authentication, Keeper creates an expiring server claim; after authentication, the person explicitly chooses whether to transfer the preserved vehicles and related records into that Profile. The claim is single-use and repeat attempts cannot duplicate records.
 
-Keeper Free includes one vehicle and no PDF export. Keeper Unlock is a $1.99 one-time purchase for three total vehicles and PDF export; Keeper Unlimited is a $4.99 one-time purchase for unlimited vehicles and PDF export. An Unlock owner pays only the remaining $3.00 to upgrade. There are no subscriptions. Paid access is decided by trusted entitlement rows and enforced by database triggers or protected server functions; the frontend is only the presentation layer and cannot grant paid access.
+Keeper Free includes one vehicle and no PDF export. Keeper Upgrade is a $1.99 one-time purchase for three total vehicles and PDF export; Keeper Infinite is a $4.99 one-time purchase for unlimited vehicles and PDF export. Both are permanent one-time products. Paid and launch access is decided by trusted entitlement rows and enforced by database triggers or protected server functions; the frontend is only the presentation layer and cannot grant access.
 
 Database changes live in `supabase/migrations`. Vehicles, tracked maintenance items, and maintenance records use Row Level Security so each signed-in identity can read only rows owned by its `auth.uid()`. Existing anonymous identities are read-only; permanent writes additionally require a current server-controlled account entitlement. Maintenance records are append-only events. New vehicle inserts are limited server-side, while existing over-limit garages remain intact, and the paid PDF export function verifies both a current paid entitlement and selected-vehicle ownership.
 
