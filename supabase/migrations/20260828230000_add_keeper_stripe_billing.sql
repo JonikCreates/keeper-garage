@@ -76,7 +76,7 @@ $$;
 
 -- Earlier paid access promised three vehicles and PDF export, which is exactly Keeper Unlock.
 insert into public.account_entitlements (user_id, entitlement_key, status, source, expires_at)
-select distinct entitlement.user_id, 'keeper_unlock_v1', 'active', 'legacy_migration', null
+select distinct entitlement.user_id, 'keeper_unlock_v1', 'active', 'legacy_migration', null::timestamptz
 from public.account_entitlements entitlement
 where entitlement.entitlement_key in ('keeper_lifetime', 'project_car', 'collector')
   and entitlement.status = 'active' and (entitlement.expires_at is null or entitlement.expires_at > now())
