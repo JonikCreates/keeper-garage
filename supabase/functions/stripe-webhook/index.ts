@@ -1,29 +1,41 @@
 import { withSupabase } from "npm:@supabase/server@^1";
 import Stripe from "npm:stripe@^22";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "");
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
 
 function id(value: string | { id: string } | null | undefined) {
   return typeof value === "string" ? value : value?.id ?? null;
 }
 
+async function verifiedEvent(rawBody: string, signature: string) {
+  const candidates = [
+    { secret: Deno.env.get("STRIPE_WEBHOOK_SECRET"), stripeSecret: Deno.env.get("STRIPE_SECRET_KEY"), livemode: false },
+    { secret: Deno.env.get("STRIPE_LIVE_WEBHOOK_SECRET"), stripeSecret: Deno.env.get("STRIPE_LIVE_SECRET_KEY"), livemode: true },
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate.secret || !candidate.stripeSecret) continue;
+    try {
+      const stripe = new Stripe(candidate.stripeSecret);
+      const event = await stripe.webhooks.constructEventAsync(rawBody, signature, candidate.secret, undefined, cryptoProvider);
+      if (event.livemode !== candidate.livemode) continue;
+      return event;
+    } catch { /* Try the other independently configured Stripe mode. */ }
+  }
+  return null;
+}
+
 export default {
   fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
     if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
     const signature = req.headers.get("stripe-signature");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    if (!signature || !webhookSecret) return new Response("Webhook authentication unavailable", { status: 400 });
+    if (!signature) return new Response("Webhook authentication unavailable", { status: 400 });
 
-    // Signature verification requires the exact, unparsed request body.
     const rawBody = await req.text();
-    let event: Stripe.Event;
-    try {
-      event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret, undefined, cryptoProvider);
-    } catch {
-      return new Response("Invalid Stripe signature", { status: 400 });
-    }
+    const event = await verifiedEvent(rawBody, signature);
+    if (!event) return new Response("Invalid Stripe signature", { status: 400 });
     if (event.livemode && Deno.env.get("KEEPER_STRIPE_LIVE_ENABLED") !== "true") return new Response("Live Keeper billing is disabled", { status: 403 });
+    if (!event.livemode && Deno.env.get("KEEPER_STRIPE_LIVE_ENABLED") === "true") return new Response("Test Keeper billing is disabled", { status: 403 });
 
     let action = "ignored";
     let userId: string | null = null;

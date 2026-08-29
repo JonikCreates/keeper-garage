@@ -50,7 +50,7 @@ test("production build contains the Keeper application", async () => {
   assert.match(bundle, /Recorded spending/);
   assert.match(bundle, /Independent vehicle ownership research and workshop records/);
   assert.match(bundle, /Keeper v/);
-  assert.match(bundle, /0\.1\.0/);
+  assert.match(bundle, /1\.0\.0/);
   assert.match(bundle, /support@keeperauto\.com/);
   assert.match(bundle, /Saved vehicles/);
   assert.match(bundle, /Add another vehicle/);

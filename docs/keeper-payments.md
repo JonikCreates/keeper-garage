@@ -30,7 +30,7 @@ Set either promotion's `active` field to `false` to disable it without a code de
 
 ## Server-only configuration
 
-These values belong in Supabase Edge Function secrets, never in `VITE_` variables or the repository:
+These values belong in Supabase Edge Function secrets, never in `VITE_` variables or the repository. The existing names are the debug/test-mode configuration:
 
 ```text
 KEEPER_SITE_URL
@@ -41,8 +41,20 @@ STRIPE_PRICE_KEEPER_UNLOCK_199
 STRIPE_PRICE_KEEPER_UNLIMITED_499
 ```
 
+Keeper 1.0 keeps production live mode in separate secrets so switching the production site cannot silently turn the debug sandbox into live checkout:
+
+```text
+KEEPER_LIVE_SITE_URL=https://keeperauto.com/
+STRIPE_LIVE_SECRET_KEY
+STRIPE_LIVE_WEBHOOK_SECRET
+STRIPE_LIVE_PRICE_KEEPER_UNLOCK_199
+STRIPE_LIVE_PRICE_KEEPER_UNLIMITED_499
+```
+
+The checkout function selects an environment only from an allow-listed request origin, validates the corresponding secret prefix, uses a mode-specific Stripe customer, and records `livemode` on the customer, purchase, and webhook audit rows. Test and live webhook signatures are verified independently. Because debug and production currently share one Supabase project and one entitlement store, the modes are mutually exclusive: setting `KEEPER_STRIPE_LIVE_ENABLED=true` enables live checkout/webhooks and disables test checkout/webhooks. This prevents a sandbox payment from granting production access.
+
 `VITE_KEEPER_CHECKOUT_ENABLED` stays `false` until the test-mode products, prices, webhook, migration, and Edge Functions are configured and verified.
-`KEEPER_STRIPE_LIVE_ENABLED` is a separate server-only kill switch and stays `false`; both Edge Functions reject live-mode billing until an explicitly approved production rollout changes it.
+`KEEPER_STRIPE_LIVE_ENABLED` is a separate server-only kill switch and stays `false` until Stripe finishes business activation, live products and prices exist, the live webhook is configured, and the production release is explicitly approved.
 
 ## Required test-mode checks
 

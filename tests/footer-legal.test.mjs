@@ -12,7 +12,7 @@ test("footer uses the package version and exposes consistent legal support", asy
     readFile(new URL("../src/routing.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(pkg.version, /^0\.\d+\.\d+$/);
+  assert.match(pkg.version, /^\d+\.\d+\.\d+$/);
   assert.match(vite, /__KEEPER_VERSION__:\s*JSON\.stringify\(packageJson\.version\)/);
   assert.match(vite, /VITE_CANONICAL_SITE_URL[\s\S]*https:\/\/keeperauto\.com\//);
   assert.match(footer, /Keeper v\{KEEPER_VERSION\}/);

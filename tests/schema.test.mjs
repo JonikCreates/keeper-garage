@@ -102,6 +102,11 @@ const keeperLaunchFixMigrationUrl = new URL(
   import.meta.url,
 );
 
+const keeperBillingModesMigrationUrl = new URL(
+  "../supabase/migrations/20260829000000_separate_stripe_test_and_live_modes.sql",
+  import.meta.url,
+);
+
 test("garage migration enforces owner-only access", async () => {
   const sql = await readFile(migrationUrl, "utf8");
 
@@ -329,4 +334,18 @@ test("launch promotions are separate, atomic, verified-account bound, and non-de
   assert.match(sql, /recent_attempts >= 5/i);
   assert.match(sql, /grant execute on function public\.claim_keeper_launch_promotion\(text\) to authenticated/i);
   assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate|drop table/i);
+});
+
+test("Keeper 1.0 isolates Stripe test and live audit identities", async () => {
+  const sql = await readFile(keeperBillingModesMigrationUrl, "utf8");
+  assert.match(sql, /add column if not exists livemode boolean not null default false/i);
+  assert.match(sql, /primary key \(user_id, livemode\)/i);
+  assert.match(sql, /unique \(livemode, provider_customer_id\)/i);
+  assert.match(sql, /unique index[\s\S]*\(livemode, provider_checkout_session_id\)/i);
+  assert.match(sql, /primary key \(livemode, stripe_event_id\)/i);
+  assert.match(sql, /get_keeper_checkout_context\(p_user_id uuid, p_livemode boolean\)/i);
+  assert.match(sql, /on conflict \(user_id, livemode\)/i);
+  assert.match(sql, /where livemode = p_livemode and provider_checkout_session_id = p_checkout_session_id/i);
+  assert.match(sql, /where livemode = p_livemode and provider_payment_intent_id = p_payment_intent_id/i);
+  assert.doesNotMatch(sql, /delete from public\.(vehicles|maintenance_records|vehicle_maintenance_items)|truncate/i);
 });

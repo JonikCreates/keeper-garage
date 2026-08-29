@@ -22,21 +22,32 @@ test("checkout trusts only authenticated identity and one productCode", async ()
   assert.match(source, /account_active/);
   assert.match(source, /mode: "payment"/);
   assert.match(source, /KEEPER_STRIPE_LIVE_ENABLED/);
+  assert.match(source, /shared database/);
+  assert.match(source, /KEEPER_LIVE_SITE_URL/);
+  assert.match(source, /STRIPE_LIVE_SECRET_KEY/);
+  assert.match(source, /requestOrigin === liveSiteUrl\.origin/);
+  assert.match(source, /p_livemode: environment\.livemode/);
   assert.match(source, /line_items: \[\{ price: priceId, quantity: 1 \}\]/);
-  assert.match(source, /checkoutIdempotencyVersion = "v2"/);
+  assert.match(source, /checkoutIdempotencyVersion = "v3"/);
+  assert.match(source, /Math\.floor\(Date\.now\(\) \/ 60_000\)/);
   assert.doesNotMatch(source, /body\.(userId|amount|priceId)|body\["userId"\]/);
 });
 
 test("webhook rejects invalid signatures before database processing and uses raw body", async () => {
   const source = await readFile(new URL("../supabase/functions/stripe-webhook/index.ts", import.meta.url), "utf8");
   const raw = source.indexOf("await req.text()");
-  const verify = source.indexOf("constructEventAsync");
+  const verify = source.indexOf("await verifiedEvent(", raw);
   const process = source.indexOf("process_keeper_stripe_event");
   assert.ok(raw >= 0 && raw < verify && verify < process);
+  assert.match(source, /constructEventAsync/);
   assert.match(source, /Invalid Stripe signature[\s\S]*status: 400/);
   assert.match(source, /event\.id/);
   assert.match(source, /checkout\.session\.expired/);
   assert.match(source, /event\.livemode[\s\S]*KEEPER_STRIPE_LIVE_ENABLED/);
+  assert.match(source, /STRIPE_LIVE_WEBHOOK_SECRET/);
+  assert.match(source, /STRIPE_LIVE_SECRET_KEY/);
+  assert.match(source, /event\.livemode !== candidate\.livemode/);
+  assert.match(source, /Test Keeper billing is disabled/);
   assert.doesNotMatch(source, /req\.json\(\)/);
 });
 
