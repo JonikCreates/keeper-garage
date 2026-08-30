@@ -101,15 +101,22 @@ export default {
     // behind one permanent user/product key.
     const checkoutAttemptBucket = Math.floor(Date.now() / 60_000);
     const session = await environment.stripe.checkout.sessions.create({
+      ui_mode: "hosted_page",
       mode: "payment",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: new URL("account/payment/success", environment.siteUrl).toString(),
       cancel_url: new URL("account/payment/cancelled", environment.siteUrl).toString(),
+      billing_address_collection: "auto",
+      phone_number_collection: { enabled: true },
+      automatic_tax: { enabled: false },
+      allow_promotion_codes: true,
+      submit_type: "auto",
+      integration_identifier: "hosted_web_0001",
+      origin_context: "web",
       client_reference_id: userId,
       metadata,
       payment_intent_data: { metadata },
-      allow_promotion_codes: false,
     }, { idempotencyKey: `keeper-checkout-${checkoutIdempotencyVersion}-${environment.livemode ? "live" : "test"}-${userId}-${planCode}-${productCode}-${checkoutAttemptBucket}` });
 
     if (!session.url) return response({ message: "Stripe did not return a hosted checkout" }, 502);
