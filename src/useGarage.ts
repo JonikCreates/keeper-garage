@@ -38,22 +38,25 @@ function sortVehicles(vehicles: VehicleRow[]) {
 
 export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleProfile) => void, dataVersion = 0) {
   const [state, setState] = useState<GarageState>(initialState);
+  const userId = user?.id ?? null;
 
   useEffect(() => {
-    if (!supabase || !user) {
+    if (!supabase || !userId) {
       queueMicrotask(() => setState(initialState));
       return;
     }
 
     const client = supabase;
-    const currentUser = user;
+    const currentUserId = userId;
     let active = true;
     async function loadVehicles() {
-      setState({ ...initialState, ownerId: currentUser.id, loading: true });
+      setState((current) => current.ownerId === currentUserId
+        ? { ...current, loading: true, error: null }
+        : { ...initialState, ownerId: currentUserId, loading: true });
       const { data, error } = await client
         .from("vehicles")
         .select("*")
-        .eq("owner_id", currentUser.id)
+        .eq("owner_id", currentUserId)
         .order("is_primary", { ascending: false })
         .order("updated_at", { ascending: false })
         .returns<VehicleRow[]>();
@@ -63,7 +66,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
         return;
       }
       const vehicles = sortVehicles(data ?? []);
-      const rememberedVehicleId = localStorage.getItem(`keeper-selected-vehicle:${currentUser.id}`);
+      const rememberedVehicleId = localStorage.getItem(`keeper-selected-vehicle:${currentUserId}`);
       const selected = vehicles.find((vehicle) => vehicle.id === rememberedVehicleId)
         ?? vehicles.find((vehicle) => vehicle.is_primary)
         ?? vehicles[0];
@@ -71,10 +74,10 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
         setState((current) => ({ ...current, vehicles: [], loading: false }));
         return;
       }
-      localStorage.setItem(`keeper-selected-vehicle:${currentUser.id}`, selected.id);
+      localStorage.setItem(`keeper-selected-vehicle:${currentUserId}`, selected.id);
       onVehicleLoaded(vehicleProfileFromRow(selected));
       setState({
-        ownerId: currentUser.id,
+        ownerId: currentUserId,
         vehicles,
         vehicleId: selected.id,
         nickname: selected.nickname,
@@ -91,7 +94,7 @@ export function useGarage(user: User | null, onVehicleLoaded: (profile: VehicleP
     return () => {
       active = false;
     };
-  }, [user, onVehicleLoaded, dataVersion]);
+  }, [userId, onVehicleLoaded, dataVersion]);
 
   const selectVehicle = useCallback((vehicleId: string) => {
     const selected = state.vehicles.find((vehicle) => vehicle.id === vehicleId);

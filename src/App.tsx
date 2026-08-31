@@ -366,6 +366,7 @@ export default function App() {
   const garage = useGarage(auth.dataUser, loadVehicle, auth.dataVersion);
   const serviceRecords = useMaintenanceRecords(auth.dataUser, garage.vehicleId);
   const trackedMaintenance = useTrackedMaintenance(auth.dataUser, garage.vehicleId);
+  const formDraftScope = auth.dataUser && garage.vehicleId ? `${auth.dataUser.id}:${garage.vehicleId}` : null;
 
   useEffect(() => {
     if (!auth.ready || auth.access.kind !== "guest") return;
@@ -972,7 +973,7 @@ export default function App() {
                         {!item.catalog && <p>{item.notes ?? "Owner-added maintenance or repair."}</p>}
                         <footer>{(item.catalog?.sources ?? item.issue?.sources ?? []).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><b>{source.type}</b>{source.title} ↗</a>)}</footer>
                       </details>}
-                      <MaintenanceRecordPanel item={item} records={item.records} tracksFluid={item.tracksFluid} signedIn={auth.access.canSaveMaintenance} isGuest={!auth.access.canSaveMaintenance} hasSavedVehicle={Boolean(garage.vehicleId && auth.access.canSaveMaintenance)} defaultMileage={demoMode ? String(DEMO_VEHICLE.mileage) : garage.mileage} saving={serviceRecords.savingSlug === item.slug} onOpenAuth={() => openAccount("save")} onAdd={(input) => serviceRecords.addRecord(item.slug, item.name, input)} />
+                      <MaintenanceRecordPanel item={item} records={item.records} tracksFluid={item.tracksFluid} signedIn={auth.access.canSaveMaintenance} isGuest={!auth.access.canSaveMaintenance} hasSavedVehicle={Boolean(garage.vehicleId && auth.access.canSaveMaintenance)} defaultMileage={demoMode ? String(DEMO_VEHICLE.mileage) : garage.mileage} draftScope={formDraftScope} saving={serviceRecords.savingSlug === item.slug} onOpenAuth={() => openAccount("save")} onAdd={(input) => serviceRecords.addRecord(item.slug, item.name, input)} />
                       {item.kind !== "baseline" && <div className="tracked-item-removal"><div><strong>Active-plan controls</strong><p>Removal hides this tracked item from the plan. Any completed service records remain in your account.</p></div><RemoveTrackedItemButton removing={trackedMaintenance.removingSlug === item.slug} onRemove={() => auth.access.canCustomize ? trackedMaintenance.removeItem(item.slug) : (openAccount("save"), Promise.resolve(false))} /></div>}
                     </div>
                   </details>;
@@ -982,7 +983,7 @@ export default function App() {
             })}
             {!visibleDashboardItems.length && <p className="maintenance-empty-state">No maintenance items match these filters.</p>}
             </div>
-            <CustomMaintenanceForm enabled={Boolean(auth.access.canCustomize && garage.vehicleId)} saving={trackedMaintenance.saving} onRequireVehicle={() => { if (!auth.access.canCustomize) openAccount("save"); else window.location.assign(pageHref("garage")); }} onAdd={trackedMaintenance.addCustomItem} />
+            <CustomMaintenanceForm key={formDraftScope ?? "no-vehicle-draft"} enabled={Boolean(auth.access.canCustomize && garage.vehicleId)} saving={trackedMaintenance.saving} draftScope={formDraftScope} onRequireVehicle={() => { if (!auth.access.canCustomize) openAccount("save"); else window.location.assign(pageHref("garage")); }} onAdd={trackedMaintenance.addCustomItem} />
           </section>
 
           <details className="fluid-summary-section" open={currentFluids.length > 0}>
@@ -1036,7 +1037,7 @@ export default function App() {
               </details>;
             })}
           </div>
-          {libraryQuery.trim() && <CustomIssueForm query={libraryQuery} enabled={Boolean(auth.access.canCustomize && garage.vehicleId)} saving={trackedMaintenance.saving} defaultMileage={garage.mileage} onRequireVehicle={requireSavedVehicle} onAdd={trackedMaintenance.addCustomIssue} />}
+          {libraryQuery.trim() && <CustomIssueForm key={formDraftScope ?? "no-vehicle-draft"} query={libraryQuery} enabled={Boolean(auth.access.canCustomize && garage.vehicleId)} saving={trackedMaintenance.saving} defaultMileage={garage.mileage} draftScope={formDraftScope} onRequireVehicle={requireSavedVehicle} onAdd={trackedMaintenance.addCustomIssue} />}
           {trackedMaintenance.error && <p className="maintenance-record-error">{trackedMaintenance.error}</p>}
         </section>
 

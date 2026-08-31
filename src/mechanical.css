@@ -668,6 +668,7 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .currency-input input { min-width: 0; border: 0; box-shadow: none !important; }
 .maintenance-record-form .button { min-height: 42px; border-radius: 0; cursor: pointer; }
 .maintenance-record-form .button:disabled { cursor: wait; opacity: .55; }
+.maintenance-record-actions { grid-column: 1 / -1; display: flex; align-items: stretch; gap: 8px; }
 .maintenance-record-notice { margin-top: 10px; color: var(--green); }
 .maintenance-history { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
 .maintenance-history ol { margin: 9px 0 0; padding: 0; display: grid; gap: 6px; list-style: none; }

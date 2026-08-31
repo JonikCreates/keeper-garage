@@ -238,12 +238,19 @@ function toCatalogItem(row: EnhancedScheduleRow, profile: VehicleProfile, source
   };
 }
 
+export function enhancedScheduleRowAppliesToProfile(profile: VehicleProfile, row: EnhancedScheduleRow) {
+  return !(profile.platform === "E46"
+    && row.name === "Convertible top hydraulics, tension components & drains"
+    && !profile.trim.endsWith("Cic"));
+}
+
 export function getEnhancedMaintenanceCatalog(profile: VehicleProfile) {
   const match = matchingProfiles(profile).find((candidate) => RESEARCH_SCHEDULES[candidate.scheduleId]?.length);
   if (!match) return [];
   return RESEARCH_SCHEDULES[match.scheduleId]
     .map((rowKey) => ({ rowKey, row: RESEARCH_SCHEDULE_ROWS[rowKey] }))
     .filter((entry): entry is { rowKey: string; row: EnhancedScheduleRow } => Boolean(entry.row))
+    .filter(({ row }) => enhancedScheduleRowAppliesToProfile(profile, row))
     .map(({ row, rowKey }) => toCatalogItem(row, profile, match.sourceWorkbook, match.scheduleId, rowKey));
 }
 

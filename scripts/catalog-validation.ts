@@ -16,6 +16,7 @@ import {
   type VehicleProfile,
 } from "../lib/catalog";
 import {
+  enhancedScheduleRowAppliesToProfile,
   getEnhancedScheduleIds,
   getOwnershipInsights,
 } from "../lib/enhancedCatalog";
@@ -259,7 +260,9 @@ function matchedKnownIssues(profile: VehicleProfile) {
 function expectedEnhancedRows(profile: VehicleProfile) {
   const scheduleId = getEnhancedScheduleIds(profile).find((candidate) => RESEARCH_SCHEDULES[candidate]?.length);
   return scheduleId
-    ? RESEARCH_SCHEDULES[scheduleId].map((key) => RESEARCH_SCHEDULE_ROWS[key]).filter(Boolean)
+    ? RESEARCH_SCHEDULES[scheduleId]
+      .map((key) => RESEARCH_SCHEDULE_ROWS[key])
+      .filter((row) => Boolean(row) && enhancedScheduleRowAppliesToProfile(profile, row))
     : [];
 }
 

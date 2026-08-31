@@ -34,16 +34,17 @@ const initialState: TrackedState = {
 
 export function useTrackedMaintenance(user: User | null, vehicleId: string | null) {
   const [state, setState] = useState(initialState);
-  const scope = user && vehicleId ? `${user.id}:${vehicleId}` : null;
+  const userId = user?.id ?? null;
+  const scope = userId && vehicleId ? `${userId}:${vehicleId}` : null;
 
   useEffect(() => {
-    if (!supabase || !user || !vehicleId) {
+    if (!supabase || !userId || !vehicleId) {
       queueMicrotask(() => setState(initialState));
       return;
     }
 
     const client = supabase;
-    const ownerId = user.id;
+    const ownerId = userId;
     const selectedVehicleId = vehicleId;
     let active = true;
     async function loadItems() {
@@ -62,7 +63,7 @@ export function useTrackedMaintenance(user: User | null, vehicleId: string | nul
     return () => {
       active = false;
     };
-  }, [user, vehicleId]);
+  }, [userId, vehicleId]);
 
   const itemSlugs = useMemo(() => new Set((state.scope === scope ? state.items : []).map((item) => item.item_slug)), [scope, state.items, state.scope]);
 

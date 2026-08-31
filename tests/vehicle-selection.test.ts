@@ -96,6 +96,22 @@ test("corrected public names and the F22 230i engine mapping stay unambiguous", 
   assert.deepEqual(getEngineOptions("F22", "230i", 2019, "8-speed automatic"), ["B46"]);
 });
 
+test("E46 M3 coupe and convertible are separate body-style variants", () => {
+  const e46Variants = getVehicleVariantOptions("E46");
+  assert.ok(e46Variants.some((variant) => variant.trim === "M3" && variant.label === "M3 Coupe"));
+  assert.ok(e46Variants.some((variant) => variant.trim === "M3Cic" && variant.label === "M3 Convertible"));
+  assert.ok(!e46Variants.some((variant) => variant.label === "M3 Coupe / Convertible"));
+  assert.deepEqual(getYearOptionsForTrim("E46", "M3"), [2006, 2005, 2004, 2003, 2002, 2001]);
+  assert.deepEqual(getYearOptionsForTrim("E46", "M3Cic"), [2006, 2005, 2004, 2003, 2002, 2001]);
+
+  const coupe = profile({ platform: "E46", year: 2004, trim: "M3", engineCode: "S54B32", transmission: "6-speed manual" });
+  const convertible = profile({ platform: "E46", year: 2004, trim: "M3Cic", engineCode: "S54B32", transmission: "6-speed manual" });
+  assert.ok(!getMaintenanceCatalog(coupe).some((item) => item.name === "Convertible top hydraulics, tension components & drains"));
+  assert.ok(getMaintenanceCatalog(convertible).some((item) => item.name === "Convertible top hydraulics, tension components & drains"));
+  assert.deepEqual(vehicleProfileFromRow(simulatedRow(coupe)), coupe);
+  assert.deepEqual(vehicleProfileFromRow(simulatedRow(convertible)), convertible);
+});
+
 test("selector labels stay concise without changing workbook-backed trim identifiers", () => {
   const bmwE82 = getVehicleFamilyOptions("BMW").find((family) => family.value === "E82");
   assert.equal(bmwE82?.label, "1 Series (E82/E88)");

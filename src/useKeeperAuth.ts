@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { getAccountAccess, isTemporaryGuest } from "./access";
 import { PRIVACY_VERSION, TERMS_VERSION } from "./legal";
@@ -103,11 +103,14 @@ export function useKeeperAuth() {
   const [legacyClaim, setLegacyClaim] = useState<LegacyGarageClaim | null>(null);
   const [dataVersion, setDataVersion] = useState(0);
   const [recoveryMode, setRecoveryMode] = useState(new URLSearchParams(window.location.search).get("account") === "recovery");
+  const activeUserIdRef = useRef<string | null>(null);
 
-  const loadAccountState = useCallback(async (nextSession: Session | null) => {
+  const loadAccountState = useCallback(async (nextSession: Session | null, preserveCurrent = false) => {
     const client = supabase;
-    setEntitlements(new Set());
-    setLegacyClaim(null);
+    if (!preserveCurrent) {
+      setEntitlements(new Set());
+      setLegacyClaim(null);
+    }
     if (!client || !nextSession?.user) {
       setAccountStateReady(true);
       return;
@@ -117,7 +120,7 @@ export function useKeeperAuth() {
       return;
     }
 
-    setAccountStateReady(false);
+    if (!preserveCurrent) setAccountStateReady(false);
     const pending = pendingLegalAcceptance();
     if (pending) {
       const { error: acceptanceError } = await client.rpc("accept_keeper_legal", {
@@ -168,6 +171,7 @@ export function useKeeperAuth() {
         if (userData.user) currentSession = { ...currentSession, user: userData.user };
       }
       if (!active) return;
+      activeUserIdRef.current = currentSession?.user.id ?? null;
       setSession(currentSession);
       setReady(true);
       await loadAccountState(currentSession);
@@ -175,17 +179,23 @@ export function useKeeperAuth() {
 
     const { data } = client.auth.onAuthStateChange((event: AuthChangeEvent, nextSession) => {
       if (!active) return;
-      setEntitlements(new Set());
-      setAccountStateReady(false);
+      const nextUserId = nextSession?.user.id ?? null;
+      const identityChanged = activeUserIdRef.current !== nextUserId;
+      activeUserIdRef.current = nextUserId;
+      if (identityChanged) {
+        setEntitlements(new Set());
+        setLegacyClaim(null);
+        setAccountStateReady(false);
+      }
       setSession(nextSession);
       setReady(true);
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") setDataVersion((version) => version + 1);
+      if (identityChanged) setDataVersion((version) => version + 1);
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryMode(true);
         setMessage("Choose a new password for your Keeper Profile.");
       }
       window.setTimeout(() => {
-        if (active) void loadAccountState(nextSession);
+        if (active) void loadAccountState(nextSession, !identityChanged);
       }, 0);
     });
 

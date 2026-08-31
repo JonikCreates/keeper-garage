@@ -43,16 +43,17 @@ function compareMaintenanceRecordsNewestFirst(left: MaintenanceRecordRow, right:
 
 export function useMaintenanceRecords(user: User | null, vehicleId: string | null) {
   const [state, setState] = useState(initialState);
-  const scope = user && vehicleId ? `${user.id}:${vehicleId}` : null;
+  const userId = user?.id ?? null;
+  const scope = userId && vehicleId ? `${userId}:${vehicleId}` : null;
 
   useEffect(() => {
-    if (!supabase || !user || !vehicleId) {
+    if (!supabase || !userId || !vehicleId) {
       queueMicrotask(() => setState(initialState));
       return;
     }
 
     const client = supabase;
-    const ownerId = user.id;
+    const ownerId = userId;
     const selectedVehicleId = vehicleId;
     let active = true;
     async function loadRecords() {
@@ -78,7 +79,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
     return () => {
       active = false;
     };
-  }, [user, vehicleId]);
+  }, [userId, vehicleId]);
 
   const recordsBySlug = useMemo(() => {
     const grouped = new Map<string, MaintenanceRecordRow[]>();

@@ -241,11 +241,13 @@ const E46_M3_EXTRAS = [
 
 function e46Catalog(profile: VehicleProfile) {
   if (profile.engineCode === "S54B32") {
-    const convertibleTrackingRow = extra("E46", "convertible-top", "Convertible top hydraulics, tension components & drains", "Body", "important", null, 12, "The workbook keeps the M3 convertible body-system row visible; coupe owners can mark it not equipped." );
+    const bodyExtras = profile.trim === "M3Cic"
+      ? [extra("E46", "convertible-top", "Convertible top hydraulics, tension components & drains", "Body", "important", null, 12, "Inspect hydraulic leakage, latches, tension components, seals, storage well, and drains.")]
+      : [];
     const smg = profile.transmission.includes("SMG")
       ? [extra("E46", "smg-hydraulics", "SMG hydraulic pump, relay, accumulator & hydraulic unit", "Driveline", "critical", null, null, "Diagnose pressure, relay, pump, accumulator, temperature, adaptation, and wiring before replacing assemblies.", [E46_SMG])]
       : [];
-    return [...coreCatalog(profile), ...E46_PLATFORM_EXTRAS, convertibleTrackingRow, ...E46_M3_EXTRAS, ...smg];
+    return [...coreCatalog(profile), ...E46_PLATFORM_EXTRAS, ...bodyExtras, ...E46_M3_EXTRAS, ...smg];
   }
 
   const engineExtras = profile.engineCode === "M56B25"

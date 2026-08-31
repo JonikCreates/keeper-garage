@@ -75,7 +75,7 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
 test("active vehicle selection has one persisted Garage source of truth", async () => {
   const hook = await readFile(new URL("../src/useGarage.ts", import.meta.url), "utf8");
 
-  assert.match(hook, /keeper-selected-vehicle:\$\{currentUser\.id\}/);
+  assert.match(hook, /keeper-selected-vehicle:\$\{currentUserId\}/);
   assert.match(hook, /vehicles\.find\(\(vehicle\) => vehicle\.id === rememberedVehicleId\)/);
   assert.match(hook, /keeper-selected-vehicle:\$\{user\.id\}/);
   assert.match(hook, /localStorage\.setItem\(selectionKey, selected\.id\)/);
