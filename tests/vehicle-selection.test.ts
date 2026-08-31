@@ -96,23 +96,52 @@ test("corrected public names and the F22 230i engine mapping stay unambiguous", 
   assert.deepEqual(getEngineOptions("F22", "230i", 2019, "8-speed automatic"), ["B46"]);
 });
 
-test("BRZ generations share one customer family while retaining exact chassis schedules", () => {
-  const family = getVehicleFamilyOptions("Subaru").find((candidate) => candidate.value === "BRZ");
-  assert.deepEqual(family?.platforms, ["ZC6", "ZD8"]);
-  assert.equal(getVehicleFamilyForPlatform("ZC6").value, "BRZ");
-  assert.equal(getVehicleFamilyForPlatform("ZD8").value, "BRZ");
+test("selector labels stay concise without changing workbook-backed trim identifiers", () => {
+  const bmwE82 = getVehicleFamilyOptions("BMW").find((family) => family.value === "E82");
+  assert.equal(bmwE82?.label, "1 Series (E82/E88)");
+  const e82 = profile({ brand: "BMW", platform: "E82", year: 2011, trim: "128i", engineCode: "N52K", transmission: "6-speed manual" });
+  const savedE82 = simulatedRow(e82);
+  assert.equal(savedE82.model, "1 Series (E82 and E88)");
+  assert.deepEqual(vehicleProfileFromRow(savedE82), e82);
 
-  const variants = getVehicleVariantOptions("BRZ");
-  assert.ok(variants.some((variant) => variant.platform === "ZC6" && variant.label === "First gen"));
-  assert.ok(variants.some((variant) => variant.platform === "ZD8" && variant.label === "Second gen"));
-  assert.deepEqual(getYearOptionsForTrim("ZC6", "First gen"), [2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013]);
-  assert.deepEqual(getYearOptionsForTrim("ZD8", "Second gen"), [2026, 2025, 2024, 2023, 2022]);
+  const mazdaNc = getVehicleVariantOptions("NC");
+  assert.deepEqual(new Set(mazdaNc.map((variant) => variant.label)), new Set(["NC1", "NC2", "NC3"]));
+  assert.ok(mazdaNc.some((variant) => variant.trim === "MX-5 Miata · NC1" && variant.label === "NC1"));
 
-  const brz = profile({ brand: "Subaru", platform: "ZD8", year: 2024, trim: "Second gen", engineCode: "FA24D", transmission: "6-speed manual" });
+  const mustang = getVehicleVariantOptions("S550");
+  for (const label of ["V6", "EcoBoost", "GT", "Bullitt", "Mach 1", "Shelby GT350 / GT350R", "Shelby GT500"]) {
+    assert.ok(mustang.some((variant) => variant.label === label), `${label} should remain selectable`);
+  }
+  assert.ok(mustang.some((variant) => variant.trim === "Mustang GT" && variant.label === "GT"));
+  assert.ok(mustang.every((variant) => !variant.label.startsWith("Mustang ")));
+});
+
+test("Subaru BRZ generations and special editions retain exact year and schedule fitment", () => {
+  const brzFamilies = getVehicleFamilyOptions("Subaru").filter((family) => ["ZC6", "ZD8"].includes(family.value));
+  assert.deepEqual(brzFamilies.map((family) => family.label), [
+    "BRZ (first generation ZC6)",
+    "BRZ (second generation ZD8)",
+  ]);
+  assert.deepEqual(getVehicleVariantOptions("ZC6").map((variant) => variant.label), ["All trims"]);
+
+  const zd8 = getVehicleVariantOptions("ZD8");
+  assert.deepEqual(new Set(zd8.map((variant) => variant.label)), new Set(["Standard", "tS", "Series.Purple", "Series.Yellow"]));
+  assert.deepEqual(getYearOptionsForTrim("ZD8", "tS"), [2026, 2025, 2024]);
+  assert.deepEqual(getYearOptionsForTrim("ZD8", "Series.Purple"), [2025]);
+  assert.deepEqual(getYearOptionsForTrim("ZD8", "Series.Yellow"), [2026]);
+  assert.deepEqual(getTransmissionOptions("ZD8", "Series.Yellow", "RWD", 2026), ["6-speed manual"]);
+
+  const yellow = profile({ brand: "Subaru", platform: "ZD8", year: 2026, trim: "Series.Yellow", engineCode: "FA24D", transmission: "6-speed manual" });
   const gr86 = profile({ brand: "Toyota", platform: "ZN8", year: 2024, trim: "Second gen", engineCode: "FA24D", transmission: "6-speed manual" });
-  assert.equal(getMaintenanceCatalog(brz).find((item) => item.name === "Engine oil & filter")?.oem.mileage, 6000);
+  assert.deepEqual(getEnhancedScheduleIds(yellow), ["research-zd8-brz-ts-24-26-6mt"]);
+  assert.equal(getMaintenanceCatalog(yellow).find((item) => item.name === "Engine oil & filter")?.oem.mileage, 6000);
   assert.equal(getMaintenanceCatalog(gr86).find((item) => item.name === "Engine oil & filter")?.oem.mileage, 7500);
-  assert.notEqual(getEnhancedScheduleIds(brz)[0], getEnhancedScheduleIds(gr86)[0]);
+  assert.notEqual(getEnhancedScheduleIds(yellow)[0], getEnhancedScheduleIds(gr86)[0]);
+  assert.ok(getMaintenanceCatalog(yellow).length >= 40);
+  assert.ok(KNOWN_ISSUES.some((issue) => matchesApplicability(yellow, issue.appliesTo)));
+
+  const legacyZc6 = profile({ brand: "Subaru", platform: "ZC6", year: 2017, trim: "BRZ", engineCode: "FA20", transmission: "6-speed manual" });
+  assert.deepEqual(vehicleProfileFromRow(simulatedRow(legacyZc6)), legacyZc6);
 });
 
 test("PPI-tagged research can be identified for older platforms", () => {
@@ -207,8 +236,16 @@ test("existing grouped BMW and legacy Nissan garage rows still restore", () => {
   legacyToyota.trim = "86";
   assert.deepEqual(vehicleProfileFromRow(legacyToyota), profile({ brand: "Toyota", platform: "ZN6_TOYOTA", year: 2019, trim: "GT86", engineCode: "FA20", transmission: "6-speed manual" }));
 
-  const legacyBrz = simulatedRow(profile({ brand: "Subaru", platform: "ZC6", year: 2019, trim: "First gen", engineCode: "FA20", transmission: "6-speed manual" }));
-  legacyBrz.model = "BRZ (first generation ZC6)";
-  legacyBrz.trim = "BRZ";
-  assert.deepEqual(vehicleProfileFromRow(legacyBrz), profile({ brand: "Subaru", platform: "ZC6", year: 2019, trim: "First gen", engineCode: "FA20", transmission: "6-speed manual" }));
+  const legacyBrz = simulatedRow(profile({ brand: "Subaru", platform: "ZC6", year: 2019, trim: "BRZ", engineCode: "FA20", transmission: "6-speed manual" }));
+  legacyBrz.model = "BRZ";
+  legacyBrz.trim = "First gen";
+  assert.deepEqual(vehicleProfileFromRow(legacyBrz), profile({ brand: "Subaru", platform: "ZC6", year: 2019, trim: "BRZ", engineCode: "FA20", transmission: "6-speed manual" }));
+
+  const legacyZd8 = simulatedRow(profile({ brand: "Subaru", platform: "ZD8", year: 2024, trim: "Standard", engineCode: "FA24D", transmission: "6-speed manual" }));
+  legacyZd8.model = "BRZ";
+  legacyZd8.trim = "Second gen";
+  assert.deepEqual(vehicleProfileFromRow(legacyZd8), profile({ brand: "Subaru", platform: "ZD8", year: 2024, trim: "Standard", engineCode: "FA24D", transmission: "6-speed manual" }));
+
+  const legacySpecial = { ...legacyZd8, trim: "tS / Series.Yellow" };
+  assert.deepEqual(vehicleProfileFromRow(legacySpecial), profile({ brand: "Subaru", platform: "ZD8", year: 2024, trim: "tS", engineCode: "FA24D", transmission: "6-speed manual" }));
 });

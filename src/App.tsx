@@ -721,8 +721,8 @@ export default function App() {
   return (
     <div className="site-shell">
       <section className="forum-banner" aria-label="Keeper workshop archive">
-        <div><span>Keeper Workshop Archive</span><strong>Owner-built maintenance intelligence</strong></div>
-        <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
+        <div><span>Keeper Workshop Archive</span><strong>Enthusiast maintenance intelligence</strong></div>
+        <p><span>KNOWLEDGE + ORGANIZATION + VEHICLE HISTORY</span></p>
       </section>
       <header className="topbar">
         <KeeperBrand href={pageHref("garage")} />

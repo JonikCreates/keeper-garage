@@ -33,6 +33,12 @@ test("Keeper branding switches by background and watermarks cannot intercept UI"
   assert.match(exporter, /KEEPER_LOGO_ASSETS\.onLight/);
   assert.match(exporter, /document\.addImage\(keeperLogo/);
   assert.match(exporter, /context\.drawImage\(keeperLogo/);
+  for (const source of [home, app]) {
+    assert.match(source, /Enthusiast maintenance intelligence/);
+    assert.match(source, /KNOWLEDGE \+ ORGANIZATION \+ VEHICLE HISTORY/);
+    assert.doesNotMatch(source, /Owner-built maintenance intelligence/);
+  }
+  assert.match(home, /Keeper is a digital ownership guide and service record for enthusiast cars\. It tells you what your specific car needs, what problems to watch for, keeps track of everything you’ve done, and helps you understand what comes next\./);
 
   for (const asset of [
     "keeper-mark-black.png",

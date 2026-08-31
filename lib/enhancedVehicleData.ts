@@ -75,7 +75,7 @@ export const ENHANCED_PLATFORMS: EnhancedPlatformRecord[] = [
   {
     "value": "E82",
     "brand": "BMW",
-    "label": "1 Series Coupe / Convertible (E82/E88)",
+    "label": "1 Series (E82/E88)",
     "yearStart": 2008,
     "yearEnd": 2013
   },

@@ -53,8 +53,8 @@ export function HomePage() {
 
   return <div className="home-shell">
     <section className="forum-banner home-forum-banner" aria-label="Keeper workshop archive">
-      <div><span>Keeper Workshop Archive</span><strong>Owner-built maintenance intelligence</strong></div>
-      <p><span>Maintenance</span><i /><span>Known issues</span><i /><span>Ownership records</span></p>
+      <div><span>Keeper Workshop Archive</span><strong>Enthusiast maintenance intelligence</strong></div>
+      <p><span>KNOWLEDGE + ORGANIZATION + VEHICLE HISTORY</span></p>
     </section>
 
     <header className="topbar">
@@ -74,7 +74,7 @@ export function HomePage() {
         <KeeperLogo className="home-hero-logo" context="hero" />
         <p className="home-kicker">Vehicle ownership, organized</p>
         <h1><span>Know your car.</span><span>Maintain it better.</span></h1>
-        <p className="home-lede">Keeper brings maintenance planning, known-issue research, and your service history together around the exact vehicle you own.</p>
+        <p className="home-lede">Keeper is a digital ownership guide and service record for enthusiast cars. It tells you what your specific car needs, what problems to watch for, keeps track of everything you’ve done, and helps you understand what comes next.</p>
         <div className="home-actions">
           <a
             className="button button-primary"

@@ -27,13 +27,21 @@ export type VehicleInsertOptions = {
   isPrimary: boolean;
 };
 
+// Keep the already-deployed database keys stable while the selector presents
+// cleaner model/generation labels. Garage rows and dependent records keep IDs.
+const PERSISTED_MODEL_LABELS: Partial<Record<string, string>> = {
+  E82: "1 Series (E82 and E88)",
+  ZC6: "BRZ",
+  ZD8: "BRZ",
+};
+
 export function vehicleInsertFromProfile(profile: VehicleProfile, options: VehicleInsertOptions): VehicleInsert {
   const platform = getPlatform(profile.platform);
   return {
     owner_id: options.ownerId,
     nickname: options.nickname.trim() || `My ${profile.brand}`,
     brand: profile.brand,
-    model: platform.label,
+    model: PERSISTED_MODEL_LABELS[platform.value] ?? platform.label,
     model_year: profile.year,
     trim: profile.trim,
     engine_code: profile.engineCode,
@@ -49,11 +57,13 @@ export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
     ? "GT86 (First gen ZN6)"
     : vehicle.model === "FR-S (first generation)"
       ? "FR-S"
-      : vehicle.model === "BRZ (first generation ZC6)"
-        ? "BRZ"
-        : vehicle.model === "1 Series Coupe / Convertible (E82/E88)"
-          ? "1 Series (E82 and E88)"
-      : vehicle.model;
+      : ["BRZ", "BRZ (first generation)"].includes(vehicle.model)
+        ? vehicle.model_year <= 2020
+          ? "BRZ (first generation ZC6)"
+          : "BRZ (second generation ZD8)"
+        : ["1 Series Coupe / Convertible (E82/E88)", "1 Series (E82 and E88)"].includes(vehicle.model)
+          ? "1 Series (E82/E88)"
+          : vehicle.model;
   const platform = PLATFORM_OPTIONS.find((option) => option.label === migratedModel
     && option.brand === vehicle.brand
     && vehicle.model_year >= option.yearStart
@@ -69,9 +79,13 @@ export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
     && vehicle.transmission === "6-speed manual";
   const migratedTrim = platform.value === "ZN6_TOYOTA" && vehicle.trim === "86"
     ? "GT86"
-    : platform.value === "ZC6" && vehicle.trim === "BRZ"
-      ? "First gen"
-      : vehicle.trim;
+    : platform.value === "ZC6" && vehicle.trim === "First gen"
+      ? "BRZ"
+      : platform.value === "ZD8" && vehicle.trim === "Second gen"
+        ? "Standard"
+        : platform.value === "ZD8" && vehicle.trim === "tS / Series.Yellow"
+          ? "tS"
+        : vehicle.trim;
   return {
     brand: vehicle.brand,
     platform: platform.value,
