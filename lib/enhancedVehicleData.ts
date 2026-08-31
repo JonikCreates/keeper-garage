@@ -271,7 +271,7 @@ export const ENHANCED_PLATFORMS: EnhancedPlatformRecord[] = [
   {
     "value": "ZC6",
     "brand": "Subaru",
-    "label": "BRZ (first generation ZC6)",
+    "label": "BRZ (ZC6)",
     "yearStart": 2013,
     "yearEnd": 2020
   },

@@ -59,8 +59,8 @@ export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
       ? "FR-S"
       : ["BRZ", "BRZ (first generation)"].includes(vehicle.model)
         ? vehicle.model_year <= 2020
-          ? "BRZ (first generation ZC6)"
-          : "BRZ (second generation ZD8)"
+          ? "BRZ (ZC6)"
+          : "BRZ (ZD8)"
         : ["1 Series Coupe / Convertible (E82/E88)", "1 Series (E82 and E88)"].includes(vehicle.model)
           ? "1 Series (E82/E88)"
           : vehicle.model;

@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   KNOWN_ISSUES,
+  LEGACY_SAVED_PROFILE_SCHEDULE_IDS,
+  dedupeEngineOptionsByLabel,
+  getEngineLabel,
   getEngineOptions,
   getMaintenanceCatalog,
   getTransmissionOptions,
@@ -120,6 +123,18 @@ test("selector labels stay concise without changing workbook-backed trim identif
   assert.equal(savedE82.model, "1 Series (E82 and E88)");
   assert.deepEqual(vehicleProfileFromRow(savedE82), e82);
 
+  const engineCodes = getEngineOptions("E82", "128i", 2009, "6-speed manual");
+  const visibleEngines = dedupeEngineOptionsByLabel(engineCodes.map((engineCode) => ({
+    value: engineCode,
+    label: getEngineLabel(profile({ platform: "E82", year: 2009, trim: "128i", engineCode, transmission: "6-speed manual" })),
+  })), "N52K");
+  assert.deepEqual(engineCodes, ["N51", "N52K", "N52"]);
+  assert.deepEqual(visibleEngines, [{
+    value: "N52K",
+    label: "N51/N52K 3.0L NA I6",
+    compatibleValues: ["N51", "N52K", "N52"],
+  }]);
+
   const mazdaNc = getVehicleVariantOptions("NC");
   assert.deepEqual(new Set(mazdaNc.map((variant) => variant.label)), new Set(["NC1", "NC2", "NC3"]));
   assert.ok(mazdaNc.some((variant) => variant.trim === "MX-5 Miata · NC1" && variant.label === "NC1"));
@@ -135,8 +150,8 @@ test("selector labels stay concise without changing workbook-backed trim identif
 test("Subaru BRZ generations and special editions retain exact year and schedule fitment", () => {
   const brzFamilies = getVehicleFamilyOptions("Subaru").filter((family) => ["ZC6", "ZD8"].includes(family.value));
   assert.deepEqual(brzFamilies.map((family) => family.label), [
-    "BRZ (first generation ZC6)",
-    "BRZ (second generation ZD8)",
+    "BRZ (ZC6)",
+    "BRZ (ZD8)",
   ]);
   assert.deepEqual(getVehicleVariantOptions("ZC6").map((variant) => variant.label), ["All trims"]);
 
@@ -158,6 +173,34 @@ test("Subaru BRZ generations and special editions retain exact year and schedule
 
   const legacyZc6 = profile({ brand: "Subaru", platform: "ZC6", year: 2017, trim: "BRZ", engineCode: "FA20", transmission: "6-speed manual" });
   assert.deepEqual(vehicleProfileFromRow(simulatedRow(legacyZc6)), legacyZc6);
+});
+
+test("E9X selector uses the body-specific workbook while legacy saved profiles remain compatible", () => {
+  const family = getVehicleFamilyOptions("BMW").find((candidate) => candidate.value === "E9X");
+  assert.equal(family?.label, "3 Series / M3 (E90/E91/E92/E93)");
+  assert.deepEqual(family?.platforms, ["E90", "E91", "E92", "E93", "E9X"]);
+
+  const variants = getVehicleVariantOptions("E9X");
+  for (const [platform, label] of [
+    ["E90", "M3 Sedan"],
+    ["E92", "M3 Coupe"],
+    ["E93", "M3 Convertible"],
+    ["E91", "328i Sports Wagon"],
+  ]) {
+    assert.ok(variants.some((variant) => variant.platform === platform && variant.label === label));
+  }
+  assert.ok(!variants.some((variant) => variant.platform === "E9X"));
+  assert.deepEqual(getYearOptionsForTrim("E92", "M3 Coupe"), [2013, 2012, 2011, 2010, 2009, 2008]);
+
+  const coupe = profile({ platform: "E92", year: 2011, trim: "M3 Coupe", engineCode: "S65", transmission: "7-speed M DCT" });
+  assert.deepEqual(getEnhancedScheduleIds(coupe), ["e9x-e92-m3-coupe-s65-m3-dct"]);
+  assert.ok(getMaintenanceCatalog(coupe).length >= 40);
+  assert.deepEqual(vehicleProfileFromRow(simulatedRow(coupe)), coupe);
+
+  const legacy = profile({ platform: "E9X", year: 2011, trim: "M3", engineCode: "S65", transmission: "7-speed M DCT" });
+  assert.deepEqual(vehicleProfileFromRow(simulatedRow(legacy)), legacy);
+  assert.ok(getMaintenanceCatalog(legacy).length > 0);
+  assert.ok(LEGACY_SAVED_PROFILE_SCHEDULE_IDS.includes("research-e9x-s65-m3-dct"));
 });
 
 test("PPI-tagged research can be identified for older platforms", () => {

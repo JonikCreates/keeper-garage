@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   KNOWN_ISSUES,
+  LEGACY_SAVED_PROFILE_SCHEDULE_IDS,
   PLATFORM_OPTIONS,
   VEHICLE_FAMILY_OPTIONS,
   getDrivetrainOptions,
@@ -277,7 +278,9 @@ export async function auditCatalog(root = process.cwd()): Promise<CatalogAudit> 
   const databaseManifest = await loadDatabaseFitmentManifest(root);
   const databaseKeys = new Set(databaseManifest?.configurations.map(databaseFitmentKey) ?? []);
   const frontendDatabaseKeys = new Set<string>();
-  const reachableSchedules = new Set<string>();
+  // These schedules are intentionally hidden from new selection, but existing
+  // saved garage rows can still restore and use their legacy profiles.
+  const reachableSchedules = new Set<string>(LEGACY_SAVED_PROFILE_SCHEDULE_IDS);
 
   for (const configuration of enumeration.configurations) {
     const payload = persistencePayload(configuration);

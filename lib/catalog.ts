@@ -6,7 +6,7 @@ import {
   normalizeEnhancedDrivetrain,
   type MaintenanceResearch,
 } from "./enhancedCatalog";
-import { RESEARCH_PLATFORMS, RESEARCH_VARIANTS } from "./researchVehicleData";
+import { RESEARCH_PLATFORMS, RESEARCH_SCHEDULE_PROFILES, RESEARCH_VARIANTS } from "./researchVehicleData";
 import { getExpandedMaintenanceCatalog } from "./expandedCatalog";
 import { EXPANDED_PLATFORMS, EXPANDED_VARIANTS } from "./expandedCatalogData";
 import { EXPANDED_KNOWN_ISSUES } from "./expandedKnownIssues";
@@ -126,8 +126,8 @@ const CORE_PLATFORM_OPTIONS: PlatformOption[] = [
 const existingPlatformIds = new Set(CORE_PLATFORM_OPTIONS.map((platform) => platform.value));
 const CUSTOMER_PLATFORM_LABELS: Record<string, string> = {
   E82: "1 Series (E82/E88)",
-  ZC6: "BRZ (first generation ZC6)",
-  ZD8: "BRZ (second generation ZD8)",
+  ZC6: "BRZ (ZC6)",
+  ZD8: "BRZ (ZD8)",
   ZN6_TOYOTA: "GT86 (First gen ZN6)",
 };
 export const PLATFORM_OPTIONS: PlatformOption[] = [
@@ -136,6 +136,7 @@ export const PLATFORM_OPTIONS: PlatformOption[] = [
 ].map((platform) => ({ ...platform, label: CUSTOMER_PLATFORM_LABELS[platform.value] ?? platform.label }));
 
 const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
+  { value: "E9X", brand: "BMW", label: "3 Series / M3 (E90/E91/E92/E93)", platforms: ["E90", "E91", "E92", "E93", "E9X"] },
   { value: "F10", brand: "BMW", label: "5 Series / M5 (F10)", platforms: ["F10", "F10M5"] },
   { value: "F22", brand: "BMW", label: "2 Series / M2 (F22/F87)", platforms: ["F22", "F87"] },
   { value: "F30", brand: "BMW", label: "3 Series / M3 (F30/F80)", platforms: ["F30", "F80"] },
@@ -207,6 +208,20 @@ const catalogVariants = [
   label: cleanedVariantDisplayLabel(variant.platform, variant.label),
 }));
 
+// The original E9X profiles remain available to resolve saved garages and
+// maintenance history. New selector choices use the body-specific workbook.
+export const LEGACY_SAVED_PROFILE_PLATFORMS = ["E9X"] as const;
+const legacySavedProfilePlatforms = new Set<string>(LEGACY_SAVED_PROFILE_PLATFORMS);
+export const LEGACY_SAVED_PROFILE_SCHEDULE_IDS = [...new Set([
+  ...catalogVariants
+    .filter((variant) => legacySavedProfilePlatforms.has(variant.platform))
+    .map((variant) => variant.scheduleId),
+  ...RESEARCH_SCHEDULE_PROFILES
+    .filter((profile) => legacySavedProfilePlatforms.has(profile.platform))
+    .map((profile) => profile.scheduleId),
+])];
+const selectableCatalogVariants = catalogVariants.filter((variant) => !legacySavedProfilePlatforms.has(variant.platform));
+
 export const TRIM_OPTIONS: TrimOption[] = [
   { platform: "F30", value: "320i", label: "320i", yearStart: 2013, yearEnd: 2018, engines: ["N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
   { platform: "F30", value: "328i", label: "328i", yearStart: 2012, yearEnd: 2016, engines: ["N26", "N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
@@ -259,7 +274,7 @@ export const TRIM_OPTIONS: TrimOption[] = [
 ];
 
 export function getTrimOptions(platform: VehicleProfile["platform"], year?: number) {
-  const expanded = catalogVariants.filter((variant) => variant.platform === platform
+  const expanded = selectableCatalogVariants.filter((variant) => variant.platform === platform
     && (year === undefined || (year >= variant.yearStart && year <= variant.yearEnd)));
   const expandedOptions = [...new Set(expanded.map((variant) => variant.trim))].map((trim): TrimOption => {
       const matches = expanded.filter((variant) => variant.trim === trim);
@@ -392,6 +407,29 @@ export function getEngineOptions(platform: VehicleProfile["platform"], trim: str
   if (["325i", "325is"].includes(trim)) return engines.filter((engine) => year === 1992 ? engine === "M50-NV" : engine === "M50TU");
   if (trim === "M3") return engines.filter((engine) => year === 1995 ? engine === "S50US" : engine === "S52US");
   return engines;
+}
+
+export type EngineSelectorOption = {
+  value: string;
+  label: string;
+  compatibleValues: string[];
+};
+
+export function dedupeEngineOptionsByLabel(
+  options: Array<{ value: string; label: string }>,
+  currentValue?: string,
+): EngineSelectorOption[] {
+  const byLabel = new Map<string, EngineSelectorOption>();
+  for (const option of options) {
+    const existing = byLabel.get(option.label);
+    if (!existing) {
+      byLabel.set(option.label, { ...option, compatibleValues: [option.value] });
+      continue;
+    }
+    existing.compatibleValues.push(option.value);
+    if (option.value === currentValue) existing.value = option.value;
+  }
+  return [...byLabel.values()];
 }
 
 export function getTransmissionOptions(platform: VehicleProfile["platform"], trim: string, drivetrain: string, year?: number) {

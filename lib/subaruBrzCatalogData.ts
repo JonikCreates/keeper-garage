@@ -7,7 +7,7 @@ export const SUBARU_BRZ_PLATFORMS: EnhancedPlatformRecord[] = [
   {
     "value": "ZD8",
     "brand": "Subaru",
-    "label": "BRZ (second generation ZD8)",
+    "label": "BRZ (ZD8)",
     "yearStart": 2022,
     "yearEnd": 2026
   }

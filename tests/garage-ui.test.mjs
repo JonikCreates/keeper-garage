@@ -59,8 +59,10 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
   assert.match(app, /createOwnershipInsights/);
   assert.match(app, /<OwnershipDashboard/);
   assert.match(ownership, /Keeper Health/);
-  assert.match(ownership, /What needs attention/);
-  assert.match(ownership, /Upcoming maintenance/);
+  assert.match(ownership, /Needs attention/);
+  assert.doesNotMatch(ownership, /What needs attention/);
+  assert.doesNotMatch(ownership, /Coming up|Upcoming maintenance|Full plan/);
+  assert.doesNotMatch(ownership, /Ownership timeline|Know what comes next|maintenance-timeline/);
   assert.match(ownership, /Vehicle data/);
   assert.match(intelligence, /assessPriority/);
   assert.match(intelligence, /More data needed/);
@@ -68,6 +70,8 @@ test("Garage prioritizes a personal vehicle dashboard using existing ownership s
   assert.doesNotMatch(topbarActions, /GitHub|github/);
   assert.match(footer, /Independent vehicle ownership research and workshop records/);
   assert.match(css, /\.ownership-command-center/);
+  assert.match(css, /\.ownership-primary-grid \{[^}]*grid-template-columns: 1fr;/);
+  assert.doesNotMatch(css, /\.ownership-secondary-grid|\.upcoming-groups|\.maintenance-timeline/);
   assert.match(css, /grid-template-columns: repeat\(5, 1fr\)/);
   assert.match(css, /@media \(max-width: 430px\)[\s\S]*\.personal-garage-specs, \.personal-garage-stats/);
 });

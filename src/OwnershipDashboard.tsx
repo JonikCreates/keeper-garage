@@ -72,9 +72,6 @@ export function OwnershipDashboard({
   maintenanceHref,
 }: OwnershipDashboardProps) {
   const visibleAttention = insights.attention.slice(0, 4);
-  const visibleGroups = insights.upcoming.filter(
-    (group) => group.items.length,
-  );
 
   const healthTone =
     insights.health.score === null
@@ -189,10 +186,7 @@ export function OwnershipDashboard({
           aria-labelledby="needs-attention-title"
         >
           <header>
-            <div>
-              <span>What needs attention</span>
-              <h3 id="needs-attention-title">Needs attention</h3>
-            </div>
+            <h3 id="needs-attention-title">Needs attention</h3>
 
             <b>{insights.attention.length}</b>
           </header>
@@ -260,115 +254,6 @@ export function OwnershipDashboard({
           )}
         </section>
 
-        <section
-          className="upcoming-maintenance-panel"
-          aria-labelledby="upcoming-maintenance-title"
-        >
-          <header>
-            <div>
-              <span>Coming up</span>
-              <h3 id="upcoming-maintenance-title">
-                Upcoming maintenance
-              </h3>
-            </div>
-
-            <a href={maintenanceHref}>Full plan →</a>
-          </header>
-
-          {visibleGroups.length ? (
-            <div className="upcoming-groups">
-              {visibleGroups.map((group) => (
-                <section key={group.key}>
-                  <h4>
-                    {group.label}
-                    <b>{group.items.length}</b>
-                  </h4>
-
-                  <ul>
-                    {group.items.slice(0, 3).map((item) => (
-                      <li key={item.slug}>
-                        <div>
-                          <strong>{item.name}</strong>
-                          <small>
-                            {recommendationLabel(item.recommendationType)}
-                          </small>
-                        </div>
-
-                        <span>{item.dueLabel}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          ) : (
-            <div className="ownership-empty">
-              <KeeperLogo className="ownership-empty-logo" context="auto" decorative />
-              <strong>No reliable due points yet</strong>
-              <p>
-                Log completed work with mileage and date. Keeper will build
-                the upcoming plan from those baselines.
-              </p>
-            </div>
-          )}
-
-          <p className="ownership-guidance-note">
-            Schedules vary by vehicle and use. Keeper planning intervals are
-            conservative ownership guidance; confirm VIN-specific
-            requirements when needed.
-          </p>
-        </section>
-      </div>
-
-      <div className="ownership-secondary-grid">
-        <section
-          className="maintenance-timeline"
-          aria-labelledby="maintenance-timeline-title"
-        >
-          <header>
-            <div>
-              <span>Ownership timeline</span>
-              <h3 id="maintenance-timeline-title">
-                Know what comes next
-              </h3>
-            </div>
-          </header>
-
-          <ol>
-            <li className="today">
-              <i />
-              <div>
-                <span>Today</span>
-                <strong>
-                  {currentMileage === null
-                    ? "Mileage not entered"
-                    : `${currentMileage.toLocaleString()} mi`}
-                </strong>
-              </div>
-            </li>
-
-            {insights.timeline.map((item) => (
-              <li key={item.slug}>
-                <i />
-                <div>
-                  <span>{item.category}</span>
-                  <strong>{item.name}</strong>
-                  <small>
-                    {item.dueLabel} ·{" "}
-                    {recommendationLabel(item.recommendationType)}
-                  </small>
-                </div>
-              </li>
-            ))}
-          </ol>
-
-          {!insights.timeline.length && (
-            <p className="timeline-empty">
-              The timeline will appear after at least one recurring service
-              has a completed date or mileage baseline.
-            </p>
-          )}
-        </section>
       </div>
 
       <details className="ownership-method-note">

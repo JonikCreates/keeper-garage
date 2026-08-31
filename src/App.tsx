@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BRAND_OPTIONS,
+  LEGACY_SAVED_PROFILE_PLATFORMS,
   KNOWN_ISSUES,
   PROJECT_IDEAS,
+  dedupeEngineOptionsByLabel,
   getEngineOptions,
   getEngineLabel,
   getDrivetrainOptions,
@@ -12,7 +14,6 @@ import {
   getTrimOptions,
   getVehicleFamilyForPlatform,
   getVehicleFamilyOptions,
-  getVehicleVariant,
   getVehicleVariantOptions,
   getYearOptionsForTrim,
   inferEngine,
@@ -381,17 +382,39 @@ export default function App() {
   const displayVariant = getVehicleVariantOptions(displayFamily.value)
     .find((variant) => variant.platform === profile.platform && variant.trim === profile.trim);
   const familyOptions = vehicleSelection.brand ? getVehicleFamilyOptions(vehicleSelection.brand) : [];
-  const variantOptions = vehicleSelection.family ? getVehicleVariantOptions(vehicleSelection.family) : [];
-  const selectedVariant = vehicleSelection.family && vehicleSelection.variant
-    ? getVehicleVariant(vehicleSelection.family, vehicleSelection.variant)
+  const selectableVariantOptions = vehicleSelection.family ? getVehicleVariantOptions(vehicleSelection.family) : [];
+  const legacyE9xVariant = vehicleSelection.family === "E9X"
+    && vehicleSelection.variant
+    && LEGACY_SAVED_PROFILE_PLATFORMS.some((platformId) => platformId === profile.platform)
+    && !selectableVariantOptions.some((variant) => variant.value === vehicleSelection.variant)
+      ? {
+          value: vehicleSelection.variant,
+          platform: profile.platform,
+          trim: profile.trim,
+          label: `Legacy ${profile.trim} · body style not recorded`,
+          yearStart: 2006,
+          yearEnd: 2013,
+        }
+      : undefined;
+  const variantOptions = legacyE9xVariant ? [...selectableVariantOptions, legacyE9xVariant] : selectableVariantOptions;
+  const selectedVariant = vehicleSelection.variant
+    ? variantOptions.find((variant) => variant.value === vehicleSelection.variant)
     : undefined;
   const years = selectedVariant ? getYearOptionsForTrim(selectedVariant.platform, selectedVariant.trim) : [];
   const configurationReady = vehicleSelectionIsComplete(vehicleSelection) && Boolean(selectedVariant);
   const libraryTrimOptions = getTrimOptions(profile.platform);
   const drivetrains = configurationReady ? getDrivetrainOptions(profile.platform, profile.trim, profile.year) : [];
   const transmissions = configurationReady ? getTransmissionOptions(profile.platform, profile.trim, profile.drivetrain, profile.year) : [];
-  const engines = configurationReady ? getEngineOptions(profile.platform, profile.trim, profile.year, profile.transmission) : [];
-  const selectedEngineLabel = engineLabels[profile.engineCode] ?? getEngineLabel(profile);
+  const engineOptions = configurationReady ? dedupeEngineOptionsByLabel(
+    getEngineOptions(profile.platform, profile.trim, profile.year, profile.transmission).map((engine) => ({
+      value: engine,
+      label: engineLabels[engine] ?? getEngineLabel({ ...profile, engineCode: engine }),
+    })),
+    profile.engineCode,
+  ) : [];
+  const selectedEngineLabel = engineOptions.find((option) => option.value === profile.engineCode)?.label
+    ?? engineLabels[profile.engineCode]
+    ?? getEngineLabel(profile);
   const profileLabel = `${profile.year} ${profile.brand} ${displayVariant?.label ?? profile.trim} · ${displayFamily.label}`;
 
   const maintenance = useMemo(() => getMaintenanceCatalog(profile), [profile]);
@@ -830,9 +853,9 @@ export default function App() {
                 <option value="" disabled>{selectedVariant ? "Select year" : "Select trim first"}</option>
                 {years.map((year) => <option value={year} key={year}>{year}</option>)}
               </select></label>
-              <label>Engine<select value={configurationReady ? profile.engineCode : ""} disabled={!configurationReady || engines.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>
+              <label>Engine<select value={configurationReady ? profile.engineCode : ""} disabled={!configurationReady || engineOptions.length === 1} onChange={(event) => setProfile((current) => ({ ...current, engineCode: event.target.value }))}>
                 {!configurationReady && <option value="">Select model first</option>}
-                {engines.map((engine) => <option value={engine} key={engine}>{engineLabels[engine] ?? getEngineLabel({ ...profile, engineCode: engine })}</option>)}
+                {engineOptions.map((engine) => <option value={engine.value} key={engine.label}>{engine.label}</option>)}
               </select></label>
               <label>Drivetrain<select value={configurationReady ? profile.drivetrain : ""} disabled={!configurationReady} onChange={(event) => selectDrivetrain(event.target.value)}>
                 {!configurationReady && <option value="">Select model first</option>}
@@ -843,7 +866,7 @@ export default function App() {
                 {transmissions.map((value) => <option key={value}>{value}</option>)}
               </select></label>
             </div>
-            {configurationReady && (engines.length > 1 || profile.platform === "E36") && <div className="inference-note"><strong>{selectedEngineLabel} selected</strong><p>Keeper uses the year as a starting point. Confirm the VIN, production date, emissions label, engine stamp, and transmission tag before ordering parts or fluids.</p></div>}
+            {configurationReady && (engineOptions.length > 1 || profile.platform === "E36") && <div className="inference-note"><strong>{selectedEngineLabel} selected</strong><p>Keeper uses the year as a starting point. Confirm the VIN, production date, emissions label, engine stamp, and transmission tag before ordering parts or fluids.</p></div>}
             <div className="garage-save">
               <label>Garage name<input value={demoVehicleSelected ? DEMO_VEHICLE.nickname : demoMode ? "" : garage.nickname} onChange={(event) => garage.setNickname(event.target.value)} maxLength={60} placeholder={`My ${profile.brand}`} disabled={!auth.access.canSaveGarage} /></label>
               <label>Mileage<input value={demoVehicleSelected ? String(DEMO_VEHICLE.mileage) : demoMode ? "" : garage.mileage} onChange={(event) => garage.setMileage(event.target.value.replace(/\D/g, "").slice(0, 7))} inputMode="numeric" placeholder="Optional" disabled={!auth.access.canSaveMileage} /></label>
