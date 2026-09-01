@@ -383,7 +383,7 @@ export default function App() {
     .find((variant) => variant.platform === profile.platform && variant.trim === profile.trim);
   const familyOptions = vehicleSelection.brand ? getVehicleFamilyOptions(vehicleSelection.brand) : [];
   const selectableVariantOptions = vehicleSelection.family ? getVehicleVariantOptions(vehicleSelection.family) : [];
-  const legacyE9xVariant = vehicleSelection.family === "E9X"
+  const legacySavedVariant = vehicleSelection.family === displayFamily.value
     && vehicleSelection.variant
     && LEGACY_SAVED_PROFILE_PLATFORMS.some((platformId) => platformId === profile.platform)
     && !selectableVariantOptions.some((variant) => variant.value === vehicleSelection.variant)
@@ -392,11 +392,11 @@ export default function App() {
           platform: profile.platform,
           trim: profile.trim,
           label: `Legacy ${profile.trim} · body style not recorded`,
-          yearStart: 2006,
-          yearEnd: 2013,
+          yearStart: platform.yearStart,
+          yearEnd: platform.yearEnd,
         }
       : undefined;
-  const variantOptions = legacyE9xVariant ? [...selectableVariantOptions, legacyE9xVariant] : selectableVariantOptions;
+  const variantOptions = legacySavedVariant ? [...selectableVariantOptions, legacySavedVariant] : selectableVariantOptions;
   const selectedVariant = vehicleSelection.variant
     ? variantOptions.find((variant) => variant.value === vehicleSelection.variant)
     : undefined;

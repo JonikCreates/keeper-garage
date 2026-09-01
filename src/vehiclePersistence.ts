@@ -30,10 +30,11 @@ export type VehicleInsertOptions = {
 // Keep the already-deployed database keys stable while the selector presents
 // cleaner model/generation labels. Garage rows and dependent records keep IDs.
 const PERSISTED_MODEL_LABELS: Partial<Record<string, string>> = {
-  E82: "1 Series (E82 and E88)",
   ZC6: "BRZ",
   ZD8: "BRZ",
 };
+
+const LEGACY_E82_TRIMS = new Set(["128i", "135i", "135is"]);
 
 export function vehicleInsertFromProfile(profile: VehicleProfile, options: VehicleInsertOptions): VehicleInsert {
   const platform = getPlatform(profile.platform);
@@ -41,7 +42,9 @@ export function vehicleInsertFromProfile(profile: VehicleProfile, options: Vehic
     owner_id: options.ownerId,
     nickname: options.nickname.trim() || `My ${profile.brand}`,
     brand: profile.brand,
-    model: PERSISTED_MODEL_LABELS[platform.value] ?? platform.label,
+    model: platform.value === "E82" && LEGACY_E82_TRIMS.has(profile.trim)
+      ? "1 Series (E82 and E88)"
+      : PERSISTED_MODEL_LABELS[platform.value] ?? platform.label,
     model_year: profile.year,
     trim: profile.trim,
     engine_code: profile.engineCode,
@@ -53,6 +56,11 @@ export function vehicleInsertFromProfile(profile: VehicleProfile, options: Vehic
 }
 
 export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
+  const legacyCombinedE82 = [
+    "1 Series Coupe / Convertible (E82/E88)",
+    "1 Series (E82 and E88)",
+    "1 Series (E82/E88)",
+  ].includes(vehicle.model);
   const migratedModel = ["86", "86 (first generation)"].includes(vehicle.model)
     ? "GT86 (First gen ZN6)"
     : vehicle.model === "FR-S (first generation)"
@@ -61,10 +69,8 @@ export function vehicleProfileFromRow(vehicle: VehicleRow): VehicleProfile {
         ? vehicle.model_year <= 2020
           ? "BRZ (ZC6)"
           : "BRZ (ZD8)"
-        : ["1 Series Coupe / Convertible (E82/E88)", "1 Series (E82 and E88)"].includes(vehicle.model)
-          ? "1 Series (E82/E88)"
-          : vehicle.model;
-  const platform = PLATFORM_OPTIONS.find((option) => option.label === migratedModel
+        : vehicle.model;
+  const platform = PLATFORM_OPTIONS.find((option) => (legacyCombinedE82 ? option.value === "E82" : option.label === migratedModel)
     && option.brand === vehicle.brand
     && vehicle.model_year >= option.yearStart
     && vehicle.model_year <= option.yearEnd);

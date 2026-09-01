@@ -16,7 +16,7 @@ import {
   matchesApplicability,
   type VehicleProfile,
 } from "../lib/catalog";
-import { getEnhancedScheduleIds } from "../lib/enhancedCatalog";
+import { getEnhancedScheduleIds, getOwnershipInsights } from "../lib/enhancedCatalog";
 import {
   ENHANCED_SCHEDULE_PROFILES,
   ENHANCED_SCHEDULES,
@@ -118,10 +118,32 @@ test("E46 M3 coupe and convertible are separate body-style variants", () => {
 test("selector labels stay concise without changing workbook-backed trim identifiers", () => {
   const bmwE82 = getVehicleFamilyOptions("BMW").find((family) => family.value === "E82");
   assert.equal(bmwE82?.label, "1 Series (E82/E88)");
+  assert.deepEqual(bmwE82?.platforms, ["E82_COUPE", "E88", "E82"]);
+
+  const bodyVariants = getVehicleVariantOptions("E82");
+  assert.deepEqual(new Set(bodyVariants.map((variant) => `${variant.platform}:${variant.label}`)), new Set([
+    "E82_COUPE:128i Coupe",
+    "E82_COUPE:135i Coupe",
+    "E82_COUPE:135is Coupe",
+    "E88:128i Convertible",
+    "E88:135i Convertible",
+    "E88:135is Convertible",
+  ]));
+  assert.ok(!bodyVariants.some((variant) => ["128i", "135i", "135is"].includes(variant.trim)));
+  assert.deepEqual(getEngineOptions("E82_COUPE", "128i Coupe", 2009, "6-speed manual"), ["N51"]);
+  assert.deepEqual(getEngineOptions("E88", "128i Convertible", 2009, "6-speed automatic"), ["N51"]);
+
+  const exactCoupe = profile({ brand: "BMW", platform: "E82_COUPE", year: 2009, trim: "128i Coupe", engineCode: "N51", transmission: "6-speed manual" });
+  assert.equal(simulatedRow(exactCoupe).model, "1 Series Coupe (E82)");
+  assert.deepEqual(vehicleProfileFromRow(simulatedRow(exactCoupe)), exactCoupe);
+  assert.ok(getMaintenanceCatalog(exactCoupe).length > 0);
+  assert.ok(getOwnershipInsights(exactCoupe).some((insight) => insight.sourceWorkbook.startsWith("BMW Updated E82 E88")));
+
   const e82 = profile({ brand: "BMW", platform: "E82", year: 2011, trim: "128i", engineCode: "N52K", transmission: "6-speed manual" });
   const savedE82 = simulatedRow(e82);
   assert.equal(savedE82.model, "1 Series (E82 and E88)");
   assert.deepEqual(vehicleProfileFromRow(savedE82), e82);
+  assert.ok(!getOwnershipInsights(e82).some((insight) => insight.sourceWorkbook.startsWith("BMW Updated E82 E88")));
 
   const engineCodes = getEngineOptions("E82", "128i", 2009, "6-speed manual");
   const visibleEngines = dedupeEngineOptionsByLabel(engineCodes.map((engineCode) => ({

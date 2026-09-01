@@ -136,6 +136,7 @@ export const PLATFORM_OPTIONS: PlatformOption[] = [
 ].map((platform) => ({ ...platform, label: CUSTOMER_PLATFORM_LABELS[platform.value] ?? platform.label }));
 
 const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
+  { value: "E82", brand: "BMW", label: "1 Series (E82/E88)", platforms: ["E82_COUPE", "E88", "E82"] },
   { value: "E9X", brand: "BMW", label: "3 Series / M3 (E90/E91/E92/E93)", platforms: ["E90", "E91", "E92", "E93", "E9X"] },
   { value: "F10", brand: "BMW", label: "5 Series / M5 (F10)", platforms: ["F10", "F10M5"] },
   { value: "F22", brand: "BMW", label: "2 Series / M2 (F22/F87)", platforms: ["F22", "F87"] },
@@ -176,7 +177,9 @@ const newlySelectableExistingSchedules = new Set([
 ]);
 
 const adaptedEnhancedVariants = RESEARCH_VARIANTS
-  .filter((variant) => !existingPlatformIds.has(variant.platform) || newlySelectableExistingSchedules.has(variant.scheduleId))
+  .filter((variant) => !existingPlatformIds.has(variant.platform)
+    || newlySelectableExistingSchedules.has(variant.scheduleId)
+    || variant.scheduleId.startsWith("e82-body-"))
   // North American F22 230i cars use the B46. The source workbook also carried
   // B48 aliases, which created a duplicate engine choice for the same schedule.
   .filter((variant) => !(variant.platform === "F22" && variant.trim === "230i" && variant.engineCode === "B48"))
@@ -208,19 +211,27 @@ const catalogVariants = [
   label: cleanedVariantDisplayLabel(variant.platform, variant.label),
 }));
 
-// The original E9X profiles remain available to resolve saved garages and
-// maintenance history. New selector choices use the body-specific workbook.
-export const LEGACY_SAVED_PROFILE_PLATFORMS = ["E9X"] as const;
-const legacySavedProfilePlatforms = new Set<string>(LEGACY_SAVED_PROFILE_PLATFORMS);
+// The original E9X profiles and generic E82/E88 trims remain available to
+// resolve saved garages and maintenance history. New selector choices use the
+// body-specific workbooks.
+export const LEGACY_SAVED_PROFILE_PLATFORMS = ["E9X", "E82"] as const;
+const legacyE82Trims = new Set(["128i", "135i", "135is"]);
+function isLegacySavedVariant(variant: { platform: string; trim: string }) {
+  return variant.platform === "E9X" || (variant.platform === "E82" && legacyE82Trims.has(variant.trim));
+}
+function isLegacySavedSchedule(profile: { platform: string; scheduleId: string }) {
+  return profile.platform === "E9X"
+    || (profile.platform === "E82" && !profile.scheduleId.startsWith("e82-body-"));
+}
 export const LEGACY_SAVED_PROFILE_SCHEDULE_IDS = [...new Set([
   ...catalogVariants
-    .filter((variant) => legacySavedProfilePlatforms.has(variant.platform))
+    .filter(isLegacySavedVariant)
     .map((variant) => variant.scheduleId),
   ...RESEARCH_SCHEDULE_PROFILES
-    .filter((profile) => legacySavedProfilePlatforms.has(profile.platform))
+    .filter(isLegacySavedSchedule)
     .map((profile) => profile.scheduleId),
 ])];
-const selectableCatalogVariants = catalogVariants.filter((variant) => !legacySavedProfilePlatforms.has(variant.platform));
+const selectableCatalogVariants = catalogVariants.filter((variant) => !isLegacySavedVariant(variant));
 
 export const TRIM_OPTIONS: TrimOption[] = [
   { platform: "F30", value: "320i", label: "320i", yearStart: 2013, yearEnd: 2018, engines: ["N20"], drivetrains: ["RWD", "xDrive"], transmissions: ["8-speed automatic", "6-speed manual"] },
