@@ -11,16 +11,21 @@ test("production build contains the Keeper application", async () => {
   assert.match(html, /<title>Keeper Auto<\/title>/);
   assert.match(html, /property="og:title" content="Keeper Auto"/);
   assert.match(html, /property="og:description" content="Your digital garage for keeping track of the cars you own, maintain, modify, and love\."/);
-  assert.match(html, /property="og:image" content="https:\/\/keeperauto\.com\/keeper-auto-social\.png"/);
+  assert.match(html, /property="og:image" content="https:\/\/keeperauto\.com\/keeper-auto-social-v2\.png"/);
   assert.match(html, /property="og:url" content="https:\/\/keeperauto\.com\/"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.match(html, /name="twitter:title" content="Keeper Auto"/);
-  assert.match(html, /name="twitter:image" content="https:\/\/keeperauto\.com\/keeper-auto-social\.png"/);
+  assert.match(html, /name="twitter:image" content="https:\/\/keeperauto\.com\/keeper-auto-social-v2\.png"/);
   assert.match(html, /rel="canonical" href="https:\/\/keeperauto\.com\/"/);
-  assert.match(html, /rel="manifest" href="\/site\.webmanifest"/);
-  for (const asset of ["keeper-auto-social.png", "keeper-logo.png", "favicon-32x32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "site.webmanifest"]) {
+  assert.match(html, /rel="manifest" href="\/(?:keeper-garage\/)?site-v2\.webmanifest"/);
+  assert.match(html, /rel="icon" type="image\/png" sizes="32x32" href="\/(?:keeper-garage\/)?favicon-v2-32x32\.png"/);
+  assert.match(html, /rel="apple-touch-icon" sizes="180x180" href="\/(?:keeper-garage\/)?apple-touch-icon-v2\.png"/);
+  assert.doesNotMatch(html, /keeper-auto-social\.png/);
+  for (const asset of ["keeper-auto-social-v2.png", "favicon-v2-32x32.png", "apple-touch-icon-v2.png", "icon-v2-192.png", "icon-v2-512.png", "site-v2.webmanifest"]) {
     assert.ok(rootAssets.includes(asset), `expected ${asset} in the production build`);
   }
+  const manifest = JSON.parse(await readFile(new URL("../dist/site-v2.webmanifest", import.meta.url), "utf8"));
+  assert.deepEqual(manifest.icons.map((icon) => icon.src), ["icon-v2-192.png", "icon-v2-512.png"]);
   assert.match(html, /\/(?:keeper-garage\/)?assets\//);
   assert.ok(scripts.length, "expected compiled JavaScript assets");
 
