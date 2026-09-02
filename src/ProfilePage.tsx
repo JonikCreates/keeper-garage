@@ -23,7 +23,7 @@ function LaunchOffer({ offer, busyKey, onClaim, onPurchase }: { offer: KeeperPro
           : null;
   return <article className={infinite ? "recommended" : undefined}>
     <span>{title}</span><strong>{offer.claimed_by_user ? "CLAIMED" : "FREE"}</strong><p>{normalPrice} normally · one time</p>
-    <ul><li>{benefit}</li><li>{offer.remaining} of {offer.max_redemptions} launch spots remaining</li><li>Permanent access</li></ul>
+    <ul><li>{benefit}</li><li>{offer.redemption_count} of {offer.max_redemptions} claimed · {offer.remaining} remaining</li><li>Permanent access</li></ul>
     {offer.claimed_by_user
       ? <b className="profile-launch-claimed">✓ Founder Launch Access</b>
       : offer.claim_available

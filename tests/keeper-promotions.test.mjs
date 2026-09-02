@@ -65,7 +65,7 @@ test("the browser only requests an authoritative promotion key", async () => {
 
 test("sold-out launch offers fall back to normal permanent pricing", async () => {
   const profile = await readFile(new URL("../src/ProfilePage.tsx", import.meta.url), "utf8");
-  for (const copy of ["Purchase ${title}", "Claim ${title} Free", "of {offer.max_redemptions} launch spots remaining", "Founder Launch Access"]) {
+  for (const copy of ["Purchase ${title}", "Claim ${title} Free", "{offer.redemption_count} of {offer.max_redemptions} claimed", "{offer.remaining} remaining", "Founder Launch Access"]) {
     assert.match(profile, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
 });
