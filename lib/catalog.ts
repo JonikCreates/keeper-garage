@@ -138,6 +138,7 @@ export const PLATFORM_OPTIONS: PlatformOption[] = [
 
 const GROUPED_VEHICLE_FAMILIES: VehicleFamilyOption[] = [
   { value: "E82", brand: "BMW", label: "1 Series (E82/E88)", platforms: ["E82_COUPE", "E88", "E82"] },
+  { value: "E60", brand: "BMW", label: "5 Series / M5 (E60/E61)", platforms: ["E60", "E61"] },
   { value: "E9X", brand: "BMW", label: "3 Series / M3 (E90/E91/E92/E93)", platforms: ["E90", "E91", "E92", "E93", "E9X"] },
   { value: "F10", brand: "BMW", label: "5 Series / M5 (F10)", platforms: ["F10", "F10M5"] },
   { value: "F22", brand: "BMW", label: "2 Series / M2 (F22/F87)", platforms: ["F22", "F87"] },

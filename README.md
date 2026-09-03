@@ -16,6 +16,7 @@ The platform library covers Acura, BMW, Porsche, Subaru, Mazda, Volkswagen, Audi
 - Mazda MX-5 Miata NA, NB, NC, and ND, including Mazdaspeed, PRHT, RF, manual, and automatic branches
 - Enhanced research for Volkswagen Mk7/Mk8, additional modern BMW platforms, Audi B8/C7, Ford S550, Honda S2000, Lexus IS, Nissan Z/GTR, Toyota/Scion/Subaru 86/BRZ, Toyota Supra A90, and Mercedes-Benz G-Class platforms
 - Acura Integra Type S DE5 and Honda Civic Type R FL5, with their shared K20C1 architecture kept model-specific across maintenance, issue, recall, and PPI guidance
+- BMW E30 3 Series/M3, E38 7 Series, grouped E60/E61 5 Series/M5, and Acura RSX Type-S DC5 with exact body, engine-era, drivetrain, and transmission routing
 - Source-backed Nissan 350Z, 370Z, and GT-R NISMO variants retained as trims within their normal model families
 - 33 enhanced research workbooks normalized into 389 populated configuration profiles and schedules, 2,232 reusable service rows, 1,111 grouped issue records, and 114 ownership-intelligence notes
 - Generation, year, engine, drivetrain, and transmission applicability
