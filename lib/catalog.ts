@@ -39,6 +39,7 @@ export const BRAND_OPTIONS = [
   { value: "Volkswagen", label: "Volkswagen" },
   { value: "Audi", label: "Audi" },
   { value: "Ford", label: "Ford" },
+  { value: "Acura", label: "Acura" },
   { value: "Honda", label: "Honda" },
   { value: "Lexus", label: "Lexus" },
   { value: "Nissan", label: "Nissan" },

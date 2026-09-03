@@ -1,8 +1,8 @@
 # Keeper
 
-Configuration-aware maintenance and ownership research for U.S.-spec enthusiast platforms across 13 makes. Cloudflare Pages is the production target, with [GitHub Pages](https://jonikcreates.github.io/keeper-garage/) retained as the rollout fallback.
+Configuration-aware maintenance and ownership research for U.S.-spec enthusiast platforms across 14 makes. Cloudflare Pages is the production target, with [GitHub Pages](https://jonikcreates.github.io/keeper-garage/) retained as the rollout fallback.
 
-The platform library covers BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford, Honda, Lexus, Nissan, Toyota, Scion, and Mercedes-Benz. Maintenance and issue records carry applicability rules for brand, generation, year, model type, engine, drivetrain, transmission, and exact research profile, so a saved vehicle only receives relevant recommendations.
+The platform library covers Acura, BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford, Honda, Lexus, Nissan, Toyota, Scion, and Mercedes-Benz. Maintenance and issue records carry applicability rules for brand, generation, year, model type, engine, drivetrain, transmission, and exact research profile, so a saved vehicle only receives relevant recommendations.
 
 ## What it covers
 
@@ -15,6 +15,7 @@ The platform library covers BMW, Porsche, Subaru, Mazda, Volkswagen, Audi, Ford,
 - Porsche 911 996.1, 996.2, 997.1, and 997.2 Carrera, Turbo, Targa, GT, RS, GTS, and special-model branches
 - Mazda MX-5 Miata NA, NB, NC, and ND, including Mazdaspeed, PRHT, RF, manual, and automatic branches
 - Enhanced research for Volkswagen Mk7/Mk8, additional modern BMW platforms, Audi B8/C7, Ford S550, Honda S2000, Lexus IS, Nissan Z/GTR, Toyota/Scion/Subaru 86/BRZ, Toyota Supra A90, and Mercedes-Benz G-Class platforms
+- Acura Integra Type S DE5 and Honda Civic Type R FL5, with their shared K20C1 architecture kept model-specific across maintenance, issue, recall, and PPI guidance
 - Source-backed Nissan 350Z, 370Z, and GT-R NISMO variants retained as trims within their normal model families
 - 33 enhanced research workbooks normalized into 389 populated configuration profiles and schedules, 2,232 reusable service rows, 1,111 grouped issue records, and 114 ownership-intelligence notes
 - Generation, year, engine, drivetrain, and transmission applicability
