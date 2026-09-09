@@ -1,9 +1,9 @@
+import { maintenanceTotalCents, formatUsdCents, recordTotalCents, hasSplitCosts, maintenanceCostDetails } from "./maintenanceCosts";
+export { maintenanceTotalCents, formatUsdCents } from "./maintenanceCosts";
 import type { MaintenanceRecordRow, VehicleRow } from "./supabase";
 import { KEEPER_LOGO_ASSETS } from "./KeeperBrand";
 
 export type ExportVehicle = Pick<VehicleRow, "brand" | "model" | "model_year" | "trim" | "engine_code" | "transmission">;
-
-const UNKNOWN_WORK = "completed service — details not recorded";
 
 function loadKeeperExportLogo() {
   return new Promise<HTMLImageElement | null>((resolve) => {
@@ -14,25 +14,14 @@ function loadKeeperExportLogo() {
   });
 }
 
-// REVIEW DECISION: aggregate integer cents and format only at the UI/export boundary so saved totals stay exact.
-export function maintenanceTotalCents(records: MaintenanceRecordRow[]) {
-  return records.reduce((total, record) => total + (record.cost_cents ?? 0), 0);
-}
-
-export function formatUsdCents(value: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value / 100);
-}
-
 function recordCost(record: MaintenanceRecordRow) {
-  return record.cost_cents === null ? "-" : formatUsdCents(record.cost_cents);
+  const total = recordTotalCents(record);
+  return total === null ? "-" : formatUsdCents(total);
 }
 
 export function completedExportRecords(records: MaintenanceRecordRow[]) {
   return records
-    .filter((record) => {
-      const work = record.work_performed.trim().toLowerCase();
-      return work.length > 0 && work !== UNKNOWN_WORK && !work.includes("not recorded");
-    })
+    .slice()
     .sort((left, right) => right.completed_at.localeCompare(left.completed_at)
       || right.mileage - left.mileage
       || right.created_at.localeCompare(left.created_at));
@@ -87,6 +76,7 @@ function recordExportText(record: MaintenanceRecordRow) {
     quantity,
     filter,
     record.notes,
+    hasSplitCosts(record) ? maintenanceCostDetails(record) : recordTotalCents(record) !== null ? "Legacy total retained" : null,
   ].filter(Boolean).join(" - ");
 
   return printableReportText(
@@ -158,37 +148,42 @@ export async function createMaintenancePdf(vehicle: ExportVehicle, sourceRecords
     document.text("SERVICE / WORK PERFORMED", margin + 10, y + 17);
     document.text("DATE", dateX, y + 17);
     document.text("MILEAGE", mileageX, y + 17, { align: "right" });
-    document.text("COST", costX, y + 17, { align: "right" });
+    document.text("TOTAL COST", costX, y + 17, { align: "right" });
     return y + 26;
   }
 
   drawHeader(false);
   let y = drawTableHeader(166);
   records.forEach((record, index) => {
-    const workLines = document.splitTextToSize(recordExportText(record), workWidth) as string[];
-    const rowHeight = Math.max(38, workLines.length * 12 + 18);
-    if (y + rowHeight > pageHeight - 54) {
-      document.addPage();
-      drawHeader(true);
-      y = drawTableHeader(166);
-    }
-    if (index % 2 === 1) {
-      document.setFillColor(249, 251, 253);
-      document.rect(margin, y, contentWidth, rowHeight, "F");
-    }
-    document.setDrawColor(219, 226, 233);
-    document.setLineWidth(.5);
-    document.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
     document.setFont("helvetica", "normal");
     document.setFontSize(9.5);
-    document.setTextColor(27, 37, 48);
-    document.text(workLines, margin + 10, y + 16, { lineHeightFactor: 1.25 });
-    document.setFontSize(9);
-    document.setTextColor(68, 80, 93);
-    document.text(reportDate(record.completed_at), dateX, y + 16);
-    document.text(`${record.mileage.toLocaleString("en-US")} mi`, mileageX, y + 16, { align: "right" });
-    document.text(recordCost(record), costX, y + 16, { align: "right" });
-    y += rowHeight;
+    const workLines = document.splitTextToSize(recordExportText(record), workWidth) as string[];
+    while (workLines.length) {
+      if (y + Math.min(38, workLines.length * 12 + 18) > pageHeight - 54) {
+        document.addPage();
+        drawHeader(true);
+        y = drawTableHeader(166);
+      }
+      const lines = workLines.splice(0, Math.max(1, Math.floor((pageHeight - 54 - y - 18) / 12)));
+      const rowHeight = Math.max(38, lines.length * 12 + 18);
+      if (index % 2 === 1) {
+        document.setFillColor(249, 251, 253);
+        document.rect(margin, y, contentWidth, rowHeight, "F");
+      }
+      document.setDrawColor(219, 226, 233);
+      document.setLineWidth(.5);
+      document.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
+      document.setFont("helvetica", "normal");
+      document.setFontSize(9.5);
+      document.setTextColor(27, 37, 48);
+      document.text(lines, margin + 10, y + 16, { lineHeightFactor: 1.25 });
+      document.setFontSize(9);
+      document.setTextColor(68, 80, 93);
+      document.text(reportDate(record.completed_at), dateX, y + 16);
+      document.text(`${record.mileage.toLocaleString("en-US")} mi`, mileageX, y + 16, { align: "right" });
+      document.text(recordCost(record), costX, y + 16, { align: "right" });
+      y += rowHeight;
+    }
   });
 
   const totalPages = document.getNumberOfPages();

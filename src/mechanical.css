@@ -886,7 +886,10 @@ main { max-width: 1260px; padding-bottom: 18px; border: 0; }
 .custom-time-field label { display: grid; gap: 7px; }
 .custom-maintenance-actions { display: flex; align-items: stretch; gap: 7px; }
 
-.maintenance-record-form.simplified { grid-template-columns: minmax(230px, 1.3fr) minmax(115px, .5fr) minmax(140px, .6fr) minmax(120px, .5fr); }
+.maintenance-record-form.simplified { grid-template-columns: minmax(230px, 1.3fr) minmax(115px, .5fr) minmax(140px, .6fr); }
+.maintenance-cost-fields { min-width: 0; grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 12px; border: 1px solid var(--line); }
+.maintenance-cost-fields legend { padding: 0 6px; color: var(--muted); font-size: 10px; }
+.maintenance-cost-fields .maintenance-cost-total { grid-column: 1 / -1; margin: 0; display: block; font-size: 12px; }
 .maintenance-record-form.simplified > .button { justify-self: start; }
 .maintenance-record-form textarea, .maintenance-record-form select { min-height: 42px; width: 100%; padding: 10px 12px; color: var(--paper); border: 1px solid var(--line); outline: 0; background: var(--field); font-size: 11px; }
 .maintenance-notes-field { grid-column: 1 / -1; }

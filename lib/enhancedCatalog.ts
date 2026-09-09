@@ -127,6 +127,13 @@ function profileScore(profile: VehicleProfile, candidate: EnhancedScheduleProfil
 }
 
 function matchingProfiles(profile: VehicleProfile) {
+  // These source profiles provide exact trim/package and gearbox routing.
+  const exactProfiles = RESEARCH_SCHEDULE_PROFILES.filter((candidate) => candidate.platform === profile.platform && candidate.scheduleId.startsWith("v113-"));
+  if (exactProfiles.length) return exactProfiles.filter((candidate) =>
+    candidate.trim === profile.trim && candidate.engineCodes.includes(profile.engineCode)
+    && candidate.transmission === profile.transmission && candidate.drivetrain === profile.drivetrain
+    && profile.year >= candidate.yearStart && profile.year <= candidate.yearEnd)
+    .sort((left, right) => right.yearStart - left.yearStart).slice(0, 1);
   const scored = RESEARCH_SCHEDULE_PROFILES
     .map((candidate) => ({ candidate, score: profileScore(profile, candidate) }))
     .filter((match) => match.score >= 0)

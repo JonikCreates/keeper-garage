@@ -1,3 +1,4 @@
+import { serializeMaintenanceCosts } from "./maintenanceCosts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { friendlyGarageError } from "./keeperApi";
@@ -32,7 +33,9 @@ export type MaintenanceRecordInput = {
   fluidQuantity: number | null;
   fluidUnit: string | null;
   filterProduct: string | null;
-  costCents: number | null;
+  costCents?: number | null;
+  partsCostCents: number | null;
+  laborCostCents: number | null;
 };
 
 function compareMaintenanceRecordsNewestFirst(left: MaintenanceRecordRow, right: MaintenanceRecordRow) {
@@ -95,7 +98,7 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
 
   const addRecord = useCallback(async (maintenanceSlug: string, maintenanceName: string, input: MaintenanceRecordInput) => {
     if (!supabase || !user || !vehicleId) return false;
-    setState((current) => ({ ...current, savingSlug: maintenanceSlug, error: null }));
+    setState((current) => current.scope !== scope ? current : ({ ...current, savingSlug: maintenanceSlug, error: null }));
     const { data, error } = await supabase
       .from("maintenance_records")
       .insert({
@@ -115,22 +118,50 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
         fluid_quantity: input.fluidQuantity,
         fluid_unit: input.fluidUnit,
         filter_product: input.filterProduct,
-        cost_cents: input.costCents,
+        ...serializeMaintenanceCosts(input),
       })
       .select()
       .single<MaintenanceRecordRow>();
     if (error) {
-      setState((current) => ({ ...current, savingSlug: null, error: friendlyGarageError() }));
+      setState((current) => current.scope !== scope ? current : ({ ...current, savingSlug: null, error: friendlyGarageError() }));
       return false;
     }
-    setState((current) => ({
+    setState((current) => current.scope !== scope ? current : ({
       ...current,
       records: [...current.records, data].sort(compareMaintenanceRecordsNewestFirst),
       savingSlug: null,
       error: null,
     }));
     return true;
-  }, [user, vehicleId]);
+  }, [user, vehicleId, scope]);
+
+  const updateRecord = useCallback(async (recordId: string, input: MaintenanceRecordInput) => {
+    if (!supabase || !user || !vehicleId) return false;
+    const existing = state.records.find((record) => record.id === recordId);
+    if (!existing) return false;
+    setState((current) => current.scope !== scope ? current : ({ ...current, savingSlug: existing.maintenance_slug, error: null }));
+    const { data, error } = await supabase.from("maintenance_records").update({
+        work_performed: input.workPerformed.trim(),
+        mileage: input.mileage,
+        completed_at: input.completedAt,
+        notes: input.notes,
+        fluid_brand: input.fluidBrand,
+        fluid_product: input.fluidProduct,
+        fluid_type: input.fluidType,
+        fluid_viscosity: input.fluidViscosity,
+        fluid_specification: input.fluidSpecification,
+        fluid_quantity: input.fluidQuantity,
+        fluid_unit: input.fluidUnit,
+        filter_product: input.filterProduct,
+        ...serializeMaintenanceCosts(input),
+    }).eq("id", recordId).eq("owner_id", user.id).eq("vehicle_id", vehicleId).select().single<MaintenanceRecordRow>();
+    if (error) {
+      setState((current) => current.scope !== scope ? current : ({ ...current, savingSlug: null, error: friendlyGarageError() }));
+      return false;
+    }
+    setState((current) => current.scope !== scope ? current : ({ ...current, records: current.records.map((record) => record.id === recordId ? data : record).sort(compareMaintenanceRecordsNewestFirst), savingSlug: null, error: null }));
+    return true;
+  }, [user, vehicleId, scope, state.records]);
 
   const deleteRecord = useCallback(async (recordId: string) => {
     if (!supabase || !user || !vehicleId) return false;
@@ -141,18 +172,19 @@ export function useMaintenanceRecords(user: User | null, vehicleId: string | nul
       .eq("owner_id", user.id)
       .eq("vehicle_id", vehicleId);
     if (error) {
-      setState((current) => ({ ...current, error: friendlyGarageError() }));
+      setState((current) => current.scope !== scope ? current : ({ ...current, error: friendlyGarageError() }));
       return false;
     }
-    setState((current) => ({ ...current, records: current.records.filter((record) => record.id !== recordId), error: null }));
+    setState((current) => current.scope !== scope ? current : ({ ...current, records: current.records.filter((record) => record.id !== recordId), error: null }));
     return true;
-  }, [user, vehicleId]);
+  }, [user, vehicleId, scope]);
 
   return {
     ...(state.scope === scope ? state : initialState),
     recordsBySlug,
     addRecord,
     deleteRecord,
-    clearError: () => setState((current) => ({ ...current, error: null })),
+    updateRecord,
+    clearError: () => setState((current) => current.scope !== scope ? current : ({ ...current, error: null })),
   };
 }

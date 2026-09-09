@@ -120,6 +120,8 @@ export type MaintenanceRecordRow = {
   fluid_unit: string | null;
   filter_product: string | null;
   cost_cents: number | null;
+  parts_cost_cents?: number | null;
+  labor_cost_cents?: number | null;
   completed_at: string;
   mileage: number;
   created_at: string;

@@ -63,7 +63,7 @@ create table if not exists public.vehicle_catalog_fitments (
 alter table public.vehicle_catalog_fitments enable row level security;
 revoke all on public.vehicle_catalog_fitments from public, anon, authenticated;
 
-truncate table public.vehicle_catalog_fitments;
+-- Add configurations without removing previously accepted garage fitments.
 
 insert into public.vehicle_catalog_fitments (
   brand, model, model_year, trim, engine_code, drivetrain, transmission
@@ -86,7 +86,8 @@ $keeper_catalog$::jsonb) as fitment(
   engine_code text,
   drivetrain text,
   transmission text
-);
+)
+on conflict do nothing;
 
 create or replace function public.validate_keeper_vehicle_fitment()
 returns trigger

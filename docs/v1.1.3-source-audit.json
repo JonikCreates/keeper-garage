@@ -1,0 +1,396 @@
+[
+  {
+    "workbook": "Chevrolet Corvette C5 USDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "82697441b2d5435e634b42cc5d84b52673937de265ea040220bafee399669d14",
+    "platform": "CORVETTE_C5",
+    "trims": {
+      "C5 Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 72
+      },
+      "C5 Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 72
+      },
+      "C5 Fixed Roof Coupe": {
+        "profiles": 1,
+        "maintenanceRows": 36
+      },
+      "C5 Z06 Coupe": {
+        "profiles": 1,
+        "maintenanceRows": 37
+      }
+    },
+    "knownIssues": 57,
+    "supportingRows": {
+      "Body Matrix": 3,
+      "Engine Matrix": 4,
+      "Chassis Notes": 4,
+      "Performance Variants": 2,
+      "Campaigns & Recalls": 1,
+      "PPI Checklist": 7,
+      "Sources": 6,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Chevrolet Corvette C6 USDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "3b773ddb213c3f3782ed698f88f56660b6d2ace217cbe00677c68563d4c229bf",
+    "platform": "CORVETTE_C6",
+    "trims": {
+      "C6 Coupe": {
+        "profiles": 6,
+        "maintenanceRows": 200
+      },
+      "C6 Convertible": {
+        "profiles": 6,
+        "maintenanceRows": 200
+      },
+      "C6 Z06 Coupe": {
+        "profiles": 1,
+        "maintenanceRows": 36
+      },
+      "C6 Grand Sport Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 69
+      },
+      "C6 Grand Sport Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 68
+      },
+      "C6 ZR1 Coupe": {
+        "profiles": 1,
+        "maintenanceRows": 37
+      },
+      "C6 427 Convertible": {
+        "profiles": 1,
+        "maintenanceRows": 37
+      }
+    },
+    "knownIssues": 167,
+    "supportingRows": {
+      "Body Matrix": 3,
+      "Engine Matrix": 13,
+      "Chassis Notes": 4,
+      "Performance Variants": 5,
+      "Campaigns & Recalls": 3,
+      "PPI Checklist": 8,
+      "Sources": 10,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Chevrolet Corvette C7 USDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "25905b05c476b736c5506173fb9f7c1e25ba0130d9c2c715189fc5c568058ebe",
+    "platform": "CORVETTE_C7",
+    "trims": {
+      "C7 Stingray Coupe": {
+        "profiles": 6,
+        "maintenanceRows": 205
+      },
+      "C7 Stingray Convertible": {
+        "profiles": 6,
+        "maintenanceRows": 205
+      },
+      "C7 Grand Sport Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 71
+      },
+      "C7 Grand Sport Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 71
+      },
+      "C7 Z06 Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 75
+      },
+      "C7 Z06 Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 75
+      },
+      "C7 ZR1 Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 77
+      },
+      "C7 ZR1 Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 77
+      }
+    },
+    "knownIssues": 238,
+    "supportingRows": {
+      "Body Matrix": 2,
+      "Engine Matrix": 12,
+      "Chassis Notes": 4,
+      "Performance Variants": 4,
+      "Campaigns & Recalls": 2,
+      "PPI Checklist": 7,
+      "Sources": 9,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Chevrolet Corvette C8 USDM 2020-2026 - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "a0205f204958d84f34aa4ed6ac74616bd4acc63e865939c5b2132eafa92420a1",
+    "platform": "CORVETTE_C8",
+    "trims": {
+      "C8 Stingray Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 70
+      },
+      "C8 Stingray Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 70
+      },
+      "C8 Z06 Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 74
+      },
+      "C8 Z06 Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 74
+      },
+      "C8 E-Ray Coupe": {
+        "profiles": 2,
+        "maintenanceRows": 76
+      },
+      "C8 E-Ray Convertible": {
+        "profiles": 2,
+        "maintenanceRows": 76
+      },
+      "C8 ZR1 Coupe": {
+        "profiles": 1,
+        "maintenanceRows": 38
+      },
+      "C8 ZR1 Convertible": {
+        "profiles": 1,
+        "maintenanceRows": 38
+      },
+      "C8 ZR1X Coupe": {
+        "profiles": 1,
+        "maintenanceRows": 41
+      },
+      "C8 ZR1X Convertible": {
+        "profiles": 1,
+        "maintenanceRows": 41
+      }
+    },
+    "knownIssues": 124,
+    "supportingRows": {
+      "Body Matrix": 2,
+      "Engine Matrix": 8,
+      "Chassis Notes": 5,
+      "Performance Variants": 5,
+      "Campaigns & Recalls": 2,
+      "PPI Checklist": 9,
+      "Sources": 13,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Toyota Chaser JZX90 JDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "505b41e0a1a52174f46448709be808a0df4cf3b16a79b9236fc1b0635f9c3cee",
+    "platform": "CHASER_JZX90",
+    "trims": {
+      "Avante 2.5": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Avante G 2.5": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Tourer S": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Tourer V": {
+        "profiles": 2,
+        "maintenanceRows": 90
+      }
+    },
+    "knownIssues": 63,
+    "supportingRows": {
+      "Cross-Sibling Matrix": 4,
+      "Engine & Drivetrain": 3,
+      "Chassis Notes": 5,
+      "Campaigns & Recalls": 3,
+      "PPI Checklist": 14,
+      "Sources": 17,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Toyota Chaser JZX100 JDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "a34158f5b307292ea39e25aa3f01c293abc4d0beb3199b41ec3d52383b5b51c9",
+    "platform": "CHASER_JZX100",
+    "trims": {
+      "Avante 2.5": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Avante G 2.5": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Tourer S": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Tourer V": {
+        "profiles": 2,
+        "maintenanceRows": 96
+      }
+    },
+    "knownIssues": 109,
+    "supportingRows": {
+      "Cross-Sibling Matrix": 5,
+      "Engine & Drivetrain": 5,
+      "Chassis Notes": 6,
+      "Campaigns & Recalls": 4,
+      "PPI Checklist": 15,
+      "Sources": 16,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Toyota Cresta JZX90 JDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "fedea221445115dd949831414a1a86ce74e871952c5b99a82ad766c45a1218d0",
+    "platform": "CRESTA_JZX90",
+    "trims": {
+      "Super Lucent 2.5": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Super Lucent G 2.5": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Tourer S": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Tourer V": {
+        "profiles": 2,
+        "maintenanceRows": 90
+      }
+    },
+    "knownIssues": 63,
+    "supportingRows": {
+      "Cross-Sibling Matrix": 4,
+      "Engine & Drivetrain": 3,
+      "Chassis Notes": 5,
+      "Campaigns & Recalls": 3,
+      "PPI Checklist": 14,
+      "Sources": 17,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Toyota Cresta JZX100 JDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "d0481c249dd14da87478123a5ab0720d8f65a5f5a3661a7755fb4803636ae820",
+    "platform": "CRESTA_JZX100",
+    "trims": {
+      "Super Lucent 2.5": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Exceed 2.5": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Exceed G 2.5": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Roulant 2.5": {
+        "profiles": 1,
+        "maintenanceRows": 45
+      },
+      "Roulant S": {
+        "profiles": 1,
+        "maintenanceRows": 45
+      },
+      "Roulant G": {
+        "profiles": 1,
+        "maintenanceRows": 50
+      }
+    },
+    "knownIssues": 119,
+    "supportingRows": {
+      "Cross-Sibling Matrix": 5,
+      "Engine & Drivetrain": 5,
+      "Chassis Notes": 6,
+      "Campaigns & Recalls": 4,
+      "PPI Checklist": 15,
+      "Sources": 16,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Toyota Mark II JZX90 JDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "d09faf4fc7332cedcda780121b84f72ba617e5784fd1565a84410793bd4cf96c",
+    "platform": "MARK_II_JZX90",
+    "trims": {
+      "Grande 2.5": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Grande G 2.5": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Tourer S": {
+        "profiles": 1,
+        "maintenanceRows": 42
+      },
+      "Tourer V": {
+        "profiles": 2,
+        "maintenanceRows": 90
+      }
+    },
+    "knownIssues": 63,
+    "supportingRows": {
+      "Cross-Sibling Matrix": 4,
+      "Engine & Drivetrain": 3,
+      "Chassis Notes": 5,
+      "Campaigns & Recalls": 3,
+      "PPI Checklist": 14,
+      "Sources": 17,
+      "Legend": 9
+    }
+  },
+  {
+    "workbook": "Toyota Mark II JZX100 JDM - Keeper Enhanced E46 Standard.xlsx",
+    "sha256": "b257bd536d8088f8c7c343a9193213bd77b81171b4c9f59b7d0bb1d0d0a5c32e",
+    "platform": "MARK_II_JZX100",
+    "trims": {
+      "Grande 2.5": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Grande G 2.5": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Tourer S": {
+        "profiles": 2,
+        "maintenanceRows": 86
+      },
+      "Tourer V": {
+        "profiles": 2,
+        "maintenanceRows": 96
+      }
+    },
+    "knownIssues": 109,
+    "supportingRows": {
+      "Cross-Sibling Matrix": 5,
+      "Engine & Drivetrain": 5,
+      "Chassis Notes": 6,
+      "Campaigns & Recalls": 4,
+      "PPI Checklist": 15,
+      "Sources": 16,
+      "Legend": 9
+    }
+  }
+]

@@ -32,6 +32,7 @@ export type Applicability = {
 };
 
 export const BRAND_OPTIONS = [
+  { value: "Chevrolet", label: "Chevrolet" },
   { value: "BMW", label: "BMW" },
   { value: "Porsche", label: "Porsche" },
   { value: "Subaru", label: "Subaru" },

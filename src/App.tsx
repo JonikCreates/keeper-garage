@@ -1,3 +1,4 @@
+import { recordTotalCents, maintenanceCostDetails } from "./maintenanceCosts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BRAND_OPTIONS,
@@ -36,6 +37,7 @@ import { useKeeperPromotions } from "./keeperPromotions";
 import { KeeperUpgradeDialog, type UpgradePromptContext } from "./KeeperUpgradeDialog";
 import { MaintenanceExportMenu } from "./MaintenanceExportMenu";
 import { formatUsdCents, maintenanceTotalCents } from "./maintenanceExport";
+import { MaintenanceRecordEditor } from "./MaintenanceRecordEditor";
 import { MaintenanceRecordPanel } from "./MaintenanceRecordPanel";
 import { OwnershipDashboard } from "./OwnershipDashboard";
 import {
@@ -508,7 +510,7 @@ export default function App() {
       name: record.maintenance_name,
       completedAt: record.completed_at,
       mileage: record.mileage,
-      costCents: record.cost_cents,
+      costCents: recordTotalCents(record),
     })),
     items: dashboardItems.map((item) => ({
       slug: item.slug,
@@ -1017,7 +1019,7 @@ export default function App() {
           <section className="maintenance-history-section" id="maintenance-history" aria-labelledby="maintenance-history-title">
             <header><div><p className="eyebrow">What has been recorded?</p><h3 id="maintenance-history-title">Maintenance history</h3></div><strong>{displayRecords.length} completed record{displayRecords.length === 1 ? "" : "s"}</strong></header>
             {demoMode && <p className="demo-history-note"><strong>Demo history</strong> These sample records demonstrate Keeper. They are not verified service records for a real vehicle.</p>}
-            {displayRecords.length ? <div className="maintenance-history-list">{displayRecords.slice(0, historyExpanded ? undefined : 5).map((record) => <details key={record.id}><summary><div><strong>{record.maintenance_name}</strong><span>{shortServiceDate(record.completed_at)} · {record.mileage.toLocaleString()} mi</span></div><small>{record.cost_cents === null ? "Cost not entered" : formatUsdCents(record.cost_cents)}{maintenanceRecordFluid(record) ? ` · ${maintenanceRecordFluid(record)}` : ""}</small><b aria-hidden="true">＋</b></summary><div><p><strong>Work completed</strong>{record.work_performed}</p><p><strong>Cost</strong>{record.cost_cents === null ? "Not entered" : formatUsdCents(record.cost_cents)}</p>{record.notes && <p><strong>Notes</strong>{record.notes}</p>}{maintenanceRecordFluid(record) && <p><strong>Fluid / product</strong>{maintenanceRecordFluid(record)}{record.fluid_specification ? ` · ${record.fluid_specification}` : ""}{record.filter_product ? ` · Filter: ${record.filter_product}` : ""}</p>}{auth.access.canSaveMaintenance && <button type="button" onClick={() => void serviceRecords.deleteRecord(record.id)}>Remove record</button>}</div></details>)}</div> : <p className="maintenance-empty-state">No completed maintenance has been logged for this vehicle yet.</p>}
+            {displayRecords.length ? <div className="maintenance-history-list">{displayRecords.slice(0, historyExpanded ? undefined : 5).map((record) => <details key={record.id}><summary><div><strong>{record.maintenance_name}</strong><span>{shortServiceDate(record.completed_at)} · {record.mileage.toLocaleString()} mi</span></div><small>{recordTotalCents(record) === null ? "Cost not entered" : formatUsdCents(recordTotalCents(record)!)}{maintenanceRecordFluid(record) ? ` · ${maintenanceRecordFluid(record)}` : ""}</small><b aria-hidden="true">＋</b></summary><div><p><strong>Work completed</strong>{record.work_performed}</p><p><strong>Cost details</strong>{maintenanceCostDetails(record)}</p>{record.notes && <p><strong>Notes</strong>{record.notes}</p>}{maintenanceRecordFluid(record) && <p><strong>Fluid / product</strong>{maintenanceRecordFluid(record)}{record.fluid_specification ? ` · ${record.fluid_specification}` : ""}{record.filter_product ? ` · Filter: ${record.filter_product}` : ""}</p>}{auth.access.canSaveMaintenance && <><MaintenanceRecordEditor record={record} draftScope={formDraftScope} saving={serviceRecords.savingSlug === record.maintenance_slug} onSave={(input) => serviceRecords.updateRecord(record.id, input)} /><button type="button" disabled={serviceRecords.savingSlug === record.maintenance_slug} onClick={() => void serviceRecords.deleteRecord(record.id)}>Remove record</button></>}</div></details>)}</div> : <p className="maintenance-empty-state">No completed maintenance has been logged for this vehicle yet.</p>}
             {displayRecords.length > 5 && <button className="button button-quiet maintenance-history-toggle" type="button" onClick={() => setHistoryExpanded((value) => !value)}>{historyExpanded ? "Show recent only" : "View full history"}</button>}
           </section>
         </section>}
